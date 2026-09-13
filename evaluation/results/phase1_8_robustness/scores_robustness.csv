@@ -1,0 +1,1084 @@
+dataset,sample_id,audio_path,speaker_id,ground_truth_label,ground_truth_name,attack_type,system_id,window_idx,window_start_s,window_end_s,aasist_l_score,prod_authenticity_score,authenticity_confidence,ecapa_similarity,stt_transcript,context_flags,risk_score,risk_state,policy_decision,policy_action,reasons,ms_aasist,ms_ecapa,ms_stt,ms_context,ms_fusion,ms_total,condition
+asvspoof2019la,LA_E_1329718,/Users/shriyansh/Desktop/voiceshield/data/external/LA_extract_full/LA/ASVspoof2019_LA_eval/flac/LA_E_1329718.flac,LA_0034,0,bonafide,none,none,1,0.0,4.04,0.0,0.0,0.75,0.7691,"For starters, many of the Scotland team didn't turn up.",,6,insufficient_evidence,ALLOW,allow,,325.3,77.69,686.36,0.07,0.04,1089.48,clean
+asvspoof2019la,LA_E_1329718,,,0,,,,1,,,0.0029,0.0029,,0.6539,"For starters, many of the Scotland team didn't turn up.",,9,insufficient_evidence,ALLOW,,,,,,,,,noise_white_20db
+asvspoof2019la,LA_E_1329718,,,0,,,,1,,,0.9978,0.9978,,0.6243,"For starters, many of the Scotland's deemed didn't turn out.",,59,suspicious,VERIFY,,,,,,,,,noise_white_10db
+asvspoof2019la,LA_E_1329718,,,0,,,,1,,,0.9993,0.9993,,0.5953,"For starters, many of the stop-wintering they didn't turn out.",,60,suspicious,VERIFY,,,,,,,,,noise_white_5db
+asvspoof2019la,LA_E_1329718,,,0,,,,1,,,0.9996,0.9996,,0.5539,The starters many of the thoughtless you didn't turn up,,61,suspicious,VERIFY,,,,,,,,,noise_white_0db
+asvspoof2019la,LA_E_1329718,,,0,,,,1,,,0.2281,0.2281,,0.6581,"For starters, many of the Scotland team didn't turn up.",,20,low,ALLOW,,,,,,,,,noise_babble_10db
+asvspoof2019la,LA_E_1329718,,,0,,,,1,,,0.9632,0.9632,,0.6453,"For starters, many of the Scotland team didn't turn out.",,57,suspicious,VERIFY,,,,,,,,,noise_pink_10db
+asvspoof2019la,LA_E_1329718,,,0,,,,1,,,0.0001,0.0001,,0.6135,"For starters, many of the Scotland team didn't turn out.",,10,insufficient_evidence,ALLOW,,,,,,,,,resample_8k
+asvspoof2019la,LA_E_1329718,,,0,,,,1,,,0.0,0.0,,0.6482,"For starters, many of the Scotland team didn't turn up.",,9,insufficient_evidence,ALLOW,,,,,,,,,lowpass_4k
+asvspoof2019la,LA_E_1329718,,,0,,,,1,,,0.0002,0.0002,,0.6197,"For starters, many of the Scotland team didn't turn up.",,10,insufficient_evidence,ALLOW,,,,,,,,,lowpass_3k4
+asvspoof2019la,LA_E_1329718,,,0,,,,1,,,0.0,0.0,,0.6055,"For starters, many of the Scotland team didn't turn out.",,10,insufficient_evidence,ALLOW,,,,,,,,,telephone_band
+asvspoof2019la,LA_E_1329718,,,0,,,,1,,,0.0,0.0,,0.7191,"For starters, many of the Scotland team didn't turn up.",,7,insufficient_evidence,ALLOW,,,,,,,,,mu_law
+asvspoof2019la,LA_E_1329718,,,0,,,,1,,,0.0001,0.0001,,0.6062,"For starters, many of the Scotland team didn't turn out.",,10,insufficient_evidence,ALLOW,,,,,,,,,telephone_chain
+asvspoof2019la,LA_E_1329718,,,0,,,,1,,,0.0241,0.0241,,0.7706,"for starters, many of the Scotland team didn't turn up.",,7,insufficient_evidence,ALLOW,,,,,,,,,gain_minus_20db
+asvspoof2019la,LA_E_1329718,,,0,,,,1,,,0.0,0.0,,0.7679,"For starters, many of the Scotland team didn't turn up.",,6,insufficient_evidence,ALLOW,,,,,,,,,gain_plus_6db
+asvspoof2019la,LA_E_1329718,,,0,,,,1,,,0.0001,0.0001,,0.7673,"For starters, many of the Scotland team didn't turn up.",,6,insufficient_evidence,ALLOW,,,,,,,,,clipping
+asvspoof2019la,LA_E_1329718,,,0,,,,1,,,0.9984,0.9984,,0.6896,"For starters, many of the Scotland team didn't turn up.",,58,suspicious,VERIFY,,,,,,,,,reverb_300ms
+asvspoof2019la,LA_E_1329718,,,0,,,,1,,,0.0003,0.0003,,0.7651,"For starters, many of the Scotland team didn't turn up.",,6,insufficient_evidence,ALLOW,,,,,,,,,packet_loss_2pct
+asvspoof2019la,LA_E_1329718,,,0,,,,1,,,0.0318,0.0318,,0.762,"For starters, many of the Scotland team didn't turn up.",,8,insufficient_evidence,ALLOW,,,,,,,,,packet_loss_5pct
+asvspoof2019la,LA_E_1967883,/Users/shriyansh/Desktop/voiceshield/data/external/LA_extract_full/LA/ASVspoof2019_LA_eval/flac/LA_E_1967883.flac,LA_0036,1,spoof,TTS_or_VC,A14,1,0.0,4.04,1.0,1.0,0.75,0.5551,"However, passengers have been promised extra services by bus company.",,61,suspicious,VERIFY,challenge,voice_authenticity_anomaly;speaker_identity_inconsistency,262.89,77.68,480.07,0.05,0.03,820.73,clean
+asvspoof2019la,LA_E_1967883,/Users/shriyansh/Desktop/voiceshield/data/external/LA_extract_full/LA/ASVspoof2019_LA_eval/flac/LA_E_1967883.flac,LA_0036,1,spoof,TTS_or_VC,A14,2,1.0,5.04,1.0,1.0,0.75,0.5023,"These engineers have been promised extra services, by bus companies throughout",,62,suspicious,VERIFY,challenge,voice_authenticity_anomaly;speaker_identity_inconsistency,245.47,74.5,494.79,0.05,0.04,814.85,clean
+asvspoof2019la,LA_E_1967883,/Users/shriyansh/Desktop/voiceshield/data/external/LA_extract_full/LA/ASVspoof2019_LA_eval/flac/LA_E_1967883.flac,LA_0036,1,spoof,TTS_or_VC,A14,3,2.0,6.04,0.9999,0.9999,0.75,0.5334,promised extra services by bus companies throughout Scotland and offered.,,62,suspicious,VERIFY,challenge,voice_authenticity_anomaly;speaker_identity_inconsistency,255.38,78.53,498.85,0.05,0.03,832.86,clean
+asvspoof2019la,LA_E_1967883,/Users/shriyansh/Desktop/voiceshield/data/external/LA_extract_full/LA/ASVspoof2019_LA_eval/flac/LA_E_1967883.flac,LA_0036,1,spoof,TTS_or_VC,A14,4,3.0,7.04,1.0,1.0,0.75,0.5268,"services, by bus companies throughout Scotland and offered free travel on the",,62,suspicious,VERIFY,challenge,voice_authenticity_anomaly;speaker_identity_inconsistency,282.77,69.2,517.81,0.05,0.03,869.88,clean
+asvspoof2019la,LA_E_1967883,/Users/shriyansh/Desktop/voiceshield/data/external/LA_extract_full/LA/ASVspoof2019_LA_eval/flac/LA_E_1967883.flac,LA_0036,1,spoof,TTS_or_VC,A14,5,4.0,8.04,1.0,1.0,0.75,0.5408,companies throughout Scotland and offered free travel on the Glasgow Underground.,,61,suspicious,VERIFY,challenge,voice_authenticity_anomaly;speaker_identity_inconsistency,251.63,80.29,500.13,0.05,0.03,832.14,clean
+asvspoof2019la,LA_E_1967883,,,1,,,,1,,,0.9998,0.9998,,0.4948,"However, passengers have been promised extra services by bus company.",,63,suspicious,VERIFY,,,,,,,,,noise_white_20db
+asvspoof2019la,LA_E_1967883,,,1,,,,2,,,0.9996,0.9996,,0.476,have been promised extra services by bus companies throughout,,63,suspicious,VERIFY,,,,,,,,,noise_white_20db
+asvspoof2019la,LA_E_1967883,,,1,,,,3,,,0.9972,0.9972,,0.4829,promised extra services by bus companies throughout Scotland and offered.,,63,suspicious,VERIFY,,,,,,,,,noise_white_20db
+asvspoof2019la,LA_E_1967883,,,1,,,,4,,,0.9996,0.9996,,0.4681,services by bus companies throughout Scotland and offered free travel on the,,63,suspicious,VERIFY,,,,,,,,,noise_white_20db
+asvspoof2019la,LA_E_1967883,,,1,,,,5,,,0.9996,0.9996,,0.4857,companies throughout Scotland and offered free travel on the Glasgow Underground.,,63,suspicious,VERIFY,,,,,,,,,noise_white_20db
+asvspoof2019la,LA_E_1967883,,,1,,,,1,,,0.9992,0.9992,,0.4443,"However, passengers have been promised extra services by bus company.",,64,suspicious,VERIFY,,,,,,,,,noise_white_10db
+asvspoof2019la,LA_E_1967883,,,1,,,,2,,,0.9997,0.9997,,0.4326,Los Angeles has been promised extra services by bus companies throughout.,,64,suspicious,VERIFY,,,,,,,,,noise_white_10db
+asvspoof2019la,LA_E_1967883,,,1,,,,3,,,0.9978,0.9978,,0.4033,The promised extra services by bus companies throughout Scotland and offers,,65,high,VERIFY,,,,,,,,,noise_white_10db
+asvspoof2019la,LA_E_1967883,,,1,,,,4,,,0.9995,0.9995,,0.386,services by bus companies throughout Scotland and offered free travel on the,,65,high,VERIFY,,,,,,,,,noise_white_10db
+asvspoof2019la,LA_E_1967883,,,1,,,,5,,,0.9993,0.9993,,0.3927,company throughout Scotland and offered free travel on the glass bill underground.,,65,high,VERIFY,,,,,,,,,noise_white_10db
+asvspoof2019la,LA_E_1967883,,,1,,,,1,,,0.9994,0.9994,,0.3867,"However, passengers have been promised extra services by bus company.",,65,high,VERIFY,,,,,,,,,noise_white_5db
+asvspoof2019la,LA_E_1967883,,,1,,,,2,,,0.9998,0.9998,,0.3768,Los Angeles have been promised extra services by bus company through us.,,66,high,VERIFY,,,,,,,,,noise_white_5db
+asvspoof2019la,LA_E_1967883,,,1,,,,3,,,0.9983,0.9983,,0.3294,Promise extra services by bus company throughout Scotland and offers.,,67,high,VERIFY,,,,,,,,,noise_white_5db
+asvspoof2019la,LA_E_1967883,,,1,,,,4,,,0.9997,0.9997,,0.2961,The prohibition by bus companies throughout Scotland and Oxford free travel on their way.,,68,high,VERIFY,,,,,,,,,noise_white_5db
+asvspoof2019la,LA_E_1967883,,,1,,,,5,,,0.9993,0.9993,,0.2852,"company through Oats, Sutton and offered free travel on the glass show underground.",,68,high,VERIFY,,,,,,,,,noise_white_5db
+asvspoof2019la,LA_E_1967883,,,1,,,,1,,,0.998,0.998,,0.2491,"However, that can just have been promised extra services by bus company.",,69,high,VERIFY,,,,,,,,,noise_white_0db
+asvspoof2019la,LA_E_1967883,,,1,,,,2,,,0.9993,0.9993,,0.2474,have been promised extra servitude by butt company through us.,,69,high,VERIFY,,,,,,,,,noise_white_0db
+asvspoof2019la,LA_E_1967883,,,1,,,,3,,,0.9978,0.9978,,0.253,"with extra services, I've come to me throughout Scotland and Oxford.",,69,high,VERIFY,,,,,,,,,noise_white_0db
+asvspoof2019la,LA_E_1967883,,,1,,,,4,,,0.9985,0.9985,,0.1713,I've come to you through a stop and offer free travel under,,71,high,VERIFY,,,,,,,,,noise_white_0db
+asvspoof2019la,LA_E_1967883,,,1,,,,5,,,0.9988,0.9988,,0.1542,"and you threw up, suck them and offer three-fabble on the glass door and the glass door.",,71,high,VERIFY,,,,,,,,,noise_white_0db
+asvspoof2019la,LA_E_1967883,,,1,,,,1,,,0.9974,0.9974,,0.4375,"However, passengers have been promised extra services by bus company.",,64,suspicious,VERIFY,,,,,,,,,noise_babble_10db
+asvspoof2019la,LA_E_1967883,,,1,,,,2,,,0.9992,0.9992,,0.426,passengers have been promised extra services by bus companies throughout.,,64,suspicious,VERIFY,,,,,,,,,noise_babble_10db
+asvspoof2019la,LA_E_1967883,,,1,,,,3,,,0.9947,0.9947,,0.4463,promised extra services by bus companies throughout Scotland and offers.,,64,suspicious,VERIFY,,,,,,,,,noise_babble_10db
+asvspoof2019la,LA_E_1967883,,,1,,,,4,,,0.9979,0.9979,,0.491,by bus companies throughout Scotland and offered free travel on their way.,,63,suspicious,VERIFY,,,,,,,,,noise_babble_10db
+asvspoof2019la,LA_E_1967883,,,1,,,,5,,,0.999,0.999,,0.4401,and use throughout Stuttlin and offered free travel on the Glasgow Underground.,,64,suspicious,VERIFY,,,,,,,,,noise_babble_10db
+asvspoof2019la,LA_E_1967883,,,1,,,,1,,,0.9972,0.9972,,0.4857,"However, passengers have been promised extra services by bus company.",,63,suspicious,VERIFY,,,,,,,,,noise_pink_10db
+asvspoof2019la,LA_E_1967883,,,1,,,,2,,,0.9984,0.9984,,0.4749,andgers have been promised extra services by bus companies throughout.,,63,suspicious,VERIFY,,,,,,,,,noise_pink_10db
+asvspoof2019la,LA_E_1967883,,,1,,,,3,,,0.9923,0.9923,,0.4619,promised extra services by bus companies throughout Scotland and offered.,,63,suspicious,VERIFY,,,,,,,,,noise_pink_10db
+asvspoof2019la,LA_E_1967883,,,1,,,,4,,,0.9987,0.9987,,0.4604,services by bus companies throughout Scotland and offered free travel on the,,63,suspicious,VERIFY,,,,,,,,,noise_pink_10db
+asvspoof2019la,LA_E_1967883,,,1,,,,5,,,0.9989,0.9989,,0.4777,companies throughout Scotland and offered free travel on the Glasgow Underground.,,63,suspicious,VERIFY,,,,,,,,,noise_pink_10db
+asvspoof2019la,LA_E_1967883,,,1,,,,1,,,1.0,1.0,,0.3471,"However, passengers have been promised extra services by bus company.",,66,high,VERIFY,,,,,,,,,resample_8k
+asvspoof2019la,LA_E_1967883,,,1,,,,2,,,1.0,1.0,,0.2868,And passengers have been promised extra services by bus companies throughout Scotland.,,68,high,VERIFY,,,,,,,,,resample_8k
+asvspoof2019la,LA_E_1967883,,,1,,,,3,,,1.0,1.0,,0.3046,promised extra services by bus companies throughout Scotland and offered.,,67,high,VERIFY,,,,,,,,,resample_8k
+asvspoof2019la,LA_E_1967883,,,1,,,,4,,,1.0,1.0,,0.321,services by bus companies throughout Scotland and offered free travel on the,,67,high,VERIFY,,,,,,,,,resample_8k
+asvspoof2019la,LA_E_1967883,,,1,,,,5,,,1.0,1.0,,0.3443,companies throughout Scotland and offered free travel on the Glasgow Underground.,,66,high,VERIFY,,,,,,,,,resample_8k
+asvspoof2019la,LA_E_1967883,,,1,,,,1,,,1.0,1.0,,0.4581,"However, passengers have been promised extra services by bus company.",,64,suspicious,VERIFY,,,,,,,,,lowpass_4k
+asvspoof2019la,LA_E_1967883,,,1,,,,2,,,1.0,1.0,,0.4151,"And just as engineers have been promised, extra services by bus companies throughout",,65,high,VERIFY,,,,,,,,,lowpass_4k
+asvspoof2019la,LA_E_1967883,,,1,,,,3,,,0.9999,0.9999,,0.4431,promised extra services by bus companies throughout Scotland and offered.,,64,suspicious,VERIFY,,,,,,,,,lowpass_4k
+asvspoof2019la,LA_E_1967883,,,1,,,,4,,,1.0,1.0,,0.4449,services by bus companies throughout Scotland and offered free travel on the,,64,suspicious,VERIFY,,,,,,,,,lowpass_4k
+asvspoof2019la,LA_E_1967883,,,1,,,,5,,,1.0,1.0,,0.4407,companies throughout Scotland and offered free travel on the Glasgow Underground.,,64,suspicious,VERIFY,,,,,,,,,lowpass_4k
+asvspoof2019la,LA_E_1967883,,,1,,,,1,,,1.0,1.0,,0.451,"However, passengers have been promised extra services by bus company.",,64,suspicious,VERIFY,,,,,,,,,lowpass_3k4
+asvspoof2019la,LA_E_1967883,,,1,,,,2,,,1.0,1.0,,0.395,"And just as engineers have been promised, extra services by bus companies throughout",,65,high,VERIFY,,,,,,,,,lowpass_3k4
+asvspoof2019la,LA_E_1967883,,,1,,,,3,,,0.9999,0.9999,,0.4121,promised extra services by bus companies throughout Scotland and offered.,,65,high,VERIFY,,,,,,,,,lowpass_3k4
+asvspoof2019la,LA_E_1967883,,,1,,,,4,,,1.0,1.0,,0.4226,services by bus companies throughout Scotland and offered free travel on the,,64,suspicious,VERIFY,,,,,,,,,lowpass_3k4
+asvspoof2019la,LA_E_1967883,,,1,,,,5,,,1.0,1.0,,0.4221,companies throughout Scotland and offered free travel on the Glasgow Underground.,,64,suspicious,VERIFY,,,,,,,,,lowpass_3k4
+asvspoof2019la,LA_E_1967883,,,1,,,,1,,,1.0,1.0,,0.4321,"However, passengers have been promised extra services by bus company.",,64,suspicious,VERIFY,,,,,,,,,telephone_band
+asvspoof2019la,LA_E_1967883,,,1,,,,2,,,1.0,1.0,,0.3791,have been promised extra services by bus companies throughout Scotland.,,66,high,VERIFY,,,,,,,,,telephone_band
+asvspoof2019la,LA_E_1967883,,,1,,,,3,,,1.0,1.0,,0.4113,promised extras services by bus companies throughout Scotland and offered.,,65,high,VERIFY,,,,,,,,,telephone_band
+asvspoof2019la,LA_E_1967883,,,1,,,,4,,,1.0,1.0,,0.4105,services by bus companies throughout Scotland and offered free travel on the,,65,high,VERIFY,,,,,,,,,telephone_band
+asvspoof2019la,LA_E_1967883,,,1,,,,5,,,1.0,1.0,,0.4167,companies throughout Scotland and offered free travel on the Glasgow Underground.,,65,high,VERIFY,,,,,,,,,telephone_band
+asvspoof2019la,LA_E_1967883,,,1,,,,1,,,1.0,1.0,,0.5191,"However, passengers have been promised extra services by bus company.",,62,suspicious,VERIFY,,,,,,,,,mu_law
+asvspoof2019la,LA_E_1967883,,,1,,,,2,,,1.0,1.0,,0.4693,And just have been promised extra services by bus companies throughout Scotland.,,63,suspicious,VERIFY,,,,,,,,,mu_law
+asvspoof2019la,LA_E_1967883,,,1,,,,3,,,0.9998,0.9998,,0.497,promised extra services by bus companies throughout Scotland and offered.,,63,suspicious,VERIFY,,,,,,,,,mu_law
+asvspoof2019la,LA_E_1967883,,,1,,,,4,,,1.0,1.0,,0.492,"services, by bus companies throughout Scotland and offered free travel on the",,63,suspicious,VERIFY,,,,,,,,,mu_law
+asvspoof2019la,LA_E_1967883,,,1,,,,5,,,1.0,1.0,,0.5014,companies throughout Scotland and offered free travel on the Glasgow Underground.,,62,suspicious,VERIFY,,,,,,,,,mu_law
+asvspoof2019la,LA_E_1967883,,,1,,,,1,,,1.0,1.0,,0.3585,"However, passengers have been promised extra services by bus company.",,66,high,VERIFY,,,,,,,,,telephone_chain
+asvspoof2019la,LA_E_1967883,,,1,,,,2,,,1.0,1.0,,0.3067,And passengers have been promised extra services by bus companies throughout Scotland.,,67,high,VERIFY,,,,,,,,,telephone_chain
+asvspoof2019la,LA_E_1967883,,,1,,,,3,,,1.0,1.0,,0.3246,promised extras services by bus companies throughout Scotland and offered.,,67,high,VERIFY,,,,,,,,,telephone_chain
+asvspoof2019la,LA_E_1967883,,,1,,,,4,,,1.0,1.0,,0.3561,services by bus companies throughout Scotland and offered free travel on the,,66,high,VERIFY,,,,,,,,,telephone_chain
+asvspoof2019la,LA_E_1967883,,,1,,,,5,,,1.0,1.0,,0.3654,companies throughout Scotland and offered free travel on the Glasgow Underground.,,66,high,VERIFY,,,,,,,,,telephone_chain
+asvspoof2019la,LA_E_1967883,,,1,,,,1,,,0.9769,0.9769,,0.5543,"However, passengers have been promised extra services by bus company.",,60,suspicious,VERIFY,,,,,,,,,gain_minus_20db
+asvspoof2019la,LA_E_1967883,,,1,,,,2,,,0.975,0.975,,0.5022,andgers have been promised extra services by bus companies throughout Scotland.,,61,suspicious,VERIFY,,,,,,,,,gain_minus_20db
+asvspoof2019la,LA_E_1967883,,,1,,,,3,,,0.9827,0.9827,,0.5326,promised extra services by bus companies throughout Scotland and offered.,,61,suspicious,VERIFY,,,,,,,,,gain_minus_20db
+asvspoof2019la,LA_E_1967883,,,1,,,,4,,,0.9387,0.9387,,0.5264,"services, by bus companies throughout Scotland and offered free travel on the",,59,suspicious,VERIFY,,,,,,,,,gain_minus_20db
+asvspoof2019la,LA_E_1967883,,,1,,,,5,,,0.976,0.976,,0.54,companies throughout Scotland and offered free travel on the Glasgow Underground.,,60,suspicious,VERIFY,,,,,,,,,gain_minus_20db
+asvspoof2019la,LA_E_1967883,,,1,,,,1,,,0.9997,0.9997,,0.5253,"However, passengers have been promised extra services by bus company.",,62,suspicious,VERIFY,,,,,,,,,gain_plus_6db
+asvspoof2019la,LA_E_1967883,,,1,,,,2,,,0.9947,0.9947,,0.486,These engineers have been promised extra services by bus companies throughout Scotland.,,63,suspicious,VERIFY,,,,,,,,,gain_plus_6db
+asvspoof2019la,LA_E_1967883,,,1,,,,3,,,0.9836,0.9836,,0.5369,"Thomas Dexterous Services, 5 bus companies throughout Scotland and offered",,61,suspicious,VERIFY,,,,,,,,,gain_plus_6db
+asvspoof2019la,LA_E_1967883,,,1,,,,4,,,0.9961,0.9961,,0.5449,services by bus companies throughout Scotland and offered free travel on the,,61,suspicious,VERIFY,,,,,,,,,gain_plus_6db
+asvspoof2019la,LA_E_1967883,,,1,,,,5,,,0.998,0.998,,0.5493,companies throughout Scotland and offered free travel on the Glasgow Underground.,,61,suspicious,VERIFY,,,,,,,,,gain_plus_6db
+asvspoof2019la,LA_E_1967883,,,1,,,,1,,,1.0,1.0,,0.4471,"However, passengers have been promised extra services by bus company.",,64,suspicious,VERIFY,,,,,,,,,clipping
+asvspoof2019la,LA_E_1967883,,,1,,,,2,,,1.0,1.0,,0.4435,And this and just have been promised extra services by bus companies throughout Scotland.,,64,suspicious,VERIFY,,,,,,,,,clipping
+asvspoof2019la,LA_E_1967883,,,1,,,,3,,,0.9999,0.9999,,0.5032,the promised extra services by bus companies throughout Scotland and offered.,,62,suspicious,VERIFY,,,,,,,,,clipping
+asvspoof2019la,LA_E_1967883,,,1,,,,4,,,1.0,1.0,,0.5001,"services, 5 bus companies throughout Scotland and offered free travel on their",,62,suspicious,VERIFY,,,,,,,,,clipping
+asvspoof2019la,LA_E_1967883,,,1,,,,5,,,1.0,1.0,,0.4935,companies throughout Scotland and offered free travel on the Glasgow Underground.,,63,suspicious,VERIFY,,,,,,,,,clipping
+asvspoof2019la,LA_E_1967883,,,1,,,,1,,,1.0,1.0,,0.3881,"However, passengers have been promised extra services by bus company.",,65,high,VERIFY,,,,,,,,,reverb_300ms
+asvspoof2019la,LA_E_1967883,,,1,,,,2,,,0.999,0.999,,0.3684,has been promised extra services by bus companies through outside.,,66,high,VERIFY,,,,,,,,,reverb_300ms
+asvspoof2019la,LA_E_1967883,,,1,,,,3,,,0.9982,0.9982,,0.4232,promised extra services by bus companies throughout Scotland and offered.,,64,suspicious,VERIFY,,,,,,,,,reverb_300ms
+asvspoof2019la,LA_E_1967883,,,1,,,,4,,,0.9997,0.9997,,0.4968,services by bus companies throughout Scotland and offered free travel on the,,63,suspicious,VERIFY,,,,,,,,,reverb_300ms
+asvspoof2019la,LA_E_1967883,,,1,,,,5,,,0.9996,0.9996,,0.5391,something needs throughout Scotland and offered free travel on the Glasgow Underground.,,62,suspicious,VERIFY,,,,,,,,,reverb_300ms
+asvspoof2019la,LA_E_1967883,,,1,,,,1,,,1.0,1.0,,0.5637,"However, passengers have been promised extra services by bus company.",,61,suspicious,VERIFY,,,,,,,,,packet_loss_2pct
+asvspoof2019la,LA_E_1967883,,,1,,,,2,,,1.0,1.0,,0.5101,Andgers have been promised extra services by bus companies throughout Scotland.,,62,suspicious,VERIFY,,,,,,,,,packet_loss_2pct
+asvspoof2019la,LA_E_1967883,,,1,,,,3,,,0.9998,0.9998,,0.5303,promised extra services by bus companies throughout Scotland and offered.,,62,suspicious,VERIFY,,,,,,,,,packet_loss_2pct
+asvspoof2019la,LA_E_1967883,,,1,,,,4,,,1.0,1.0,,0.523,"services, 5 bus companies throughout Scotland and offered free travel on the",,62,suspicious,VERIFY,,,,,,,,,packet_loss_2pct
+asvspoof2019la,LA_E_1967883,,,1,,,,5,,,1.0,1.0,,0.5408,companies throughout Scotland and offered free travel on the Glasgow Underground.,,61,suspicious,VERIFY,,,,,,,,,packet_loss_2pct
+asvspoof2019la,LA_E_1967883,,,1,,,,1,,,1.0,1.0,,0.5817,"However, fasteners have been promised extra services by bus companies.",,60,suspicious,VERIFY,,,,,,,,,packet_loss_5pct
+asvspoof2019la,LA_E_1967883,,,1,,,,2,,,1.0,1.0,,0.5365,andgers have been promised extra services by bus companies throughout the country.,,62,suspicious,VERIFY,,,,,,,,,packet_loss_5pct
+asvspoof2019la,LA_E_1967883,,,1,,,,3,,,0.9999,0.9999,,0.5544,promised extra services by bus companies throughout Scotland and offered.,,61,suspicious,VERIFY,,,,,,,,,packet_loss_5pct
+asvspoof2019la,LA_E_1967883,,,1,,,,4,,,1.0,1.0,,0.546,"services, 5 bus companies throughout Scotland and offered free travel on the",,61,suspicious,VERIFY,,,,,,,,,packet_loss_5pct
+asvspoof2019la,LA_E_1967883,,,1,,,,5,,,0.9999,0.9999,,0.5617,companies throughout Scotland and offered free travel on the Glasgow Underground.,,61,suspicious,VERIFY,,,,,,,,,packet_loss_5pct
+asvspoof2019la,LA_E_2832665,/Users/shriyansh/Desktop/voiceshield/data/external/LA_extract_full/LA/ASVspoof2019_LA_eval/flac/LA_E_2832665.flac,LA_0038,1,spoof,TTS_or_VC,A16,1,0.0,4.04,1.0,1.0,0.75,0.6349,and I am on one course for that move to be a recent hit. But I am on one course for that move to be a,,59,suspicious,VERIFY,challenge,voice_authenticity_anomaly;speaker_identity_inconsistency,263.98,86.3,913.22,0.06,0.03,1263.59,clean
+asvspoof2019la,LA_E_2832665,,,1,,,,1,,,0.9897,0.9897,,0.459,and I am on one course for that loop to be reset it. And I am on one course for that loop to be reset it.,,63,suspicious,VERIFY,,,,,,,,,noise_white_20db
+asvspoof2019la,LA_E_2832665,,,1,,,,1,,,0.9985,0.9985,,0.4037,لانمانان فورتب لسوكي رشاكي لانمانان فورتب لسوكي,,65,high,VERIFY,,,,,,,,,noise_white_10db
+asvspoof2019la,LA_E_2832665,,,1,,,,1,,,0.9992,0.9992,,0.3524,,,66,high,VERIFY,,,,,,,,,noise_white_5db
+asvspoof2019la,LA_E_2832665,,,1,,,,1,,,0.9982,0.9982,,0.2498,あなたの人と人達を引き抜け、 あなたの人と人達を引き抜け、,,69,high,VERIFY,,,,,,,,,noise_white_0db
+asvspoof2019la,LA_E_2832665,,,1,,,,1,,,0.993,0.993,,0.3729,لأنهم من قصفادة برطوكي رشاكيك لأنهم من قصفادة برطوكي,,65,high,VERIFY,,,,,,,,,noise_babble_10db
+asvspoof2019la,LA_E_2832665,,,1,,,,1,,,0.9842,0.9842,,0.4128,لأنهم أن يكون مصفضة بلسوطي رشاكي لأنهم أن يكون مصفضة بلسوطي,,64,suspicious,VERIFY,,,,,,,,,noise_pink_10db
+asvspoof2019la,LA_E_2832665,,,1,,,,1,,,1.0,1.0,,0.494,I am on one course for that move to be re-shanked. But I am on one course for that move to be re-shanked.,,63,suspicious,VERIFY,,,,,,,,,resample_8k
+asvspoof2019la,LA_E_2832665,,,1,,,,1,,,1.0,1.0,,0.5185,and I am on one course for that move to be re-shanked. But I am on one course for that move to be re-shanked.,,62,suspicious,VERIFY,,,,,,,,,lowpass_4k
+asvspoof2019la,LA_E_2832665,,,1,,,,1,,,1.0,1.0,,0.4954,and I am on one course for that move to be re-shanked. But I am on one course for that move to be re-shanked.,,63,suspicious,VERIFY,,,,,,,,,lowpass_3k4
+asvspoof2019la,LA_E_2832665,,,1,,,,1,,,1.0,1.0,,0.5085,and I want one cause for that move to be reached and it. And I want one cause for that move to be reached.,,62,suspicious,VERIFY,,,,,,,,,telephone_band
+asvspoof2019la,LA_E_2832665,,,1,,,,1,,,1.0,1.0,,0.549,and I am on one course for that move to be a recent bit. But I am on one course for that move to be a recent bit.,,61,suspicious,VERIFY,,,,,,,,,mu_law
+asvspoof2019la,LA_E_2832665,,,1,,,,1,,,1.0,1.0,,0.4919,I am a dwindkors for that mv2p raise and kitt. I am a dwindkors for that mv2p raise.,,63,suspicious,VERIFY,,,,,,,,,telephone_chain
+asvspoof2019la,LA_E_2832665,,,1,,,,1,,,0.4064,0.4064,,0.6348,and I'm on one course for that move to be a recent kid. But I'm on one course for that move to be a,,29,low,ALLOW,,,,,,,,,gain_minus_20db
+asvspoof2019la,LA_E_2832665,,,1,,,,1,,,0.9992,0.9992,,0.5961,and I am on one course for that move to P-R-Sankton. But I am on one course for that move to P-R-Sankton.,,60,suspicious,VERIFY,,,,,,,,,gain_plus_6db
+asvspoof2019la,LA_E_2832665,,,1,,,,1,,,1.0,1.0,,0.5118,namanment cause for that mu to be recent but namanment cause for that mu to be,,62,suspicious,VERIFY,,,,,,,,,clipping
+asvspoof2019la,LA_E_2832665,,,1,,,,1,,,1.0,1.0,,0.5614,Laanamun Durut Course4UT LapiriII Laanamun Durut Course4UT LapiriII,,61,suspicious,VERIFY,,,,,,,,,reverb_300ms
+asvspoof2019la,LA_E_2832665,,,1,,,,1,,,1.0,1.0,,0.636,and I am on one course for that move to be a reaction kit. But I am on one course for that move to be a reaction kit.,,59,suspicious,VERIFY,,,,,,,,,packet_loss_2pct
+asvspoof2019la,LA_E_2832665,,,1,,,,1,,,1.0,1.0,,0.649,and I am on one course for that move to be rich and good. But I am on one course for that move to be rich and good.,,59,suspicious,VERIFY,,,,,,,,,packet_loss_5pct
+asvspoof2019la,LA_E_2992403,/Users/shriyansh/Desktop/voiceshield/data/external/LA_extract_full/LA/ASVspoof2019_LA_eval/flac/LA_E_2992403.flac,LA_0035,0,bonafide,none,none,1,0.0,4.04,0.0,0.0,0.75,0.6022,Das hier einuntestet.,,10,insufficient_evidence,ALLOW,allow,speaker_identity_inconsistency,272.73,91.01,1366.0,0.05,0.03,1729.82,clean
+asvspoof2019la,LA_E_2992403,,,0,,,,1,,,0.0002,0.0002,,0.4746,Das hier einuntestet.,,13,insufficient_evidence,ALLOW,,,,,,,,,noise_white_20db
+asvspoof2019la,LA_E_2992403,,,0,,,,1,,,0.7813,0.7813,,0.3434,Das ist ja ein Füßtürt.,,55,suspicious,VERIFY,,,,,,,,,noise_white_10db
+asvspoof2019la,LA_E_2992403,,,0,,,,1,,,0.9863,0.9863,,0.2885,Das ist ja ein bisschen.,,67,high,VERIFY,,,,,,,,,noise_white_5db
+asvspoof2019la,LA_E_2992403,,,0,,,,1,,,0.9975,0.9975,,0.2001,"Thank you, I am just here.",,70,high,VERIFY,,,,,,,,,noise_white_0db
+asvspoof2019la,LA_E_2992403,,,0,,,,1,,,0.1201,0.1201,,0.4111,This year I understood.,,21,low,ALLOW,,,,,,,,,noise_babble_10db
+asvspoof2019la,LA_E_2992403,,,0,,,,1,,,0.9383,0.9383,,0.4376,Das ist ja ein Testort.,,61,suspicious,VERIFY,,,,,,,,,noise_pink_10db
+asvspoof2019la,LA_E_2992403,,,0,,,,1,,,0.0,0.0,,0.2611,This year I understood.,,18,insufficient_evidence,ALLOW,,,,,,,,,resample_8k
+asvspoof2019la,LA_E_2992403,,,0,,,,1,,,0.0,0.0,,0.3808,"Das hier, I understood.",,15,insufficient_evidence,ALLOW,,,,,,,,,lowpass_4k
+asvspoof2019la,LA_E_2992403,,,0,,,,1,,,0.0,0.0,,0.2936,"Das hier, I und the Stood.",,18,insufficient_evidence,ALLOW,,,,,,,,,lowpass_3k4
+asvspoof2019la,LA_E_2992403,,,0,,,,1,,,0.002,0.002,,0.2952,"Das hier, I understood.",,18,insufficient_evidence,ALLOW,,,,,,,,,telephone_band
+asvspoof2019la,LA_E_2992403,,,0,,,,1,,,0.0,0.0,,0.5595,Das hier einuntestet.,,11,insufficient_evidence,ALLOW,,,,,,,,,mu_law
+asvspoof2019la,LA_E_2992403,,,0,,,,1,,,0.0004,0.0004,,0.2781,"Das hier, I understood.",,18,insufficient_evidence,ALLOW,,,,,,,,,telephone_chain
+asvspoof2019la,LA_E_2992403,,,0,,,,1,,,0.0003,0.0003,,0.6109,This year I understood.,,10,insufficient_evidence,ALLOW,,,,,,,,,gain_minus_20db
+asvspoof2019la,LA_E_2992403,,,0,,,,1,,,0.0,0.0,,0.5754,this year I understood.,,11,insufficient_evidence,ALLOW,,,,,,,,,gain_plus_6db
+asvspoof2019la,LA_E_2992403,,,0,,,,1,,,0.0,0.0,,0.5087,This year I understood.,,12,insufficient_evidence,ALLOW,,,,,,,,,clipping
+asvspoof2019la,LA_E_2992403,,,0,,,,1,,,1.0,1.0,,0.5626,Das ist ja ein Testort.,,61,suspicious,VERIFY,,,,,,,,,reverb_300ms
+asvspoof2019la,LA_E_2992403,,,0,,,,1,,,0.0,0.0,,0.6022,Das hier einuntestet.,,10,insufficient_evidence,ALLOW,,,,,,,,,packet_loss_2pct
+asvspoof2019la,LA_E_2992403,,,0,,,,1,,,0.0089,0.0089,,0.6036,Dysher aion dysdod.,,10,insufficient_evidence,ALLOW,,,,,,,,,packet_loss_5pct
+asvspoof2019la,LA_E_3355870,/Users/shriyansh/Desktop/voiceshield/data/external/LA_extract_full/LA/ASVspoof2019_LA_eval/flac/LA_E_3355870.flac,LA_0009,1,spoof,TTS_or_VC,A07,1,0.0,4.04,0.9993,0.9993,0.749,0.5135,situation must change. That situation must change. That situation must,,62,suspicious,VERIFY,challenge,voice_authenticity_anomaly;speaker_identity_inconsistency,247.92,68.86,519.34,0.05,0.03,836.21,clean
+asvspoof2019la,LA_E_3355870,,,1,,,,1,,,1.0,1.0,,0.4484,situation must change.,,64,suspicious,VERIFY,,,,,,,,,noise_white_20db
+asvspoof2019la,LA_E_3355870,,,1,,,,1,,,1.0,1.0,,0.3081,"situation, that situation, that situation, that situation.",,67,high,VERIFY,,,,,,,,,noise_white_10db
+asvspoof2019la,LA_E_3355870,,,1,,,,1,,,0.9998,0.9998,,0.21,"situation of change, that situation of change, that situation of",,70,high,VERIFY,,,,,,,,,noise_white_5db
+asvspoof2019la,LA_E_3355870,,,1,,,,1,,,0.9983,0.9983,,0.1773,situation of pain.,,70,high,VERIFY,,,,,,,,,noise_white_0db
+asvspoof2019la,LA_E_3355870,,,1,,,,1,,,0.9999,0.9999,,0.261,situation must change. That situation must change. That situation must,,68,high,VERIFY,,,,,,,,,noise_babble_10db
+asvspoof2019la,LA_E_3355870,,,1,,,,1,,,0.9999,0.9999,,0.4113,situation must change. That situation must change. That situation must change.,,65,high,VERIFY,,,,,,,,,noise_pink_10db
+asvspoof2019la,LA_E_3355870,,,1,,,,1,,,1.0,1.0,,0.3948,situation must change. That situation must change. That situation must,,65,high,VERIFY,,,,,,,,,resample_8k
+asvspoof2019la,LA_E_3355870,,,1,,,,1,,,1.0,1.0,,0.4348,situation must change. That situation must change. That situation must,,64,suspicious,VERIFY,,,,,,,,,lowpass_4k
+asvspoof2019la,LA_E_3355870,,,1,,,,1,,,1.0,1.0,,0.388,situation must change. That situation must change. That situation must,,65,high,VERIFY,,,,,,,,,lowpass_3k4
+asvspoof2019la,LA_E_3355870,,,1,,,,1,,,1.0,1.0,,0.377,situation must change. That situation must change. That situation must,,66,high,VERIFY,,,,,,,,,telephone_band
+asvspoof2019la,LA_E_3355870,,,1,,,,1,,,0.9997,0.9997,,0.392,situation must change. That situation must change. That situation must,,65,high,VERIFY,,,,,,,,,mu_law
+asvspoof2019la,LA_E_3355870,,,1,,,,1,,,1.0,1.0,,0.2964,situation must change. That situation must change. That situation must,,68,high,VERIFY,,,,,,,,,telephone_chain
+asvspoof2019la,LA_E_3355870,,,1,,,,1,,,0.9814,0.9814,,0.5153,situation must change. That situation must change. That situation must,,61,suspicious,VERIFY,,,,,,,,,gain_minus_20db
+asvspoof2019la,LA_E_3355870,,,1,,,,1,,,0.996,0.996,,0.4377,situation must change. That situation must change. That situation must,,64,suspicious,VERIFY,,,,,,,,,gain_plus_6db
+asvspoof2019la,LA_E_3355870,,,1,,,,1,,,0.9999,0.9999,,0.3558,situation must change. That situation must change. That situation must,,66,high,VERIFY,,,,,,,,,clipping
+asvspoof2019la,LA_E_3355870,,,1,,,,1,,,0.9999,0.9999,,0.4299,situation must change. That situation must change. That situation must change.,,64,suspicious,VERIFY,,,,,,,,,reverb_300ms
+asvspoof2019la,LA_E_3355870,,,1,,,,1,,,1.0,1.0,,0.5189,situation must change. That situation must change. That situation must,,62,suspicious,VERIFY,,,,,,,,,packet_loss_2pct
+asvspoof2019la,LA_E_3355870,,,1,,,,1,,,1.0,1.0,,0.499,situation must change. That situation must change. That situation must,,63,suspicious,VERIFY,,,,,,,,,packet_loss_5pct
+asvspoof2019la,LA_E_4980752,/Users/shriyansh/Desktop/voiceshield/data/external/LA_extract_full/LA/ASVspoof2019_LA_eval/flac/LA_E_4980752.flac,LA_0053,0,bonafide,none,none,1,0.0,4.04,0.0,0.0,0.75,0.7628,"Brown is an interesting man, but he is not desperate.",,6,insufficient_evidence,ALLOW,allow,,245.97,72.51,516.81,0.05,0.03,835.38,clean
+asvspoof2019la,LA_E_4980752,,,0,,,,1,,,0.0001,0.0001,,0.6388,"Brown is an interesting man, but he is not desperate.",,9,insufficient_evidence,ALLOW,,,,,,,,,noise_white_20db
+asvspoof2019la,LA_E_4980752,,,0,,,,1,,,0.8185,0.8185,,0.5534,Brown is an interesting man but he is not desperate.,,52,suspicious,VERIFY,,,,,,,,,noise_white_10db
+asvspoof2019la,LA_E_4980752,,,0,,,,1,,,0.9985,0.9985,,0.5442,Brown is an interesting man but he is not desperate.,,61,suspicious,VERIFY,,,,,,,,,noise_white_5db
+asvspoof2019la,LA_E_4980752,,,0,,,,1,,,0.9996,0.9996,,0.465,Brown is an interesting man but he is not best with.,,63,suspicious,VERIFY,,,,,,,,,noise_white_0db
+asvspoof2019la,LA_E_4980752,,,0,,,,1,,,0.0956,0.0956,,0.635,Brown is an interesting man but he is not desperate.,,14,insufficient_evidence,ALLOW,,,,,,,,,noise_babble_10db
+asvspoof2019la,LA_E_4980752,,,0,,,,1,,,0.7843,0.7843,,0.618,"Brown is an interesting man, but he is not desperate.",,49,suspicious,VERIFY,,,,,,,,,noise_pink_10db
+asvspoof2019la,LA_E_4980752,,,0,,,,1,,,0.0,0.0,,0.6146,"Brown is an interesting man, but he is not desperate.",,10,insufficient_evidence,ALLOW,,,,,,,,,resample_8k
+asvspoof2019la,LA_E_4980752,,,0,,,,1,,,0.0,0.0,,0.6508,"Brown is an interesting man, but he is not desperate.",,9,insufficient_evidence,ALLOW,,,,,,,,,lowpass_4k
+asvspoof2019la,LA_E_4980752,,,0,,,,1,,,0.0,0.0,,0.6381,"Brown is an interesting man, but he is not desperate.",,9,insufficient_evidence,ALLOW,,,,,,,,,lowpass_3k4
+asvspoof2019la,LA_E_4980752,,,0,,,,1,,,0.0059,0.0059,,0.6055,"Brown is an interesting man, but he is not desperate.",,10,insufficient_evidence,ALLOW,,,,,,,,,telephone_band
+asvspoof2019la,LA_E_4980752,,,0,,,,1,,,0.0,0.0,,0.679,"Brown is an interesting man, but he is not desperate.",,8,insufficient_evidence,ALLOW,,,,,,,,,mu_law
+asvspoof2019la,LA_E_4980752,,,0,,,,1,,,0.0034,0.0034,,0.4924,"Brown is an interesting man, but he is not desperate.",,13,insufficient_evidence,ALLOW,,,,,,,,,telephone_chain
+asvspoof2019la,LA_E_4980752,,,0,,,,1,,,0.0327,0.0327,,0.7676,"Brown is an interesting man, but he is not desperate.",,7,insufficient_evidence,ALLOW,,,,,,,,,gain_minus_20db
+asvspoof2019la,LA_E_4980752,,,0,,,,1,,,0.0,0.0,,0.7528,"Brown is an interesting man, but he is not desperate.",,6,insufficient_evidence,ALLOW,,,,,,,,,gain_plus_6db
+asvspoof2019la,LA_E_4980752,,,0,,,,1,,,0.0,0.0,,0.7163,"Brone is an interesting man, but he is not desperate.",,7,insufficient_evidence,ALLOW,,,,,,,,,clipping
+asvspoof2019la,LA_E_4980752,,,0,,,,1,,,0.9959,0.9959,,0.6531,"Brown is an interesting man, but he is not desperate.",,58,suspicious,VERIFY,,,,,,,,,reverb_300ms
+asvspoof2019la,LA_E_4980752,,,0,,,,1,,,0.001,0.001,,0.748,"Brown is an interesting man, but he is not desperate.",,6,insufficient_evidence,ALLOW,,,,,,,,,packet_loss_2pct
+asvspoof2019la,LA_E_4980752,,,0,,,,1,,,0.1105,0.1105,,0.762,"Brown is an interesting man, but he is not desperate.",,11,insufficient_evidence,ALLOW,,,,,,,,,packet_loss_5pct
+asvspoof2019la,LA_E_5402023,/Users/shriyansh/Desktop/voiceshield/data/external/LA_extract_full/LA/ASVspoof2019_LA_eval/flac/LA_E_5402023.flac,LA_0018,1,spoof,TTS_or_VC,A10,1,0.0,4.04,0.9965,0.9965,0.747,0.7588,"to get back to the Glasgow Southern Program, but to get back to the Glasgow Southern Program.",,56,suspicious,VERIFY,challenge,voice_authenticity_anomaly,275.26,86.52,580.36,0.06,0.04,942.25,clean
+asvspoof2019la,LA_E_5402023,,,1,,,,1,,,0.9745,0.9745,,0.6649,"to get back to the Glasgow Southern program, but to get back to the Glasgow Southern program.",,57,suspicious,VERIFY,,,,,,,,,noise_white_20db
+asvspoof2019la,LA_E_5402023,,,1,,,,1,,,0.9966,0.9966,,0.6437,"to get back to the Glasgow Southern program, but to get back to the Glasgow Southern program.",,59,suspicious,VERIFY,,,,,,,,,noise_white_10db
+asvspoof2019la,LA_E_5402023,,,1,,,,1,,,0.9988,0.9988,,0.6387,"to get back to the Glaskers Southern program, but to get back to the Glaskers Southern program.",,59,suspicious,VERIFY,,,,,,,,,noise_white_5db
+asvspoof2019la,LA_E_5402023,,,1,,,,1,,,0.9984,0.9984,,0.5513,to get back to the clusters of embroidery. But to get back to the clusters of embroidery.,,61,suspicious,VERIFY,,,,,,,,,noise_white_0db
+asvspoof2019la,LA_E_5402023,,,1,,,,1,,,0.9819,0.9819,,0.6341,"to get back to the Glasco Southern program, but to get back to the Glasco Southern program.",,58,suspicious,VERIFY,,,,,,,,,noise_babble_10db
+asvspoof2019la,LA_E_5402023,,,1,,,,1,,,0.995,0.995,,0.6453,"to get back to the Glasgow Southern program, but to get back to the Glasgow Southern program.",,59,suspicious,VERIFY,,,,,,,,,noise_pink_10db
+asvspoof2019la,LA_E_5402023,,,1,,,,1,,,0.9994,0.9994,,0.6281,"to get back to the Glasgow Southern program, but to get back to the Glasgow Southern program.",,59,suspicious,VERIFY,,,,,,,,,resample_8k
+asvspoof2019la,LA_E_5402023,,,1,,,,1,,,0.998,0.998,,0.6841,to get back to the Glasgow Southern Program. But to get back to the Glasgow Southern Program.,,58,suspicious,VERIFY,,,,,,,,,lowpass_4k
+asvspoof2019la,LA_E_5402023,,,1,,,,1,,,0.9986,0.9986,,0.651,to get back to the Glasgow Southern Program. But to get back to the Glasgow Southern Program.,,59,suspicious,VERIFY,,,,,,,,,lowpass_3k4
+asvspoof2019la,LA_E_5402023,,,1,,,,1,,,1.0,1.0,,0.5933,"to get back to the Glasgow Southern program, but to get back to the Glasgow Southern program.",,60,suspicious,VERIFY,,,,,,,,,telephone_band
+asvspoof2019la,LA_E_5402023,,,1,,,,1,,,0.9949,0.9949,,0.7365,"to get back to the Glasgow Southern Program, but to get back to the Glasgow Southern Program.",,56,suspicious,VERIFY,,,,,,,,,mu_law
+asvspoof2019la,LA_E_5402023,,,1,,,,1,,,1.0,1.0,,0.5397,"to get back to the Glasgow Southern program, but to get back to the Glasgow Southern program.",,62,suspicious,VERIFY,,,,,,,,,telephone_chain
+asvspoof2019la,LA_E_5402023,,,1,,,,1,,,0.0143,0.0143,,0.7602,"to get back to the Glasgow Southern Program, but to get back to the Glasgow Southern Program.",,7,insufficient_evidence,ALLOW,,,,,,,,,gain_minus_20db
+asvspoof2019la,LA_E_5402023,,,1,,,,1,,,0.8946,0.8946,,0.7574,"to get back to the Glasgow Southern Program, but to get back to the Glasgow Southern Program.",,51,suspicious,VERIFY,,,,,,,,,gain_plus_6db
+asvspoof2019la,LA_E_5402023,,,1,,,,1,,,0.998,0.998,,0.734,"to get back to the Glasgow Southern Program, but to get back to the Glasgow Southern Program.",,57,suspicious,VERIFY,,,,,,,,,clipping
+asvspoof2019la,LA_E_5402023,,,1,,,,1,,,0.9977,0.9977,,0.5048,"to get back to the Classcos of the program, but to get back to the Classcos of the program.",,62,suspicious,VERIFY,,,,,,,,,reverb_300ms
+asvspoof2019la,LA_E_5402023,,,1,,,,1,,,1.0,1.0,,0.7689,to get back to the Glasgow Southern Program. But to get back to the Glasgow Southern Program.,,56,suspicious,VERIFY,,,,,,,,,packet_loss_2pct
+asvspoof2019la,LA_E_5402023,,,1,,,,1,,,1.0,1.0,,0.751,to get back to the Glasgow Southern Programme. But to get back to the Glasgow Southern Programme.,,56,suspicious,VERIFY,,,,,,,,,packet_loss_5pct
+asvspoof2019la,LA_E_5605777,/Users/shriyansh/Desktop/voiceshield/data/external/LA_extract_full/LA/ASVspoof2019_LA_eval/flac/LA_E_5605777.flac,LA_0064,0,bonafide,none,none,1,0.0,4.04,0.0,0.0,0.75,0.5743,But everywhere the problems are the same. But everywhere,,11,insufficient_evidence,ALLOW,allow,speaker_identity_inconsistency,335.77,80.0,538.22,0.05,0.03,954.09,clean
+asvspoof2019la,LA_E_5605777,,,0,,,,1,,,0.5471,0.5471,,0.5889,But everywhere the problems are the same. But everywhere.,,38,low,ALLOW,,,,,,,,,noise_white_20db
+asvspoof2019la,LA_E_5605777,,,0,,,,1,,,0.9934,0.9934,,0.553,But everywhere the problems are the same. But everywhere,,61,suspicious,VERIFY,,,,,,,,,noise_white_10db
+asvspoof2019la,LA_E_5605777,,,0,,,,1,,,0.9983,0.9983,,0.525,And everywhere the problems are the same. And everywhere,,62,suspicious,VERIFY,,,,,,,,,noise_white_5db
+asvspoof2019la,LA_E_5605777,,,0,,,,1,,,0.9963,0.9963,,0.4607,And I feel where the problem is at the same time. And I feel where the problem is at the same time.,,63,suspicious,VERIFY,,,,,,,,,noise_white_0db
+asvspoof2019la,LA_E_5605777,,,0,,,,1,,,0.9806,0.9806,,0.5184,But everywhere the problems are the same. But everywhere,,61,suspicious,VERIFY,,,,,,,,,noise_babble_10db
+asvspoof2019la,LA_E_5605777,,,0,,,,1,,,0.9402,0.9402,,0.5393,But everywhere the problems are the same.,,59,suspicious,VERIFY,,,,,,,,,noise_pink_10db
+asvspoof2019la,LA_E_5605777,,,0,,,,1,,,0.0003,0.0003,,0.4893,But everywhere the problems are the same. But everywhere,,13,insufficient_evidence,ALLOW,,,,,,,,,resample_8k
+asvspoof2019la,LA_E_5605777,,,0,,,,1,,,0.0001,0.0001,,0.5193,But everywhere the problems are the same. But everywhere,,12,insufficient_evidence,ALLOW,,,,,,,,,lowpass_4k
+asvspoof2019la,LA_E_5605777,,,0,,,,1,,,0.0001,0.0001,,0.5037,But everywhere the problems are the same. But everywhere,,12,insufficient_evidence,ALLOW,,,,,,,,,lowpass_3k4
+asvspoof2019la,LA_E_5605777,,,0,,,,1,,,0.9992,0.9992,,0.4624,But everywhere the problems are the same. But everywhere,,63,suspicious,VERIFY,,,,,,,,,telephone_band
+asvspoof2019la,LA_E_5605777,,,0,,,,1,,,0.0,0.0,,0.567,But everywhere the problems are the same. But everywhere,,11,insufficient_evidence,ALLOW,,,,,,,,,mu_law
+asvspoof2019la,LA_E_5605777,,,0,,,,1,,,0.9994,0.9994,,0.4579,But everywhere the problems are the same. But everywhere,,64,suspicious,VERIFY,,,,,,,,,telephone_chain
+asvspoof2019la,LA_E_5605777,,,0,,,,1,,,0.0079,0.0079,,0.5751,But everywhere the problems are the same. But everywhere,,11,insufficient_evidence,ALLOW,,,,,,,,,gain_minus_20db
+asvspoof2019la,LA_E_5605777,,,0,,,,1,,,0.0032,0.0032,,0.5775,But everywhere the problems are the same. But everywhere,,11,insufficient_evidence,ALLOW,,,,,,,,,gain_plus_6db
+asvspoof2019la,LA_E_5605777,,,0,,,,1,,,0.0051,0.0051,,0.5264,But everywhere the problems are the same. But everywhere.,,12,insufficient_evidence,ALLOW,,,,,,,,,clipping
+asvspoof2019la,LA_E_5605777,,,0,,,,1,,,1.0,1.0,,0.5001,But everywhere the problems of the sin. But everywhere.,,62,suspicious,VERIFY,,,,,,,,,reverb_300ms
+asvspoof2019la,LA_E_5605777,,,0,,,,1,,,0.0619,0.0619,,0.5663,But everywhere the problems are the same. But everywhere,,14,insufficient_evidence,ALLOW,,,,,,,,,packet_loss_2pct
+asvspoof2019la,LA_E_5605777,,,0,,,,1,,,0.2459,0.2459,,0.5541,But everywhere the problems are the same. But everywhere,,23,low,ALLOW,,,,,,,,,packet_loss_5pct
+asvspoof2019la,LA_E_5943082,/Users/shriyansh/Desktop/voiceshield/data/external/LA_extract_full/LA/ASVspoof2019_LA_eval/flac/LA_E_5943082.flac,LA_0007,1,spoof,TTS_or_VC,A09,1,0.0,4.04,1.0,1.0,0.75,0.138,date for any further hearing has yet been fixed. No date for any further hearing has yet.,,72,high,VERIFY,verify,voice_authenticity_anomaly;speaker_identity_mismatch,247.67,67.35,802.56,0.06,0.03,1117.67,clean
+asvspoof2019la,LA_E_5943082,,,1,,,,1,,,1.0,1.0,,0.0995,date for any further hearing has yet been fixed. No date for any further hearing has yet,,73,high,VERIFY,,,,,,,,,noise_white_20db
+asvspoof2019la,LA_E_5943082,,,1,,,,1,,,0.9998,0.9998,,0.0395,for any further hearing has yet been picked. No date for any further hearing has yet been picked.,,74,high,VERIFY,,,,,,,,,noise_white_10db
+asvspoof2019la,LA_E_5943082,,,1,,,,1,,,0.9983,0.9983,,-0.0144,"update for any code of hearing, have yet been picked. No date for any code of hearing, have yet been picked.",,75,high,VERIFY,,,,,,,,,noise_white_5db
+asvspoof2019la,LA_E_5943082,,,1,,,,1,,,0.9972,0.9972,,-0.024,I don't think I can take for any co-the-hering I get into. No take for any co-the-hering I get into.,,75,high,VERIFY,,,,,,,,,noise_white_0db
+asvspoof2019la,LA_E_5943082,,,1,,,,1,,,0.9992,0.9992,,0.0371,date for any further hearing has yet been fixed. No date for any further hearing has yet,,74,high,VERIFY,,,,,,,,,noise_babble_10db
+asvspoof2019la,LA_E_5943082,,,1,,,,1,,,0.9955,0.9955,,0.0614,update for any further hearing has yet been fixed. No date for any further hearing has yet,,73,high,VERIFY,,,,,,,,,noise_pink_10db
+asvspoof2019la,LA_E_5943082,,,1,,,,1,,,1.0,1.0,,0.0981,date for any further hearing has yet been fixed. No date for any further hearing has yet,,73,high,VERIFY,,,,,,,,,resample_8k
+asvspoof2019la,LA_E_5943082,,,1,,,,1,,,1.0,1.0,,0.1777,date for any further hearing has yet been fixed. No date for any further hearing has,,71,high,VERIFY,,,,,,,,,lowpass_4k
+asvspoof2019la,LA_E_5943082,,,1,,,,1,,,1.0,1.0,,0.1849,date for any further hearing has yet been fixed. No date for any further hearing has,,70,high,VERIFY,,,,,,,,,lowpass_3k4
+asvspoof2019la,LA_E_5943082,,,1,,,,1,,,1.0,1.0,,0.1492,date for any further hearing has yet been fixed. No date for any further hearing has yet,,71,high,VERIFY,,,,,,,,,telephone_band
+asvspoof2019la,LA_E_5943082,,,1,,,,1,,,1.0,1.0,,0.0853,date for any further hearing has yet been fixed. No date for any further hearing has yet.,,73,high,VERIFY,,,,,,,,,mu_law
+asvspoof2019la,LA_E_5943082,,,1,,,,1,,,1.0,1.0,,0.1435,date for any further hearing as you have been fixed. No date for any further hearing as you have been.,,71,high,VERIFY,,,,,,,,,telephone_chain
+asvspoof2019la,LA_E_5943082,,,1,,,,1,,,0.999,0.999,,0.1357,date for any further hearing has yet been fixed. No date for any further hearing has yet,,72,high,VERIFY,,,,,,,,,gain_minus_20db
+asvspoof2019la,LA_E_5943082,,,1,,,,1,,,1.0,1.0,,0.1173,date for any further hearing has yet been fixed. No date for any further hearing has yet,,72,high,VERIFY,,,,,,,,,gain_plus_6db
+asvspoof2019la,LA_E_5943082,,,1,,,,1,,,1.0,1.0,,0.09,deep for any further hearing has yet been fixed. No deep for any further hearing has yet,,73,high,VERIFY,,,,,,,,,clipping
+asvspoof2019la,LA_E_5943082,,,1,,,,1,,,1.0,1.0,,0.0384,for any further hearing has yet been fixed. No date for any further hearing has yet,,74,high,VERIFY,,,,,,,,,reverb_300ms
+asvspoof2019la,LA_E_5943082,,,1,,,,1,,,1.0,1.0,,0.138,date for any further hearing has yet been fixed. No date for any further hearing has yet.,,72,high,VERIFY,,,,,,,,,packet_loss_2pct
+asvspoof2019la,LA_E_5943082,,,1,,,,1,,,1.0,1.0,,0.1159,date for any further hearing had yet been fixed. No date for any further hearing had yet.,,72,high,VERIFY,,,,,,,,,packet_loss_5pct
+asvspoof2019la,LA_E_6009730,/Users/shriyansh/Desktop/voiceshield/data/external/LA_extract_full/LA/ASVspoof2019_LA_eval/flac/LA_E_6009730.flac,LA_0004,0,bonafide,none,none,1,0.0,4.04,0.0,0.0,0.75,0.389,We have expected it. We have expected it.,,15,insufficient_evidence,ALLOW,allow,speaker_identity_mismatch,239.78,74.83,549.11,0.06,0.03,863.82,clean
+asvspoof2019la,LA_E_6009730,,,0,,,,1,,,0.0149,0.0149,,0.2791,We have expected it. We have expected it.,,19,insufficient_evidence,ALLOW,,,,,,,,,noise_white_20db
+asvspoof2019la,LA_E_6009730,,,0,,,,1,,,0.9731,0.9731,,0.1337,We have expected it. We have expected it.,,70,high,VERIFY,,,,,,,,,noise_white_10db
+asvspoof2019la,LA_E_6009730,,,0,,,,1,,,0.9969,0.9969,,0.1461,We have expected it. We have expected it.,,71,high,VERIFY,,,,,,,,,noise_white_5db
+asvspoof2019la,LA_E_6009730,,,0,,,,1,,,0.9993,0.9993,,0.1627,We have expected it. We have expected it.,,71,high,VERIFY,,,,,,,,,noise_white_0db
+asvspoof2019la,LA_E_6009730,,,0,,,,1,,,0.909,0.909,,0.2905,We have expected it. We have expected it.,,63,suspicious,VERIFY,,,,,,,,,noise_babble_10db
+asvspoof2019la,LA_E_6009730,,,0,,,,1,,,0.974,0.974,,0.2729,We have expected it. We have expected it.,,67,high,VERIFY,,,,,,,,,noise_pink_10db
+asvspoof2019la,LA_E_6009730,,,0,,,,1,,,0.0002,0.0002,,0.268,We have expected it. We have expected it.,,18,insufficient_evidence,ALLOW,,,,,,,,,resample_8k
+asvspoof2019la,LA_E_6009730,,,0,,,,1,,,0.0002,0.0002,,0.3304,We have expected it. We have expected it.,,17,insufficient_evidence,ALLOW,,,,,,,,,lowpass_4k
+asvspoof2019la,LA_E_6009730,,,0,,,,1,,,0.0006,0.0006,,0.2708,We have expected it. We have expected it.,,18,insufficient_evidence,ALLOW,,,,,,,,,lowpass_3k4
+asvspoof2019la,LA_E_6009730,,,0,,,,1,,,0.1941,0.1941,,0.2359,We have expected it. We have expected it.,,29,low,ALLOW,,,,,,,,,telephone_band
+asvspoof2019la,LA_E_6009730,,,0,,,,1,,,0.0,0.0,,0.337,We have expected it. We have expected it.,,17,insufficient_evidence,ALLOW,,,,,,,,,mu_law
+asvspoof2019la,LA_E_6009730,,,0,,,,1,,,0.022,0.022,,0.1436,We have expected it. We have expected it.,,23,low,ALLOW,,,,,,,,,telephone_chain
+asvspoof2019la,LA_E_6009730,,,0,,,,1,,,0.1467,0.1467,,0.3972,We have expected it. We have expected it.,,22,low,ALLOW,,,,,,,,,gain_minus_20db
+asvspoof2019la,LA_E_6009730,,,0,,,,1,,,0.0,0.0,,0.3569,We have expected it. We have expected it.,,16,insufficient_evidence,ALLOW,,,,,,,,,gain_plus_6db
+asvspoof2019la,LA_E_6009730,,,0,,,,1,,,0.0017,0.0017,,0.343,We have expected it. We have expected it.,,17,insufficient_evidence,ALLOW,,,,,,,,,clipping
+asvspoof2019la,LA_E_6009730,,,0,,,,1,,,1.0,1.0,,0.3538,We have expected it. We have expected it.,,66,high,VERIFY,,,,,,,,,reverb_300ms
+asvspoof2019la,LA_E_6009730,,,0,,,,1,,,0.0055,0.0055,,0.3846,We have expected it. We have expected it.,,16,insufficient_evidence,ALLOW,,,,,,,,,packet_loss_2pct
+asvspoof2019la,LA_E_6009730,,,0,,,,1,,,0.9998,0.9998,,0.4204,We have expected it. We have expected it.,,64,suspicious,VERIFY,,,,,,,,,packet_loss_5pct
+asvspoof2019la,LA_E_6951342,/Users/shriyansh/Desktop/voiceshield/data/external/LA_extract_full/LA/ASVspoof2019_LA_eval/flac/LA_E_6951342.flac,LA_0022,0,bonafide,none,none,1,0.0,4.04,0.0,0.0,0.75,0.656,The home was now under new management.,,9,insufficient_evidence,ALLOW,allow,speaker_identity_inconsistency,250.98,77.12,523.44,0.05,0.03,851.63,clean
+asvspoof2019la,LA_E_6951342,,,0,,,,1,,,0.0008,0.0008,,0.5177,The home was now under new management.,,12,insufficient_evidence,ALLOW,,,,,,,,,noise_white_20db
+asvspoof2019la,LA_E_6951342,,,0,,,,1,,,0.9974,0.9974,,0.431,The home was now under new management.,,64,suspicious,VERIFY,,,,,,,,,noise_white_10db
+asvspoof2019la,LA_E_6951342,,,0,,,,1,,,0.9996,0.9996,,0.3833,The home was now under new management.,,65,high,VERIFY,,,,,,,,,noise_white_5db
+asvspoof2019la,LA_E_6951342,,,0,,,,1,,,0.9995,0.9995,,0.3296,The home was now under real management.,,67,high,VERIFY,,,,,,,,,noise_white_0db
+asvspoof2019la,LA_E_6951342,,,0,,,,1,,,0.9736,0.9736,,0.4931,The home was now under new management.,,61,suspicious,VERIFY,,,,,,,,,noise_babble_10db
+asvspoof2019la,LA_E_6951342,,,0,,,,1,,,0.998,0.998,,0.5013,The home was now under new management.,,62,suspicious,VERIFY,,,,,,,,,noise_pink_10db
+asvspoof2019la,LA_E_6951342,,,0,,,,1,,,0.0001,0.0001,,0.508,The home was now under new management.,,12,insufficient_evidence,ALLOW,,,,,,,,,resample_8k
+asvspoof2019la,LA_E_6951342,,,0,,,,1,,,0.0,0.0,,0.589,The home was now under new management.,,10,insufficient_evidence,ALLOW,,,,,,,,,lowpass_4k
+asvspoof2019la,LA_E_6951342,,,0,,,,1,,,0.0001,0.0001,,0.5687,The home was now under new management.,,11,insufficient_evidence,ALLOW,,,,,,,,,lowpass_3k4
+asvspoof2019la,LA_E_6951342,,,0,,,,1,,,0.0741,0.0741,,0.5145,The home was now under new management.,,16,insufficient_evidence,ALLOW,,,,,,,,,telephone_band
+asvspoof2019la,LA_E_6951342,,,0,,,,1,,,0.0,0.0,,0.6315,The home was now under new management.,,9,insufficient_evidence,ALLOW,,,,,,,,,mu_law
+asvspoof2019la,LA_E_6951342,,,0,,,,1,,,0.0518,0.0518,,0.4393,The home was now under new management.,,17,insufficient_evidence,ALLOW,,,,,,,,,telephone_chain
+asvspoof2019la,LA_E_6951342,,,0,,,,1,,,0.0982,0.0982,,0.6527,The home was now under new management.,,14,insufficient_evidence,ALLOW,,,,,,,,,gain_minus_20db
+asvspoof2019la,LA_E_6951342,,,0,,,,1,,,0.0,0.0,,0.6532,The home was now under new management.,,9,insufficient_evidence,ALLOW,,,,,,,,,gain_plus_6db
+asvspoof2019la,LA_E_6951342,,,0,,,,1,,,0.0,0.0,,0.5712,The home was now under new management.,,11,insufficient_evidence,ALLOW,,,,,,,,,clipping
+asvspoof2019la,LA_E_6951342,,,0,,,,1,,,1.0,1.0,,0.5492,The hope was now under new management.,,61,suspicious,VERIFY,,,,,,,,,reverb_300ms
+asvspoof2019la,LA_E_6951342,,,0,,,,1,,,0.0,0.0,,0.6558,The home was now under new management.,,9,insufficient_evidence,ALLOW,,,,,,,,,packet_loss_2pct
+asvspoof2019la,LA_E_6951342,,,0,,,,1,,,0.1842,0.1842,,0.6496,The home was now under new management.,,18,insufficient_evidence,ALLOW,,,,,,,,,packet_loss_5pct
+asvspoof2019la,LA_E_6952337,/Users/shriyansh/Desktop/voiceshield/data/external/LA_extract_full/LA/ASVspoof2019_LA_eval/flac/LA_E_6952337.flac,LA_0033,1,spoof,TTS_or_VC,A13,1,0.0,4.04,0.9926,0.9926,0.743,0.2804,was only logical to end it. It was only logical to end it.,,68,high,VERIFY,verify,voice_authenticity_anomaly;speaker_identity_mismatch,255.48,64.56,537.02,0.05,0.03,857.15,clean
+asvspoof2019la,LA_E_6952337,,,1,,,,1,,,0.9943,0.9943,,0.3258,It was only logical to end day. It was only logical to end day.,,67,high,VERIFY,,,,,,,,,noise_white_20db
+asvspoof2019la,LA_E_6952337,,,1,,,,1,,,0.9996,0.9996,,0.207,It was only logical to add it. It was only logical to add it.,,70,high,VERIFY,,,,,,,,,noise_white_10db
+asvspoof2019la,LA_E_6952337,,,1,,,,1,,,0.9995,0.9995,,0.0692,only watch it all the time there it won't be watch it all the time there it won't be,,73,high,VERIFY,,,,,,,,,noise_white_5db
+asvspoof2019la,LA_E_6952337,,,1,,,,1,,,0.9988,0.9988,,0.0186,,,74,high,VERIFY,,,,,,,,,noise_white_0db
+asvspoof2019la,LA_E_6952337,,,1,,,,1,,,0.9982,0.9982,,0.2619,It was only magical to end it was only magical to end it it was only,,68,high,VERIFY,,,,,,,,,noise_babble_10db
+asvspoof2019la,LA_E_6952337,,,1,,,,1,,,0.996,0.996,,0.2877,It was only logical to end day. It was only logical to end day.,,68,high,VERIFY,,,,,,,,,noise_pink_10db
+asvspoof2019la,LA_E_6952337,,,1,,,,1,,,0.9958,0.9958,,0.2424,only logical to end day. It was only logical to end day. It was only,,69,high,VERIFY,,,,,,,,,resample_8k
+asvspoof2019la,LA_E_6952337,,,1,,,,1,,,0.9948,0.9948,,0.3011,only logical to end it was only logical to end it it was only,,67,high,VERIFY,,,,,,,,,lowpass_4k
+asvspoof2019la,LA_E_6952337,,,1,,,,1,,,0.9963,0.9963,,0.2958,only logical to end it was only logical to end it was only,,67,high,VERIFY,,,,,,,,,lowpass_3k4
+asvspoof2019la,LA_E_6952337,,,1,,,,1,,,0.9991,0.9991,,0.2248,it was only logical to end it. It was only logical to end it.,,69,high,VERIFY,,,,,,,,,telephone_band
+asvspoof2019la,LA_E_6952337,,,1,,,,1,,,0.9932,0.9932,,0.2762,was only logical to end it. It was only logical to end it. It was only,,68,high,VERIFY,,,,,,,,,mu_law
+asvspoof2019la,LA_E_6952337,,,1,,,,1,,,0.9992,0.9992,,0.1609,it was only logical to end it. It was only logical to end it.,,71,high,VERIFY,,,,,,,,,telephone_chain
+asvspoof2019la,LA_E_6952337,,,1,,,,1,,,0.8345,0.8345,,0.2786,was only logical to end it. It was only logical to end it. It was only logical to end it.,,60,suspicious,VERIFY,,,,,,,,,gain_minus_20db
+asvspoof2019la,LA_E_6952337,,,1,,,,1,,,0.9988,0.9988,,0.2774,was only logical to end it. It was only logical to end it. It was only,,68,high,VERIFY,,,,,,,,,gain_plus_6db
+asvspoof2019la,LA_E_6952337,,,1,,,,1,,,0.9869,0.9869,,0.2311,It was only logical to mandate. It was only logical to mandate.,,69,high,VERIFY,,,,,,,,,clipping
+asvspoof2019la,LA_E_6952337,,,1,,,,1,,,0.9996,0.9996,,0.3081,It was only logical to land it. It was only logical to land it.,,67,high,VERIFY,,,,,,,,,reverb_300ms
+asvspoof2019la,LA_E_6952337,,,1,,,,1,,,0.9931,0.9931,,0.2937,was only logical to end it. It was only logical to end it. It was only,,67,high,VERIFY,,,,,,,,,packet_loss_2pct
+asvspoof2019la,LA_E_6952337,,,1,,,,1,,,0.9987,0.9987,,0.3,was only logical to end it. It was only logical to end it. It was only,,67,high,VERIFY,,,,,,,,,packet_loss_5pct
+asvspoof2019la,LA_E_6958508,/Users/shriyansh/Desktop/voiceshield/data/external/LA_extract_full/LA/ASVspoof2019_LA_eval/flac/LA_E_6958508.flac,LA_0027,1,spoof,TTS_or_VC,A15,1,0.0,4.04,0.9992,0.9992,0.749,0.3938,need adrenaline and focus. I need adrenaline and focus. I need,,65,high,VERIFY,verify,voice_authenticity_anomaly;speaker_identity_mismatch,995.49,621.91,1027.04,0.07,0.04,2644.57,clean
+asvspoof2019la,LA_E_6958508,,,1,,,,1,,,0.9818,0.9818,,0.2739,I need a granul and focus. I need a granul and focus. I need a,,67,high,VERIFY,,,,,,,,,noise_white_20db
+asvspoof2019la,LA_E_6958508,,,1,,,,1,,,0.9987,0.9987,,0.2899,I need a granulin focus. I need a granulin focus. I need a,,68,high,VERIFY,,,,,,,,,noise_white_10db
+asvspoof2019la,LA_E_6958508,,,1,,,,1,,,0.9994,0.9994,,0.2369,,,69,high,VERIFY,,,,,,,,,noise_white_5db
+asvspoof2019la,LA_E_6958508,,,1,,,,1,,,0.9992,0.9992,,0.2061,I need a piano on the talker. I need a piano on the talker.,,70,high,VERIFY,,,,,,,,,noise_white_0db
+asvspoof2019la,LA_E_6958508,,,1,,,,1,,,0.9827,0.9827,,0.3959,I need a granoman focus. I need a granoman focus. I need,,64,suspicious,VERIFY,,,,,,,,,noise_babble_10db
+asvspoof2019la,LA_E_6958508,,,1,,,,1,,,0.9922,0.9922,,0.277,I need a granulin focus. I need a granulin focus. I need a,,68,high,VERIFY,,,,,,,,,noise_pink_10db
+asvspoof2019la,LA_E_6958508,,,1,,,,1,,,0.9999,0.9999,,0.2811,need the adrenaline and focus. I need the adrenaline and focus. I need,,68,high,VERIFY,,,,,,,,,resample_8k
+asvspoof2019la,LA_E_6958508,,,1,,,,1,,,0.9997,0.9997,,0.2818,need a adrenaline and focus. I need a adrenaline and focus. I need,,68,high,VERIFY,,,,,,,,,lowpass_4k
+asvspoof2019la,LA_E_6958508,,,1,,,,1,,,0.9961,0.9961,,0.2676,need the adrenaline and focus. I need the adrenaline and focus. I need,,68,high,VERIFY,,,,,,,,,lowpass_3k4
+asvspoof2019la,LA_E_6958508,,,1,,,,1,,,1.0,1.0,,0.273,I need the adrenaline and focus. I need the adrenaline and focus. I need,,68,high,VERIFY,,,,,,,,,telephone_band
+asvspoof2019la,LA_E_6958508,,,1,,,,1,,,0.9991,0.9991,,0.396,need a adrenaline and focus. I need a adrenaline and focus. I need,,65,high,VERIFY,,,,,,,,,mu_law
+asvspoof2019la,LA_E_6958508,,,1,,,,1,,,1.0,1.0,,0.3113,need adrenaline and focus. I need adrenaline and focus. I need,,67,high,VERIFY,,,,,,,,,telephone_chain
+asvspoof2019la,LA_E_6958508,,,1,,,,1,,,0.0922,0.0922,,0.3927,need adrenaline and focus. I need adrenaline and focus. I need,,20,low,ALLOW,,,,,,,,,gain_minus_20db
+asvspoof2019la,LA_E_6958508,,,1,,,,1,,,0.9997,0.9997,,0.3899,need adrenaline and focus. I need adrenaline and focus. I need,,65,high,VERIFY,,,,,,,,,gain_plus_6db
+asvspoof2019la,LA_E_6958508,,,1,,,,1,,,1.0,1.0,,0.3538,I need a dronone and focus. I need a dronone and focus. I need a,,66,high,VERIFY,,,,,,,,,clipping
+asvspoof2019la,LA_E_6958508,,,1,,,,1,,,1.0,1.0,,0.4694,I need a adrenaline and focus. I need a adrenaline and focus. I need a adrenaline and focus.,,63,suspicious,VERIFY,,,,,,,,,reverb_300ms
+asvspoof2019la,LA_E_6958508,,,1,,,,1,,,1.0,1.0,,0.4079,need a Dreadlinon focus. I need a Dreadlinon focus. I need,,65,high,VERIFY,,,,,,,,,packet_loss_2pct
+asvspoof2019la,LA_E_6958508,,,1,,,,1,,,1.0,1.0,,0.4062,need a Dreadlinon focus. I need a Dreadlinon focus. I need,,65,high,VERIFY,,,,,,,,,packet_loss_5pct
+asvspoof2019la,LA_E_8762411,/Users/shriyansh/Desktop/voiceshield/data/external/LA_extract_full/LA/ASVspoof2019_LA_eval/flac/LA_E_8762411.flac,LA_0017,0,bonafide,none,none,1,0.0,4.04,0.0,0.0,0.75,0.7187,The home team had an amazing start.,,7,insufficient_evidence,ALLOW,allow,,277.05,85.0,510.97,0.05,0.03,873.11,clean
+asvspoof2019la,LA_E_8762411,,,0,,,,1,,,0.0029,0.0029,,0.621,The home team had an amazing start.,,10,insufficient_evidence,ALLOW,,,,,,,,,noise_white_20db
+asvspoof2019la,LA_E_8762411,,,0,,,,1,,,0.949,0.949,,0.541,The home team had an amazing start.,,59,suspicious,VERIFY,,,,,,,,,noise_white_10db
+asvspoof2019la,LA_E_8762411,,,0,,,,1,,,0.9984,0.9984,,0.4237,The home team had an amazing start.,,64,suspicious,VERIFY,,,,,,,,,noise_white_5db
+asvspoof2019la,LA_E_8762411,,,0,,,,1,,,0.9996,0.9996,,0.3391,The home to have an amazing start.,,67,high,VERIFY,,,,,,,,,noise_white_0db
+asvspoof2019la,LA_E_8762411,,,0,,,,1,,,0.2162,0.2162,,0.6386,The home team had an amazing start.,,20,low,ALLOW,,,,,,,,,noise_babble_10db
+asvspoof2019la,LA_E_8762411,,,0,,,,1,,,0.9876,0.9876,,0.6111,The home team had an amazing start.,,59,suspicious,VERIFY,,,,,,,,,noise_pink_10db
+asvspoof2019la,LA_E_8762411,,,0,,,,1,,,0.0,0.0,,0.5377,The home team had an amazing start.,,12,insufficient_evidence,ALLOW,,,,,,,,,resample_8k
+asvspoof2019la,LA_E_8762411,,,0,,,,1,,,0.0,0.0,,0.5866,The home team had an amazing start.,,10,insufficient_evidence,ALLOW,,,,,,,,,lowpass_4k
+asvspoof2019la,LA_E_8762411,,,0,,,,1,,,0.0,0.0,,0.5604,The home team had an amazing start.,,11,insufficient_evidence,ALLOW,,,,,,,,,lowpass_3k4
+asvspoof2019la,LA_E_8762411,,,0,,,,1,,,0.0037,0.0037,,0.5009,The home team had an amazing start.,,13,insufficient_evidence,ALLOW,,,,,,,,,telephone_band
+asvspoof2019la,LA_E_8762411,,,0,,,,1,,,0.0,0.0,,0.6624,The home team had an amazing start.,,8,insufficient_evidence,ALLOW,,,,,,,,,mu_law
+asvspoof2019la,LA_E_8762411,,,0,,,,1,,,0.0036,0.0036,,0.4087,The Home Team had an amazing start.,,15,insufficient_evidence,ALLOW,,,,,,,,,telephone_chain
+asvspoof2019la,LA_E_8762411,,,0,,,,1,,,0.0167,0.0167,,0.7148,The home team had an amazing start.,,8,insufficient_evidence,ALLOW,,,,,,,,,gain_minus_20db
+asvspoof2019la,LA_E_8762411,,,0,,,,1,,,0.0,0.0,,0.6977,The home team had an amazing start.,,8,insufficient_evidence,ALLOW,,,,,,,,,gain_plus_6db
+asvspoof2019la,LA_E_8762411,,,0,,,,1,,,0.0064,0.0064,,0.6411,The home team had an amazing start.,,9,insufficient_evidence,ALLOW,,,,,,,,,clipping
+asvspoof2019la,LA_E_8762411,,,0,,,,1,,,1.0,1.0,,0.6832,The Hoat team had an amazing start.,,58,suspicious,VERIFY,,,,,,,,,reverb_300ms
+asvspoof2019la,LA_E_8762411,,,0,,,,1,,,0.0,0.0,,0.7177,The home team had an amazing start.,,7,insufficient_evidence,ALLOW,,,,,,,,,packet_loss_2pct
+asvspoof2019la,LA_E_8762411,,,0,,,,1,,,0.9559,0.9559,,0.676,The home team had an amazing start.,,56,suspicious,VERIFY,,,,,,,,,packet_loss_5pct
+asvspoof2019la,LA_E_8811224,/Users/shriyansh/Desktop/voiceshield/data/external/LA_extract_full/LA/ASVspoof2019_LA_eval/flac/LA_E_8811224.flac,LA_0021,0,bonafide,none,none,1,0.0,4.04,0.0,0.0,0.75,0.6946,He is keen to stay in public service.,,8,insufficient_evidence,ALLOW,allow,speaker_identity_inconsistency,319.75,100.55,518.97,0.07,0.03,939.38,clean
+asvspoof2019la,LA_E_8811224,,,0,,,,1,,,0.0009,0.0009,,0.6392,He is keen to stay in public service.,,9,insufficient_evidence,ALLOW,,,,,,,,,noise_white_20db
+asvspoof2019la,LA_E_8811224,,,0,,,,1,,,0.9811,0.9811,,0.5598,He is keen to stay in public service.,,60,suspicious,VERIFY,,,,,,,,,noise_white_10db
+asvspoof2019la,LA_E_8811224,,,0,,,,1,,,0.9967,0.9967,,0.4834,He is King's Day in Public Service.,,63,suspicious,VERIFY,,,,,,,,,noise_white_5db
+asvspoof2019la,LA_E_8811224,,,0,,,,1,,,0.9993,0.9993,,0.3365,It's a pink day in public service.,,100,critical,HOLD,,,,,,,,,noise_white_0db
+asvspoof2019la,LA_E_8811224,,,0,,,,1,,,0.7689,0.7689,,0.5319,He is keen to stay in public service.,,50,suspicious,VERIFY,,,,,,,,,noise_babble_10db
+asvspoof2019la,LA_E_8811224,,,0,,,,1,,,0.9478,0.9478,,0.6213,He is keen to stay in public service.,,57,suspicious,VERIFY,,,,,,,,,noise_pink_10db
+asvspoof2019la,LA_E_8811224,,,0,,,,1,,,0.0001,0.0001,,0.5908,He is keen to stay in public service.,,10,insufficient_evidence,ALLOW,,,,,,,,,resample_8k
+asvspoof2019la,LA_E_8811224,,,0,,,,1,,,0.0,0.0,,0.6311,He is keen to stay in public service.,,9,insufficient_evidence,ALLOW,,,,,,,,,lowpass_4k
+asvspoof2019la,LA_E_8811224,,,0,,,,1,,,0.0001,0.0001,,0.6148,He is keen to stay in public service.,,10,insufficient_evidence,ALLOW,,,,,,,,,lowpass_3k4
+asvspoof2019la,LA_E_8811224,,,0,,,,1,,,0.0413,0.0413,,0.6106,He is keen to stay in public service.,,12,insufficient_evidence,ALLOW,,,,,,,,,telephone_band
+asvspoof2019la,LA_E_8811224,,,0,,,,1,,,0.0,0.0,,0.6381,He is keen to stay in public service.,,9,insufficient_evidence,ALLOW,,,,,,,,,mu_law
+asvspoof2019la,LA_E_8811224,,,0,,,,1,,,0.0403,0.0403,,0.5451,He is King's Day in Public Service.,,13,insufficient_evidence,ALLOW,,,,,,,,,telephone_chain
+asvspoof2019la,LA_E_8811224,,,0,,,,1,,,0.1167,0.1167,,0.6956,He is keen to stay in public service.,,13,insufficient_evidence,ALLOW,,,,,,,,,gain_minus_20db
+asvspoof2019la,LA_E_8811224,,,0,,,,1,,,0.0,0.0,,0.6775,He is keen to stay in public service.,,8,insufficient_evidence,ALLOW,,,,,,,,,gain_plus_6db
+asvspoof2019la,LA_E_8811224,,,0,,,,1,,,0.0001,0.0001,,0.6321,He is keen to stay in public service.,,9,insufficient_evidence,ALLOW,,,,,,,,,clipping
+asvspoof2019la,LA_E_8811224,,,0,,,,1,,,1.0,1.0,,0.624,He is keen to stay in public service.,,59,suspicious,VERIFY,,,,,,,,,reverb_300ms
+asvspoof2019la,LA_E_8811224,,,0,,,,1,,,0.0,0.0,,0.6954,He is keen to stay in public service.,,8,insufficient_evidence,ALLOW,,,,,,,,,packet_loss_2pct
+asvspoof2019la,LA_E_8811224,,,0,,,,1,,,0.0,0.0,,0.6878,He is keen to stay in public service.,,8,insufficient_evidence,ALLOW,,,,,,,,,packet_loss_5pct
+asvspoof2019la,LA_E_9154679,/Users/shriyansh/Desktop/voiceshield/data/external/LA_extract_full/LA/ASVspoof2019_LA_eval/flac/LA_E_9154679.flac,LA_0043,1,spoof,TTS_or_VC,A08,1,0.0,4.04,1.0,1.0,0.75,0.4939,"As before, Mr. Hinn made his common statement that the Prime Minister's official press",,63,suspicious,VERIFY,challenge,voice_authenticity_anomaly;speaker_identity_mismatch,283.78,101.1,575.54,0.06,0.03,960.52,clean
+asvspoof2019la,LA_E_9154679,/Users/shriyansh/Desktop/voiceshield/data/external/LA_extract_full/LA/ASVspoof2019_LA_eval/flac/LA_E_9154679.flac,LA_0043,1,spoof,TTS_or_VC,A08,2,1.0,5.04,1.0,1.0,0.75,0.4416,"in, made his comments statement. The Prime Minister's official press spokesman dismissed",,64,suspicious,VERIFY,challenge,voice_authenticity_anomaly;speaker_identity_mismatch,301.97,92.87,600.87,0.06,0.03,995.81,clean
+asvspoof2019la,LA_E_9154679,/Users/shriyansh/Desktop/voiceshield/data/external/LA_extract_full/LA/ASVspoof2019_LA_eval/flac/LA_E_9154679.flac,LA_0043,1,spoof,TTS_or_VC,A08,3,2.0,6.04,1.0,1.0,0.75,0.4476,statement. The Prime Minister's official press spokesman dismissed any suggestion of consent.,,64,suspicious,VERIFY,challenge,voice_authenticity_anomaly;speaker_identity_mismatch,302.47,88.35,578.89,0.07,0.04,969.83,clean
+asvspoof2019la,LA_E_9154679,/Users/shriyansh/Desktop/voiceshield/data/external/LA_extract_full/LA/ASVspoof2019_LA_eval/flac/LA_E_9154679.flac,LA_0043,1,spoof,TTS_or_VC,A08,4,3.0,7.04,1.0,1.0,0.75,0.4715,Minister's official press spokesman dismissed an issue gestion of confusion among Minister.,,63,suspicious,VERIFY,challenge,voice_authenticity_anomaly;speaker_identity_mismatch,370.68,120.84,810.47,0.08,0.05,1302.13,clean
+asvspoof2019la,LA_E_9154679,,,1,,,,1,,,1.0,1.0,,0.4949,"As far as before, Mr. King made his comments statement. The Prime Minister's official press.",,63,suspicious,VERIFY,,,,,,,,,noise_white_20db
+asvspoof2019la,LA_E_9154679,,,1,,,,2,,,1.0,1.0,,0.4851,in major comments statement. The Prime Minister's official press spokesman dismissed,,63,suspicious,VERIFY,,,,,,,,,noise_white_20db
+asvspoof2019la,LA_E_9154679,,,1,,,,3,,,1.0,1.0,,0.4933,statement. The Prime Minister's official press spokesman dismissed the needs of Judge Dinner Pinsor.,,100,critical,HOLD,,,,,,,,,noise_white_20db
+asvspoof2019la,LA_E_9154679,,,1,,,,4,,,1.0,1.0,,0.5082,ministers official press spokesman dismissed the news suggestion of confusion among ministers.,,100,critical,HOLD,,,,,,,,,noise_white_20db
+asvspoof2019la,LA_E_9154679,,,1,,,,1,,,0.9999,0.9999,,0.4252,"before a misdolling, major common statement, the prime minister's official press",,64,suspicious,VERIFY,,,,,,,,,noise_white_10db
+asvspoof2019la,LA_E_9154679,,,1,,,,2,,,0.9999,0.9999,,0.4116,in major comments statement.,,65,high,VERIFY,,,,,,,,,noise_white_10db
+asvspoof2019la,LA_E_9154679,,,1,,,,3,,,0.9998,0.9998,,0.4191,"statement, the prime minister's official press vote, since Mr. Nixis Jaskin has been",,65,high,VERIFY,,,,,,,,,noise_white_10db
+asvspoof2019la,LA_E_9154679,,,1,,,,4,,,0.9995,0.9995,,0.3924,administrative official press folks and dismiss any suggestion of confusion among ministers.,,65,high,VERIFY,,,,,,,,,noise_white_10db
+asvspoof2019la,LA_E_9154679,,,1,,,,1,,,0.9998,0.9998,,0.3881,before a misdolling may succumb and statement the prime minister's official pressure.,,65,high,VERIFY,,,,,,,,,noise_white_5db
+asvspoof2019la,LA_E_9154679,,,1,,,,2,,,0.9998,0.9998,,0.371,"in major comments statement, the prime minister of official press votes and dismiss",,66,high,VERIFY,,,,,,,,,noise_white_5db
+asvspoof2019la,LA_E_9154679,,,1,,,,3,,,0.9995,0.9995,,0.3556,,,66,high,VERIFY,,,,,,,,,noise_white_5db
+asvspoof2019la,LA_E_9154679,,,1,,,,4,,,0.9994,0.9994,,0.3235,Minister for Social Security and Minister for Social Security.,,67,high,VERIFY,,,,,,,,,noise_white_5db
+asvspoof2019la,LA_E_9154679,,,1,,,,1,,,0.999,0.999,,0.3122,"So before Mr. Jim, Mr. Cummins statement, the time minutes of the digital pressure.",,67,high,VERIFY,,,,,,,,,noise_white_0db
+asvspoof2019la,LA_E_9154679,,,1,,,,2,,,0.9983,0.9983,,0.2675,"make the comments statement, the prime minister, the digital platforms, the social",,68,high,VERIFY,,,,,,,,,noise_white_0db
+asvspoof2019la,LA_E_9154679,,,1,,,,3,,,0.9978,0.9978,,0.2573,,,68,high,VERIFY,,,,,,,,,noise_white_0db
+asvspoof2019la,LA_E_9154679,,,1,,,,4,,,0.9986,0.9986,,0.2664,,,68,high,VERIFY,,,,,,,,,noise_white_0db
+asvspoof2019la,LA_E_9154679,,,1,,,,1,,,0.9994,0.9994,,0.4983,"As far as Mr. King, matters common statement. The Prime Minister's official press",,63,suspicious,VERIFY,,,,,,,,,noise_babble_10db
+asvspoof2019la,LA_E_9154679,,,1,,,,2,,,0.9998,0.9998,,0.4487,"making, make this common statement. The Prime Minister's official press votes and dismiss the vote.",,64,suspicious,VERIFY,,,,,,,,,noise_babble_10db
+asvspoof2019la,LA_E_9154679,,,1,,,,3,,,0.9996,0.9996,,0.4682,"Stigman, the Prime Minister's official press spokesman, dismissal ni sy'n jaskyn of conci.",,63,suspicious,VERIFY,,,,,,,,,noise_babble_10db
+asvspoof2019la,LA_E_9154679,,,1,,,,4,,,0.9985,0.9985,,0.4571,ministers official press spokesman dismissed any suggestion of confusion among ministers.,,63,suspicious,VERIFY,,,,,,,,,noise_babble_10db
+asvspoof2019la,LA_E_9154679,,,1,,,,1,,,0.9973,0.9973,,0.4789,before a misdoll can make this common statement.,,63,suspicious,VERIFY,,,,,,,,,noise_pink_10db
+asvspoof2019la,LA_E_9154679,,,1,,,,2,,,0.9983,0.9983,,0.4617,the Prime Minister's official press spokesman dismissed.,,63,suspicious,VERIFY,,,,,,,,,noise_pink_10db
+asvspoof2019la,LA_E_9154679,,,1,,,,3,,,0.9993,0.9993,,0.4835,"statements, the prime ministers official press spokesman dismissed the next judge can have been",,63,suspicious,VERIFY,,,,,,,,,noise_pink_10db
+asvspoof2019la,LA_E_9154679,,,1,,,,4,,,0.9986,0.9986,,0.5057,ministers official press spokesman dismissed the judge for the confusion among ministers.,,62,suspicious,VERIFY,,,,,,,,,noise_pink_10db
+asvspoof2019la,LA_E_9154679,,,1,,,,1,,,1.0,1.0,,0.3732,"As before, Mr. Hinn made his comments statement. The Prime Minister's official press.",,66,high,VERIFY,,,,,,,,,resample_8k
+asvspoof2019la,LA_E_9154679,,,1,,,,2,,,1.0,1.0,,0.3471,in major comments statement. The Prime Minister's official press spokesman dismissed,,66,high,VERIFY,,,,,,,,,resample_8k
+asvspoof2019la,LA_E_9154679,,,1,,,,3,,,1.0,1.0,,0.3364,statement. The Prime Minister's official press spokesman dismissed an issue.,,67,high,VERIFY,,,,,,,,,resample_8k
+asvspoof2019la,LA_E_9154679,,,1,,,,4,,,1.0,1.0,,0.3137,Minister's official press spokesman dismissed any suggestion of confusion among Minister.,,67,high,VERIFY,,,,,,,,,resample_8k
+asvspoof2019la,LA_E_9154679,,,1,,,,1,,,1.0,1.0,,0.3583,"As before, Mr. Hinn made his comments statement. The Prime Minister's official press.",,66,high,VERIFY,,,,,,,,,lowpass_4k
+asvspoof2019la,LA_E_9154679,,,1,,,,2,,,1.0,1.0,,0.3225,meeting made his comments statement. The Prime Minister's official press spokesman,,67,high,VERIFY,,,,,,,,,lowpass_4k
+asvspoof2019la,LA_E_9154679,,,1,,,,3,,,1.0,1.0,,0.3225,statement. The Prime Minister's official press spokesman dismissed any suggestion of consent.,,67,high,VERIFY,,,,,,,,,lowpass_4k
+asvspoof2019la,LA_E_9154679,,,1,,,,4,,,1.0,1.0,,0.3107,"Minister's official press spokesman, dismiss any suggestion of confusion among Minister.",,67,high,VERIFY,,,,,,,,,lowpass_4k
+asvspoof2019la,LA_E_9154679,,,1,,,,1,,,1.0,1.0,,0.3787,"Our State Foreign Minister, he made his comments statement. The Prime Minister's official press.",,66,high,VERIFY,,,,,,,,,lowpass_3k4
+asvspoof2019la,LA_E_9154679,,,1,,,,2,,,1.0,1.0,,0.3535,in major comments statement. The Prime Minister's official press spokesman dismissed,,66,high,VERIFY,,,,,,,,,lowpass_3k4
+asvspoof2019la,LA_E_9154679,,,1,,,,3,,,1.0,1.0,,0.3368,statement. The Prime Minister's official press spokesman dismissed any suggestion of consent.,,67,high,VERIFY,,,,,,,,,lowpass_3k4
+asvspoof2019la,LA_E_9154679,,,1,,,,4,,,1.0,1.0,,0.3126,"Minister's official press spokesman, this Mr. Nixie Justin of confusion among Minister.",,67,high,VERIFY,,,,,,,,,lowpass_3k4
+asvspoof2019la,LA_E_9154679,,,1,,,,1,,,1.0,1.0,,0.3727,"As before, Mr. Hinn made his comments statement to the Prime Minister's official press.",,66,high,VERIFY,,,,,,,,,telephone_band
+asvspoof2019la,LA_E_9154679,,,1,,,,2,,,1.0,1.0,,0.3197,in major comments statement. The Prime Minister's official press spokesman dismissed.,,67,high,VERIFY,,,,,,,,,telephone_band
+asvspoof2019la,LA_E_9154679,,,1,,,,3,,,1.0,1.0,,0.2819,statement. The Prime Minister's official press spokesman dismissed any suggestion of consent.,,68,high,VERIFY,,,,,,,,,telephone_band
+asvspoof2019la,LA_E_9154679,,,1,,,,4,,,1.0,1.0,,0.2658,"Minister's official press spokesman, this Mr. Nixigestion of Confusion on Munisters.",,68,high,VERIFY,,,,,,,,,telephone_band
+asvspoof2019la,LA_E_9154679,,,1,,,,1,,,1.0,1.0,,0.5087,"As before, Mr. Hinn made his comments statement. The Prime Minister's official press.",,62,suspicious,VERIFY,,,,,,,,,mu_law
+asvspoof2019la,LA_E_9154679,,,1,,,,2,,,1.0,1.0,,0.4362,in May to his comments statement. The Prime Minister's official press spokesman dismissed,,64,suspicious,VERIFY,,,,,,,,,mu_law
+asvspoof2019la,LA_E_9154679,,,1,,,,3,,,1.0,1.0,,0.4439,statement. The Prime Minister's official press spokesman dismissed any suggestion of consent.,,64,suspicious,VERIFY,,,,,,,,,mu_law
+asvspoof2019la,LA_E_9154679,,,1,,,,4,,,1.0,1.0,,0.4734,Minister's official press spokesman dismissed any suggestion of confusion among Minister.,,63,suspicious,VERIFY,,,,,,,,,mu_law
+asvspoof2019la,LA_E_9154679,,,1,,,,1,,,1.0,1.0,,0.3438,"As far as before, Mr. Hinn made his comments statement to the Prime Minister's official press.",,66,high,VERIFY,,,,,,,,,telephone_chain
+asvspoof2019la,LA_E_9154679,,,1,,,,2,,,1.0,1.0,,0.308,"meeting, made his comments statement to the Prime Minister's official press spokesman dismisses.",,67,high,VERIFY,,,,,,,,,telephone_chain
+asvspoof2019la,LA_E_9154679,,,1,,,,3,,,1.0,1.0,,0.2879,"statement. The Prime Minister's official press spokesman, this Mr. Mr. Justin of concern.",,68,high,VERIFY,,,,,,,,,telephone_chain
+asvspoof2019la,LA_E_9154679,,,1,,,,4,,,1.0,1.0,,0.2513,"Minister of Official Press, spokesman, dismiss any suggestion of confusion among ministers.",,69,high,VERIFY,,,,,,,,,telephone_chain
+asvspoof2019la,LA_E_9154679,,,1,,,,1,,,0.9999,0.9999,,0.495,"As before, Mr. Hinn made his common statement the Prime Minister's official press.",,63,suspicious,VERIFY,,,,,,,,,gain_minus_20db
+asvspoof2019la,LA_E_9154679,,,1,,,,2,,,0.9996,0.9996,,0.4452,"in, made his common statement the Prime Minister's official press spokesman dismissed.",,64,suspicious,VERIFY,,,,,,,,,gain_minus_20db
+asvspoof2019la,LA_E_9154679,,,1,,,,3,,,0.9999,0.9999,,0.4487,statement. The Prime Minister's official press spokesman dismissed an issue gestion of consent.,,64,suspicious,VERIFY,,,,,,,,,gain_minus_20db
+asvspoof2019la,LA_E_9154679,,,1,,,,4,,,0.9997,0.9997,,0.4709,Minister's official press spokesman dismissed an issue gestion of confusion among Minister.,,63,suspicious,VERIFY,,,,,,,,,gain_minus_20db
+asvspoof2019la,LA_E_9154679,,,1,,,,1,,,0.9999,0.9999,,0.4737,"As before, Mr. Hinn made his comments statement. The Prime Minister's official press.",,63,suspicious,VERIFY,,,,,,,,,gain_plus_6db
+asvspoof2019la,LA_E_9154679,,,1,,,,2,,,1.0,1.0,,0.43,"in. Made his comments statement, the Prime Minister's official press spokesman dismissed",,64,suspicious,VERIFY,,,,,,,,,gain_plus_6db
+asvspoof2019la,LA_E_9154679,,,1,,,,3,,,1.0,1.0,,0.4706,statement. The Prime Minister's official press spokesman dismissed any suggestion of consent.,,63,suspicious,VERIFY,,,,,,,,,gain_plus_6db
+asvspoof2019la,LA_E_9154679,,,1,,,,4,,,1.0,1.0,,0.4664,"Minister's official press spokesman, dismissed any suggestion of confusion among Minister.",,63,suspicious,VERIFY,,,,,,,,,gain_plus_6db
+asvspoof2019la,LA_E_9154679,,,1,,,,1,,,1.0,1.0,,0.4273,"As before, Mr. Hinn made his comments statement. The Prime Minister is official press.",,64,suspicious,VERIFY,,,,,,,,,clipping
+asvspoof2019la,LA_E_9154679,,,1,,,,2,,,1.0,1.0,,0.3828,in. May it has come in statement. May the Minister's official press spokesman dismiss.,,65,high,VERIFY,,,,,,,,,clipping
+asvspoof2019la,LA_E_9154679,,,1,,,,3,,,1.0,1.0,,0.4199,statement. The Prime Minister's official press spokesman dismissed any suggestion of consent.,,65,high,VERIFY,,,,,,,,,clipping
+asvspoof2019la,LA_E_9154679,,,1,,,,4,,,1.0,1.0,,0.4347,"Minister's official press spokesman, dismissed any suggestion of confusion among Minister.",,64,suspicious,VERIFY,,,,,,,,,clipping
+asvspoof2019la,LA_E_9154679,,,1,,,,1,,,0.9997,0.9997,,0.4679,Our State for Mr. King makes his comments statements. The Prime Minister is official president.,,63,suspicious,VERIFY,,,,,,,,,reverb_300ms
+asvspoof2019la,LA_E_9154679,,,1,,,,2,,,1.0,1.0,,0.4357,the Prime Minister's official press spokesman dismissed.,,64,suspicious,VERIFY,,,,,,,,,reverb_300ms
+asvspoof2019la,LA_E_9154679,,,1,,,,3,,,0.9999,0.9999,,0.4355,statements. The Prime Minister's official press spokesman dismissed an suggestion of consent.,,64,suspicious,VERIFY,,,,,,,,,reverb_300ms
+asvspoof2019la,LA_E_9154679,,,1,,,,4,,,0.9999,0.9999,,0.4196,Minister of Social Presbyterians and Minister of Social Presbyterians.,,65,high,VERIFY,,,,,,,,,reverb_300ms
+asvspoof2019la,LA_E_9154679,,,1,,,,1,,,1.0,1.0,,0.4806,"As before, Mr. Hinn made his common statement that the Prime Minister's official press",,63,suspicious,VERIFY,,,,,,,,,packet_loss_2pct
+asvspoof2019la,LA_E_9154679,,,1,,,,2,,,1.0,1.0,,0.4526,"in, made his common statement, the Prime Minister's official press spokesman dismissed",,64,suspicious,VERIFY,,,,,,,,,packet_loss_2pct
+asvspoof2019la,LA_E_9154679,,,1,,,,3,,,1.0,1.0,,0.462,statement. The Prime Minister's official press spokesman dismissed any suggestion of consent.,,63,suspicious,VERIFY,,,,,,,,,packet_loss_2pct
+asvspoof2019la,LA_E_9154679,,,1,,,,4,,,1.0,1.0,,0.4803,Minister's official press spokesman dismissed an issue gestion of confusion among Minister.,,63,suspicious,VERIFY,,,,,,,,,packet_loss_2pct
+asvspoof2019la,LA_E_9154679,,,1,,,,1,,,1.0,1.0,,0.4997,"As far as before, Mr. Hinn made his comments statement. The Prime Minister's official press.",,63,suspicious,VERIFY,,,,,,,,,packet_loss_5pct
+asvspoof2019la,LA_E_9154679,,,1,,,,2,,,0.9999,0.9999,,0.4566,The Prime Minister's official press spokesman dismissed the bill.,,64,suspicious,VERIFY,,,,,,,,,packet_loss_5pct
+asvspoof2019la,LA_E_9154679,,,1,,,,3,,,1.0,1.0,,0.4706,statement. The Prime Minister's official press spokesman dismissed any suggestion of consent.,,63,suspicious,VERIFY,,,,,,,,,packet_loss_5pct
+asvspoof2019la,LA_E_9154679,,,1,,,,4,,,1.0,1.0,,0.4881,Minister's official press spokesman dismissed any suggestion of confusion among Minister.,,63,suspicious,VERIFY,,,,,,,,,packet_loss_5pct
+asvspoof2019la,LA_E_9410541,/Users/shriyansh/Desktop/voiceshield/data/external/LA_extract_full/LA/ASVspoof2019_LA_eval/flac/LA_E_9410541.flac,LA_0014,0,bonafide,none,none,1,0.0,4.04,0.0002,0.0002,0.75,0.5306,It was quite a new prescription. It was quite a new prescription.,,12,insufficient_evidence,ALLOW,allow,speaker_identity_inconsistency,276.73,80.33,552.08,0.05,0.03,909.23,clean
+asvspoof2019la,LA_E_9410541,,,0,,,,1,,,0.0515,0.0515,,0.4338,It was quite a new prescription. It was quite a new prescription.,,17,insufficient_evidence,ALLOW,,,,,,,,,noise_white_20db
+asvspoof2019la,LA_E_9410541,,,0,,,,1,,,0.9886,0.9886,,0.3656,It was quite a new prescription. It was quite a new prescription.,,65,high,VERIFY,,,,,,,,,noise_white_10db
+asvspoof2019la,LA_E_9410541,,,0,,,,1,,,0.9981,0.9981,,0.3076,It was quite a new prescription. It was quite a new prescription.,,67,high,VERIFY,,,,,,,,,noise_white_5db
+asvspoof2019la,LA_E_9410541,,,0,,,,1,,,0.9994,0.9994,,0.2018,It requires the new secret and it requires the new secret.,,70,high,VERIFY,,,,,,,,,noise_white_0db
+asvspoof2019la,LA_E_9410541,,,0,,,,1,,,0.9933,0.9933,,0.3496,It was quite a new prescription. It was quite a new prescription.,,66,high,VERIFY,,,,,,,,,noise_babble_10db
+asvspoof2019la,LA_E_9410541,,,0,,,,1,,,0.9937,0.9937,,0.403,It was quite a new prescription. It was quite a new prescription.,,65,high,VERIFY,,,,,,,,,noise_pink_10db
+asvspoof2019la,LA_E_9410541,,,0,,,,1,,,0.0009,0.0009,,0.5048,It was quite a new prescription. It was quite a new prescription.,,12,insufficient_evidence,ALLOW,,,,,,,,,resample_8k
+asvspoof2019la,LA_E_9410541,,,0,,,,1,,,0.0003,0.0003,,0.5005,It was quite a new prescription. It was quite a new prescription.,,13,insufficient_evidence,ALLOW,,,,,,,,,lowpass_4k
+asvspoof2019la,LA_E_9410541,,,0,,,,1,,,0.0008,0.0008,,0.4765,It was quite a new prescription. It was quite a new prescription.,,13,insufficient_evidence,ALLOW,,,,,,,,,lowpass_3k4
+asvspoof2019la,LA_E_9410541,,,0,,,,1,,,0.0182,0.0182,,0.4265,It was quiet a new prescription. It was quiet a new prescription.,,15,insufficient_evidence,ALLOW,,,,,,,,,telephone_band
+asvspoof2019la,LA_E_9410541,,,0,,,,1,,,0.0002,0.0002,,0.5168,It was quiet a new prescription. It was quiet a new prescription.,,12,insufficient_evidence,ALLOW,,,,,,,,,mu_law
+asvspoof2019la,LA_E_9410541,,,0,,,,1,,,0.0721,0.0721,,0.4179,It was quite a new prescription. It was quite a new prescription.,,18,insufficient_evidence,ALLOW,,,,,,,,,telephone_chain
+asvspoof2019la,LA_E_9410541,,,0,,,,1,,,0.0384,0.0384,,0.532,It was quite a new prescription. It was quite a new prescription.,,14,insufficient_evidence,ALLOW,,,,,,,,,gain_minus_20db
+asvspoof2019la,LA_E_9410541,,,0,,,,1,,,0.0073,0.0073,,0.5427,It was quite a new prescription. It was quite a new prescription.,,12,insufficient_evidence,ALLOW,,,,,,,,,gain_plus_6db
+asvspoof2019la,LA_E_9410541,,,0,,,,1,,,0.0109,0.0109,,0.5344,It was quite a new prescription. It was quite a new prescription.,,12,insufficient_evidence,ALLOW,,,,,,,,,clipping
+asvspoof2019la,LA_E_9410541,,,0,,,,1,,,1.0,1.0,,0.4551,It was quite a new prescription. It was quite a new prescription.,,64,suspicious,VERIFY,,,,,,,,,reverb_300ms
+asvspoof2019la,LA_E_9410541,,,0,,,,1,,,0.0005,0.0005,,0.5253,It was quite a new prescription. It was quite a new prescription.,,12,insufficient_evidence,ALLOW,,,,,,,,,packet_loss_2pct
+asvspoof2019la,LA_E_9410541,,,0,,,,1,,,0.9892,0.9892,,0.5087,It was quite a new prescription. It was quite a new prescription.,,62,suspicious,VERIFY,,,,,,,,,packet_loss_5pct
+asvspoof2019la,LA_E_9568896,/Users/shriyansh/Desktop/voiceshield/data/external/LA_extract_full/LA/ASVspoof2019_LA_eval/flac/LA_E_9568896.flac,LA_0039,0,bonafide,none,none,1,0.0,4.04,0.0,0.0,0.75,0.6717,Everything in golf is a balance.,,8,insufficient_evidence,ALLOW,allow,speaker_identity_inconsistency,258.21,69.71,489.2,0.05,0.03,817.21,clean
+asvspoof2019la,LA_E_9568896,,,0,,,,1,,,0.0005,0.0005,,0.5994,Everything in the car is the balance.,,10,insufficient_evidence,ALLOW,,,,,,,,,noise_white_20db
+asvspoof2019la,LA_E_9568896,,,0,,,,1,,,0.7637,0.7637,,0.4941,Everything in cars is the ball.,,51,suspicious,VERIFY,,,,,,,,,noise_white_10db
+asvspoof2019la,LA_E_9568896,,,0,,,,1,,,0.9965,0.9965,,0.4582,Everything in the car is the ball.,,63,suspicious,VERIFY,,,,,,,,,noise_white_5db
+asvspoof2019la,LA_E_9568896,,,0,,,,1,,,0.9994,0.9994,,0.4067,Everything in God is a baller.,,65,high,VERIFY,,,,,,,,,noise_white_0db
+asvspoof2019la,LA_E_9568896,,,0,,,,1,,,0.9728,0.9728,,0.572,Everything in cars is balanced.,,59,suspicious,VERIFY,,,,,,,,,noise_babble_10db
+asvspoof2019la,LA_E_9568896,,,0,,,,1,,,0.8939,0.8939,,0.574,Everything in the car is the balance.,,55,suspicious,VERIFY,,,,,,,,,noise_pink_10db
+asvspoof2019la,LA_E_9568896,,,0,,,,1,,,0.0,0.0,,0.5358,Everything in golf is a balance. Everything in golf is a balance.,,12,insufficient_evidence,ALLOW,,,,,,,,,resample_8k
+asvspoof2019la,LA_E_9568896,,,0,,,,1,,,0.0,0.0,,0.6422,Everything in golf is a balance.,,9,insufficient_evidence,ALLOW,,,,,,,,,lowpass_4k
+asvspoof2019la,LA_E_9568896,,,0,,,,1,,,0.0,0.0,,0.578,Everything in golf is a balance.,,11,insufficient_evidence,ALLOW,,,,,,,,,lowpass_3k4
+asvspoof2019la,LA_E_9568896,,,0,,,,1,,,0.0046,0.0046,,0.5308,Everything in golf is a balance. Everything in golf is a balance.,,12,insufficient_evidence,ALLOW,,,,,,,,,telephone_band
+asvspoof2019la,LA_E_9568896,,,0,,,,1,,,0.0,0.0,,0.6806,Everything in golf is a balance.,,8,insufficient_evidence,ALLOW,,,,,,,,,mu_law
+asvspoof2019la,LA_E_9568896,,,0,,,,1,,,0.0064,0.0064,,0.4469,Everything in calls is a balance.,,14,insufficient_evidence,ALLOW,,,,,,,,,telephone_chain
+asvspoof2019la,LA_E_9568896,,,0,,,,1,,,0.001,0.001,,0.6719,Everything in golf is a balance.,,8,insufficient_evidence,ALLOW,,,,,,,,,gain_minus_20db
+asvspoof2019la,LA_E_9568896,,,0,,,,1,,,0.0,0.0,,0.6673,Everything in golf is a balance.,,8,insufficient_evidence,ALLOW,,,,,,,,,gain_plus_6db
+asvspoof2019la,LA_E_9568896,,,0,,,,1,,,0.0,0.0,,0.6172,Everything in golf is a balance. Everything in golf is a balance.,,10,insufficient_evidence,ALLOW,,,,,,,,,clipping
+asvspoof2019la,LA_E_9568896,,,0,,,,1,,,1.0,1.0,,0.5997,Everything in college is a balance.,,60,suspicious,VERIFY,,,,,,,,,reverb_300ms
+asvspoof2019la,LA_E_9568896,,,0,,,,1,,,0.0004,0.0004,,0.653,Everything in call is a balance.,,9,insufficient_evidence,ALLOW,,,,,,,,,packet_loss_2pct
+asvspoof2019la,LA_E_9568896,,,0,,,,1,,,0.0009,0.0009,,0.6308,Everything in golf is balanced.,,9,insufficient_evidence,ALLOW,,,,,,,,,packet_loss_5pct
+asvspoof2019la,LA_E_9654296,/Users/shriyansh/Desktop/voiceshield/data/external/LA_extract_full/LA/ASVspoof2019_LA_eval/flac/LA_E_9654296.flac,LA_0026,1,spoof,TTS_or_VC,A11,1,0.0,4.04,1.0,1.0,0.75,0.5406,change the very language. It change the very language. It change the,,61,suspicious,VERIFY,challenge,voice_authenticity_anomaly;speaker_identity_inconsistency,270.47,65.39,708.62,0.05,0.03,1044.57,clean
+asvspoof2019la,LA_E_9654296,,,1,,,,1,,,0.9999,0.9999,,0.4786,the very language. It changed the very language. It changed the,,63,suspicious,VERIFY,,,,,,,,,noise_white_20db
+asvspoof2019la,LA_E_9654296,,,1,,,,1,,,0.9996,0.9996,,0.4098,It seems to be very limes. It seems to be very limes.,,65,high,VERIFY,,,,,,,,,noise_white_10db
+asvspoof2019la,LA_E_9654296,,,1,,,,1,,,0.9993,0.9993,,0.3951,"It's a change, it's a change, it's a change, it's a change.",,65,high,VERIFY,,,,,,,,,noise_white_5db
+asvspoof2019la,LA_E_9654296,,,1,,,,1,,,0.9988,0.9988,,0.3518,"It changed, it changed, it changed.",,66,high,VERIFY,,,,,,,,,noise_white_0db
+asvspoof2019la,LA_E_9654296,,,1,,,,1,,,0.9983,0.9983,,0.4557,change the verin language. It changed the verin language. It changed the,,64,suspicious,VERIFY,,,,,,,,,noise_babble_10db
+asvspoof2019la,LA_E_9654296,,,1,,,,1,,,0.9958,0.9958,,0.4476,the very language. It changed the very language. It changed the,,64,suspicious,VERIFY,,,,,,,,,noise_pink_10db
+asvspoof2019la,LA_E_9654296,,,1,,,,1,,,1.0,1.0,,0.3729,the very language. It changed the very language. It changed the,,66,high,VERIFY,,,,,,,,,resample_8k
+asvspoof2019la,LA_E_9654296,,,1,,,,1,,,1.0,1.0,,0.4088,change the very language. It change the very language. It change the,,65,high,VERIFY,,,,,,,,,lowpass_4k
+asvspoof2019la,LA_E_9654296,,,1,,,,1,,,1.0,1.0,,0.3811,the very language. It changed the very language. It changed the,,65,high,VERIFY,,,,,,,,,lowpass_3k4
+asvspoof2019la,LA_E_9654296,,,1,,,,1,,,1.0,1.0,,0.3479,the very language. It seems the very language. It seems the,,66,high,VERIFY,,,,,,,,,telephone_band
+asvspoof2019la,LA_E_9654296,,,1,,,,1,,,1.0,1.0,,0.5394,change the very language. It change the very language. It change the,,62,suspicious,VERIFY,,,,,,,,,mu_law
+asvspoof2019la,LA_E_9654296,,,1,,,,1,,,1.0,1.0,,0.3057,change the very language. It change the very language. It change the,,67,high,VERIFY,,,,,,,,,telephone_chain
+asvspoof2019la,LA_E_9654296,,,1,,,,1,,,0.9378,0.9378,,0.543,change the very language. It changed the very language. It changed the,,58,suspicious,VERIFY,,,,,,,,,gain_minus_20db
+asvspoof2019la,LA_E_9654296,,,1,,,,1,,,0.981,0.981,,0.5184,change the very language. It change the very language. It change the,,61,suspicious,VERIFY,,,,,,,,,gain_plus_6db
+asvspoof2019la,LA_E_9654296,,,1,,,,1,,,1.0,1.0,,0.4506,change the very language. It change the very language. It change the,,64,suspicious,VERIFY,,,,,,,,,clipping
+asvspoof2019la,LA_E_9654296,,,1,,,,1,,,0.9996,0.9996,,0.4843,change the very language. It changed the very language. It changed the,,63,suspicious,VERIFY,,,,,,,,,reverb_300ms
+asvspoof2019la,LA_E_9654296,,,1,,,,1,,,0.9997,0.9997,,0.5307,change the very language. It change the very language. It change the,,62,suspicious,VERIFY,,,,,,,,,packet_loss_2pct
+asvspoof2019la,LA_E_9654296,,,1,,,,1,,,0.9999,0.9999,,0.5297,change the very language. It change the very language. It change the,,62,suspicious,VERIFY,,,,,,,,,packet_loss_5pct
+asvspoof2019la,LA_E_9937781,/Users/shriyansh/Desktop/voiceshield/data/external/LA_extract_full/LA/ASVspoof2019_LA_eval/flac/LA_E_9937781.flac,LA_0017,1,spoof,TTS_or_VC,A12,1,0.0,4.04,0.9987,0.9987,0.749,0.7118,real enemies in your own backyard. The real enemies in your own backyard.,,57,suspicious,VERIFY,challenge,voice_authenticity_anomaly,272.65,76.82,520.11,0.05,0.04,869.68,clean
+asvspoof2019la,LA_E_9937781,,,1,,,,1,,,0.9968,0.9968,,0.5635,real enemies in your own backyard. The real enemies in your own backyard.,,61,suspicious,VERIFY,,,,,,,,,noise_white_20db
+asvspoof2019la,LA_E_9937781,,,1,,,,1,,,0.9984,0.9984,,0.4285,you're in the middle and in the middle and in your own backyard. The real and in the middle and in your own backyard.,,64,suspicious,VERIFY,,,,,,,,,noise_white_10db
+asvspoof2019la,LA_E_9937781,,,1,,,,1,,,0.999,0.999,,0.3643,"the real nomeness in your own vacuum, the real nomeness in your own vacuum.",,66,high,VERIFY,,,,,,,,,noise_white_5db
+asvspoof2019la,LA_E_9937781,,,1,,,,1,,,0.9987,0.9987,,0.2615,,,68,high,VERIFY,,,,,,,,,noise_white_0db
+asvspoof2019la,LA_E_9937781,,,1,,,,1,,,0.9976,0.9976,,0.533,"you're in the near near your own backyard. For real, in the near near your own backyard.",,62,suspicious,VERIFY,,,,,,,,,noise_babble_10db
+asvspoof2019la,LA_E_9937781,,,1,,,,1,,,0.996,0.996,,0.4924,real enemies in your own backyard. The real enemies in your own backyard.,,62,suspicious,VERIFY,,,,,,,,,noise_pink_10db
+asvspoof2019la,LA_E_9937781,,,1,,,,1,,,1.0,1.0,,0.5257,real enemies in your own backyard. The real enemies in your own backyard.,,62,suspicious,VERIFY,,,,,,,,,resample_8k
+asvspoof2019la,LA_E_9937781,,,1,,,,1,,,1.0,1.0,,0.5683,real enemies in your own backyard. The real enemies in your own backyard.,,61,suspicious,VERIFY,,,,,,,,,lowpass_4k
+asvspoof2019la,LA_E_9937781,,,1,,,,1,,,1.0,1.0,,0.5166,real enemies in your own backyard. The real enemies in your own backyard.,,62,suspicious,VERIFY,,,,,,,,,lowpass_3k4
+asvspoof2019la,LA_E_9937781,,,1,,,,1,,,1.0,1.0,,0.454,real enemies in your own backyard. The real enemies in your own backyard.,,64,suspicious,VERIFY,,,,,,,,,telephone_band
+asvspoof2019la,LA_E_9937781,,,1,,,,1,,,0.9989,0.9989,,0.6835,real enemies in your own backyard. The real enemies in your own backyard.,,58,suspicious,VERIFY,,,,,,,,,mu_law
+asvspoof2019la,LA_E_9937781,,,1,,,,1,,,1.0,1.0,,0.4471,real enemies in your own backyard. The real enemies in your own backyard.,,64,suspicious,VERIFY,,,,,,,,,telephone_chain
+asvspoof2019la,LA_E_9937781,,,1,,,,1,,,0.0396,0.0396,,0.7114,real enemies in your own backyard. The real enemies in your own,,9,insufficient_evidence,ALLOW,,,,,,,,,gain_minus_20db
+asvspoof2019la,LA_E_9937781,,,1,,,,1,,,0.9824,0.9824,,0.7101,real enemies in your own backyard. The real enemies in your own backyard.,,56,suspicious,VERIFY,,,,,,,,,gain_plus_6db
+asvspoof2019la,LA_E_9937781,,,1,,,,1,,,0.9992,0.9992,,0.6786,real enemies in your own backyard. The real enemies in your own backyard.,,58,suspicious,VERIFY,,,,,,,,,clipping
+asvspoof2019la,LA_E_9937781,,,1,,,,1,,,1.0,1.0,,0.5481,your own backyard. Terrier of the enemy is in your own backyard.,,61,suspicious,VERIFY,,,,,,,,,reverb_300ms
+asvspoof2019la,LA_E_9937781,,,1,,,,1,,,1.0,1.0,,0.7064,real enemies in your own backyard. The real enemies in your own,,57,suspicious,VERIFY,,,,,,,,,packet_loss_2pct
+asvspoof2019la,LA_E_9937781,,,1,,,,1,,,1.0,1.0,,0.7004,real enemies in your own backyard. The real enemies in your own,,57,suspicious,VERIFY,,,,,,,,,packet_loss_5pct
+in_the_wild,13639,/Users/shriyansh/Desktop/voiceshield/data/external/InTheWild/release_in_the_wild/13639.wav,Donald Trump,0,bonafide,none,none,1,0.0,4.04,0.9998,0.9998,0.75,0.4018,"Also, Fort Four. Also, Fort Four.",,65,high,VERIFY,verify,voice_authenticity_anomaly;speaker_identity_mismatch,253.31,78.57,517.74,0.05,0.03,849.7,clean
+in_the_wild,13639,,,0,,,,1,,,0.9958,0.9958,,0.299,Also Fort Four. Also Fort Four.,,67,high,VERIFY,,,,,,,,,noise_white_20db
+in_the_wild,13639,,,0,,,,1,,,0.9995,0.9995,,0.1812,Also for four. Also for four.,,70,high,VERIFY,,,,,,,,,noise_white_10db
+in_the_wild,13639,,,0,,,,1,,,0.9995,0.9995,,0.1753,Or also for four. Or also for four.,,71,high,VERIFY,,,,,,,,,noise_white_5db
+in_the_wild,13639,,,0,,,,1,,,0.9995,0.9995,,0.1309,"Also for four, also for four.",,72,high,VERIFY,,,,,,,,,noise_white_0db
+in_the_wild,13639,,,0,,,,1,,,0.997,0.997,,0.2401,Also for four. Also for four.,,69,high,VERIFY,,,,,,,,,noise_babble_10db
+in_the_wild,13639,,,0,,,,1,,,0.9849,0.9849,,0.2791,Also for four. Also for four.,,67,high,VERIFY,,,,,,,,,noise_pink_10db
+in_the_wild,13639,,,0,,,,1,,,0.9998,0.9998,,0.2876,Also Fort Four. Also Fort Four.,,68,high,VERIFY,,,,,,,,,resample_8k
+in_the_wild,13639,,,0,,,,1,,,0.9998,0.9998,,0.323,"Also, Fort Four. Also, Fort Four.",,67,high,VERIFY,,,,,,,,,lowpass_4k
+in_the_wild,13639,,,0,,,,1,,,0.9998,0.9998,,0.287,Also Fort Four. Also Fort Four.,,68,high,VERIFY,,,,,,,,,lowpass_3k4
+in_the_wild,13639,,,0,,,,1,,,0.9999,0.9999,,0.2664,Also Fort Four. Also Fort Four.,,68,high,VERIFY,,,,,,,,,telephone_band
+in_the_wild,13639,,,0,,,,1,,,0.9998,0.9998,,0.4219,"Also, Fort Four. Also, Fort Four.",,64,suspicious,VERIFY,,,,,,,,,mu_law
+in_the_wild,13639,,,0,,,,1,,,0.9999,0.9999,,0.185,Also Fort Four. Also Fort Four.,,70,high,VERIFY,,,,,,,,,telephone_chain
+in_the_wild,13639,,,0,,,,1,,,0.0161,0.0161,,0.3877,"Also, for, for, also, for.",,16,insufficient_evidence,ALLOW,,,,,,,,,gain_minus_20db
+in_the_wild,13639,,,0,,,,1,,,1.0,1.0,,0.402,"Also, Fort Four. Also, Fort Four.",,65,high,VERIFY,,,,,,,,,gain_plus_6db
+in_the_wild,13639,,,0,,,,1,,,0.9998,0.9998,,0.4018,"Also, Fort Four. Also, Fort Four.",,65,high,VERIFY,,,,,,,,,clipping
+in_the_wild,13639,,,0,,,,1,,,1.0,1.0,,0.2753,Also for 4. Also for 4.,,68,high,VERIFY,,,,,,,,,reverb_300ms
+in_the_wild,13639,,,0,,,,1,,,0.9957,0.9957,,0.3937,Also Fort Four. Also Fort Four.,,65,high,VERIFY,,,,,,,,,packet_loss_2pct
+in_the_wild,13639,,,0,,,,1,,,0.9962,0.9962,,0.379,Also Fort Four. Also Fort Four.,,65,high,VERIFY,,,,,,,,,packet_loss_5pct
+in_the_wild,15302,/Users/shriyansh/Desktop/voiceshield/data/external/InTheWild/release_in_the_wild/15302.wav,Bernie Sanders,1,spoof,in_the_wild_collected,none,1,0.0,4.04,1.0,1.0,0.75,0.3449,"The mode in working class developed, the mode in working class.",,66,high,VERIFY,verify,voice_authenticity_anomaly;speaker_identity_mismatch,251.08,79.38,542.68,0.05,0.03,873.23,clean
+in_the_wild,15302,,,1,,,,1,,,0.9998,0.9998,,0.213,the motor in the working class. Double up the motor in the working class.,,70,high,VERIFY,,,,,,,,,noise_white_20db
+in_the_wild,15302,,,1,,,,1,,,0.9997,0.9997,,0.078,the mode of the broken class. I have a lot of the mode of the broken class.,,73,high,VERIFY,,,,,,,,,noise_white_10db
+in_the_wild,15302,,,1,,,,1,,,0.9997,0.9997,,0.0444,모든 것인 사람. 여부도 모든 것인 사람.,,74,high,VERIFY,,,,,,,,,noise_white_5db
+in_the_wild,15302,,,1,,,,1,,,0.9997,0.9997,,0.0662,"네, 네, 네, 네, 네, 네. 여부로, 네, 네, 네, 네, 네.",,73,high,VERIFY,,,,,,,,,noise_white_0db
+in_the_wild,15302,,,1,,,,1,,,0.9993,0.9993,,0.1882,"The moment we go to the past, definitely the moment we go to the past.",,70,high,VERIFY,,,,,,,,,noise_babble_10db
+in_the_wild,15302,,,1,,,,1,,,0.9999,0.9999,,0.1492,"the mode of the board from class. You have a low, the mode of the board from class.",,85,critical,HOLD,,,,,,,,,noise_pink_10db
+in_the_wild,15302,,,1,,,,1,,,1.0,1.0,,0.2609,"The mode in working class developed, the mode in working class.",,68,high,VERIFY,,,,,,,,,resample_8k
+in_the_wild,15302,,,1,,,,1,,,1.0,1.0,,0.2541,The mode in working class developed the mode in working class.,,69,high,VERIFY,,,,,,,,,lowpass_4k
+in_the_wild,15302,,,1,,,,1,,,1.0,1.0,,0.2508,The mode in working class developed the mode in working class.,,69,high,VERIFY,,,,,,,,,lowpass_3k4
+in_the_wild,15302,,,1,,,,1,,,0.9983,0.9983,,0.2666,"The mode in working class developed, the mode in working class.",,68,high,VERIFY,,,,,,,,,telephone_band
+in_the_wild,15302,,,1,,,,1,,,1.0,1.0,,0.2527,"The mode in working class developed, the mode in working class.",,69,high,VERIFY,,,,,,,,,mu_law
+in_the_wild,15302,,,1,,,,1,,,0.9982,0.9982,,0.2281,"The mode in working class, developed, the mode in working class.",,69,high,VERIFY,,,,,,,,,telephone_chain
+in_the_wild,15302,,,1,,,,1,,,0.0253,0.0253,,0.3318,"The mode in working class developed, the mode in working class.",,18,insufficient_evidence,ALLOW,,,,,,,,,gain_minus_20db
+in_the_wild,15302,,,1,,,,1,,,1.0,1.0,,0.3449,"The mode in working class, developed, the mode in working class.",,66,high,VERIFY,,,,,,,,,gain_plus_6db
+in_the_wild,15302,,,1,,,,1,,,1.0,1.0,,0.3302,"The mode in working class developed, the mode in working class.",,67,high,VERIFY,,,,,,,,,clipping
+in_the_wild,15302,,,1,,,,1,,,1.0,1.0,,0.3307,"The mode in working class developed, the mode in working class.",,67,high,VERIFY,,,,,,,,,reverb_300ms
+in_the_wild,15302,,,1,,,,1,,,1.0,1.0,,0.3323,The mode and working class developed. The mode and working class.,,67,high,VERIFY,,,,,,,,,packet_loss_2pct
+in_the_wild,15302,,,1,,,,1,,,1.0,1.0,,0.3137,"The modern working class developed, the modern working class.",,67,high,VERIFY,,,,,,,,,packet_loss_5pct
+in_the_wild,15358,/Users/shriyansh/Desktop/voiceshield/data/external/InTheWild/release_in_the_wild/15358.wav,Donald Trump,0,bonafide,none,none,1,0.0,4.04,0.9505,0.9505,0.701,0.6143,I want to begin by expressing my appreciation. I want it.,,57,suspicious,VERIFY,challenge,voice_authenticity_anomaly;speaker_identity_inconsistency,255.49,76.97,1064.3,0.05,0.03,1396.86,clean
+in_the_wild,15358,,,0,,,,1,,,0.7905,0.7905,,0.5376,I want to begin by expressing my appreciation.,,51,suspicious,VERIFY,,,,,,,,,noise_white_20db
+in_the_wild,15358,,,0,,,,1,,,0.9903,0.9903,,0.4499,I want to begin by expressing my appreciation. I want to thank you.,,63,suspicious,VERIFY,,,,,,,,,noise_white_10db
+in_the_wild,15358,,,0,,,,1,,,0.9973,0.9973,,0.3292,I want to begin by expressing my appreciation. I want to begin by expressing my appreciation.,,67,high,VERIFY,,,,,,,,,noise_white_5db
+in_the_wild,15358,,,0,,,,1,,,0.9993,0.9993,,0.2278,I want to keep the end by expressing my appreciation. I want to keep the end by expressing my appreciation.,,69,high,VERIFY,,,,,,,,,noise_white_0db
+in_the_wild,15358,,,0,,,,1,,,0.9576,0.9576,,0.5286,I want to begin by expressing my appreciation.,,60,suspicious,VERIFY,,,,,,,,,noise_babble_10db
+in_the_wild,15358,,,0,,,,1,,,0.9621,0.9621,,0.5151,I want to begin by expressing my appreciation. I want to begin by expressing my appreciation.,,60,suspicious,VERIFY,,,,,,,,,noise_pink_10db
+in_the_wild,15358,,,0,,,,1,,,0.9962,0.9962,,0.4756,I want to begin by expressing my appreciation. I want to...,,63,suspicious,VERIFY,,,,,,,,,resample_8k
+in_the_wild,15358,,,0,,,,1,,,0.9871,0.9871,,0.5914,I want to begin by expressing my appreciation. I want it.,,60,suspicious,VERIFY,,,,,,,,,lowpass_4k
+in_the_wild,15358,,,0,,,,1,,,0.9951,0.9951,,0.5193,I want to begin by expressing my appreciation. I want it.,,62,suspicious,VERIFY,,,,,,,,,lowpass_3k4
+in_the_wild,15358,,,0,,,,1,,,0.9997,0.9997,,0.4357,I want to begin by expressing my appreciation. I want it.,,64,suspicious,VERIFY,,,,,,,,,telephone_band
+in_the_wild,15358,,,0,,,,1,,,0.955,0.955,,0.5845,I want to begin by expressing my appreciation. I want it.,,58,suspicious,VERIFY,,,,,,,,,mu_law
+in_the_wild,15358,,,0,,,,1,,,0.9998,0.9998,,0.4393,I want to begin by expressing my appreciation. I want it.,,64,suspicious,VERIFY,,,,,,,,,telephone_chain
+in_the_wild,15358,,,0,,,,1,,,0.0191,0.0191,,0.6071,I want to begin by expressing my appreciation. I want it.,,11,insufficient_evidence,ALLOW,,,,,,,,,gain_minus_20db
+in_the_wild,15358,,,0,,,,1,,,0.999,0.999,,0.6153,I want to begin by expressing my appreciation. I want to...,,60,suspicious,VERIFY,,,,,,,,,gain_plus_6db
+in_the_wild,15358,,,0,,,,1,,,0.9505,0.9505,,0.6143,I want to begin by expressing my appreciation. I want it.,,57,suspicious,VERIFY,,,,,,,,,clipping
+in_the_wild,15358,,,0,,,,1,,,0.9998,0.9998,,0.5224,I want to begin by expressing my appreciation.,,62,suspicious,VERIFY,,,,,,,,,reverb_300ms
+in_the_wild,15358,,,0,,,,1,,,0.9894,0.9894,,0.5487,I want to begin by expressing my appreciation. I want it.,,61,suspicious,VERIFY,,,,,,,,,packet_loss_2pct
+in_the_wild,15358,,,0,,,,1,,,0.9999,0.9999,,0.5455,I want to begin by expressing my appreciation. I don't want it.,,61,suspicious,VERIFY,,,,,,,,,packet_loss_5pct
+in_the_wild,17810,/Users/shriyansh/Desktop/voiceshield/data/external/InTheWild/release_in_the_wild/17810.wav,Ayn Rand,1,spoof,in_the_wild_collected,none,1,0.0,4.04,0.9926,0.9926,0.743,-0.0439,against feudal aristocracy and absolute monarchy in other countries.,,75,high,VERIFY,verify,voice_authenticity_anomaly;speaker_identity_mismatch,260.5,80.62,518.82,0.06,0.03,860.04,clean
+in_the_wild,17810,,,1,,,,1,,,0.9746,0.9746,,-0.059,against feudal aristocracy and absolute monarchy in other countries.,,74,high,VERIFY,,,,,,,,,noise_white_20db
+in_the_wild,17810,,,1,,,,1,,,0.8191,0.8191,,-0.0653,"Again, Pudel, I is suppressive and absolute monarchy in other states.",,66,high,VERIFY,,,,,,,,,noise_white_10db
+in_the_wild,17810,,,1,,,,1,,,0.944,0.944,,-0.0407,"Again, Pugel, I is suppressive and absolute monarchy in other countries.",,72,high,VERIFY,,,,,,,,,noise_white_5db
+in_the_wild,17810,,,1,,,,1,,,0.9933,0.9933,,-0.0261,"Again, Hugo, I is subject to an absolute monarchy in a way.",,75,high,VERIFY,,,,,,,,,noise_white_0db
+in_the_wild,17810,,,1,,,,1,,,0.9638,0.9638,,-0.0371,"against Tudal, aristocracy and absolute monarchy in other countries.",,73,high,VERIFY,,,,,,,,,noise_babble_10db
+in_the_wild,17810,,,1,,,,1,,,0.9897,0.9897,,-0.0567,against feudal aristocracy and absolute monarchy in other countries.,,74,high,VERIFY,,,,,,,,,noise_pink_10db
+in_the_wild,17810,,,1,,,,1,,,0.9958,0.9958,,-0.052,against feudal aristocracy and absolute monarchy in other countries.,,75,high,VERIFY,,,,,,,,,resample_8k
+in_the_wild,17810,,,1,,,,1,,,0.9936,0.9936,,-0.0396,against feudal aristocracy and absolute monarchy in other countries.,,75,high,VERIFY,,,,,,,,,lowpass_4k
+in_the_wild,17810,,,1,,,,1,,,0.9951,0.9951,,-0.04,against feudal aristocracy and absolute monarchy in other countries.,,75,high,VERIFY,,,,,,,,,lowpass_3k4
+in_the_wild,17810,,,1,,,,1,,,0.9984,0.9984,,-0.068,against feudal aristocracy and absolute monarchy in other countries.,,75,high,VERIFY,,,,,,,,,telephone_band
+in_the_wild,17810,,,1,,,,1,,,0.9923,0.9923,,-0.0211,against feudal aristocracy and absolute monarchy in other countries.,,75,high,VERIFY,,,,,,,,,mu_law
+in_the_wild,17810,,,1,,,,1,,,0.9982,0.9982,,-0.0729,against the feudal aristocracy and absolute monarchy in other countries.,,75,high,VERIFY,,,,,,,,,telephone_chain
+in_the_wild,17810,,,1,,,,1,,,0.1102,0.1102,,-0.0446,against feudal aristocracy and absolute monarchy in other countries.,,31,low,ALLOW,,,,,,,,,gain_minus_20db
+in_the_wild,17810,,,1,,,,1,,,0.9999,0.9999,,-0.0444,against feudal aristocracy and absolute monarchy in other countries.,,75,high,VERIFY,,,,,,,,,gain_plus_6db
+in_the_wild,17810,,,1,,,,1,,,0.9926,0.9926,,-0.0439,against feudal aristocracy and absolute monarchy in other countries.,,75,high,VERIFY,,,,,,,,,clipping
+in_the_wild,17810,,,1,,,,1,,,0.9999,0.9999,,-0.0228,against feudal aristocracy and absolute mother key in other.,,75,high,VERIFY,,,,,,,,,reverb_300ms
+in_the_wild,17810,,,1,,,,1,,,0.979,0.979,,-0.0364,against feudal aristocracy and absolute monarchy in other countries.,,74,high,VERIFY,,,,,,,,,packet_loss_2pct
+in_the_wild,17810,,,1,,,,1,,,0.9963,0.9963,,-0.0151,against feudal aristocracy and absolute monarchy in other states.,,75,high,VERIFY,,,,,,,,,packet_loss_5pct
+in_the_wild,1818,/Users/shriyansh/Desktop/voiceshield/data/external/InTheWild/release_in_the_wild/1818.wav,Queen Elizabeth II,1,spoof,in_the_wild_collected,none,1,0.0,4.04,0.3509,0.3509,0.399,0.571,They too have been deaf to the voice of justice and of continuity.,,28,low,ALLOW,allow,speaker_identity_inconsistency,578.11,73.84,544.97,0.05,0.03,1197.0,clean
+in_the_wild,1818,,,1,,,,1,,,0.8395,0.8395,,0.5392,They too have been deaf for the voice of justice and of constant dignity.,,53,suspicious,VERIFY,,,,,,,,,noise_white_20db
+in_the_wild,1818,,,1,,,,1,,,0.9377,0.9377,,0.4828,They too have been there for the boys of justice and of constant limit.,,60,suspicious,VERIFY,,,,,,,,,noise_white_10db
+in_the_wild,1818,,,1,,,,1,,,0.9927,0.9927,,0.4481,They two have been there for the boys who justice and the country were in the gym.,,63,suspicious,VERIFY,,,,,,,,,noise_white_5db
+in_the_wild,1818,,,1,,,,1,,,0.9976,0.9976,,0.4057,The two of them are the boys who just fish and the funky one.,,65,high,VERIFY,,,,,,,,,noise_white_0db
+in_the_wild,1818,,,1,,,,1,,,0.9808,0.9808,,0.4626,They too have been there for the voice of justice and the constant warranty.,,62,suspicious,VERIFY,,,,,,,,,noise_babble_10db
+in_the_wild,1818,,,1,,,,1,,,0.9924,0.9924,,0.4959,They too have been deaf for the voice of justice and of constant limit.,,62,suspicious,VERIFY,,,,,,,,,noise_pink_10db
+in_the_wild,1818,,,1,,,,1,,,0.955,0.955,,0.4861,They too have been deaf to the voice of justice and of continuity.,,61,suspicious,VERIFY,,,,,,,,,resample_8k
+in_the_wild,1818,,,1,,,,1,,,0.8985,0.8985,,0.5281,They too have been deaf to the voice of justice and of continuity.,,57,suspicious,VERIFY,,,,,,,,,lowpass_4k
+in_the_wild,1818,,,1,,,,1,,,0.9648,0.9648,,0.5119,They too have been deaf to the voice of justice and of continuity.,,60,suspicious,VERIFY,,,,,,,,,lowpass_3k4
+in_the_wild,1818,,,1,,,,1,,,0.9317,0.9317,,0.4818,They too have been deaf to the voice of justice and of continuity.,,60,suspicious,VERIFY,,,,,,,,,telephone_band
+in_the_wild,1818,,,1,,,,1,,,0.3382,0.3382,,0.5537,They too have been deaf to the voice of justice and of continuity.,,28,low,ALLOW,,,,,,,,,mu_law
+in_the_wild,1818,,,1,,,,1,,,0.9414,0.9414,,0.4173,They too have been deaf to the voice of justice and of continuity.,,62,suspicious,VERIFY,,,,,,,,,telephone_chain
+in_the_wild,1818,,,1,,,,1,,,0.0117,0.0117,,0.5719,They too have been deaf to the voice of justice and of continuity.,,11,insufficient_evidence,ALLOW,,,,,,,,,gain_minus_20db
+in_the_wild,1818,,,1,,,,1,,,0.9666,0.9666,,0.5708,They too have been deaf to the voice of justice and of continuity.,,59,suspicious,VERIFY,,,,,,,,,gain_plus_6db
+in_the_wild,1818,,,1,,,,1,,,0.3509,0.3509,,0.571,They too have been deaf to the voice of justice and of continuity.,,28,low,ALLOW,,,,,,,,,clipping
+in_the_wild,1818,,,1,,,,1,,,0.9999,0.9999,,0.5408,They too will be deaf to the voice of justice and of consumer energy.,,61,suspicious,VERIFY,,,,,,,,,reverb_300ms
+in_the_wild,1818,,,1,,,,1,,,0.8748,0.8748,,0.5412,They too have been depved of the voice of justice and of continuity.,,55,suspicious,VERIFY,,,,,,,,,packet_loss_2pct
+in_the_wild,1818,,,1,,,,1,,,0.8748,0.8748,,0.5242,They too have been depved of the voice of justice and of continuity.,,56,suspicious,VERIFY,,,,,,,,,packet_loss_5pct
+in_the_wild,18878,/Users/shriyansh/Desktop/voiceshield/data/external/InTheWild/release_in_the_wild/18878.wav,Martin Luther King,1,spoof,in_the_wild_collected,none,1,0.0,4.04,0.9979,0.9979,0.748,0.3286,They're gonna sit down on play with you. They're gonna sit down on...,,67,high,VERIFY,verify,voice_authenticity_anomaly;speaker_identity_mismatch,275.05,86.84,665.4,0.07,0.04,1027.41,clean
+in_the_wild,18878,,,1,,,,1,,,0.9935,0.9935,,0.3594,"They're gonna sit down on, play with you. They're gonna sit down on.",,66,high,VERIFY,,,,,,,,,noise_white_20db
+in_the_wild,18878,,,1,,,,1,,,0.9974,0.9974,,0.2502,They're all a scutanon play with me. They're all a scutanon.,,69,high,VERIFY,,,,,,,,,noise_white_10db
+in_the_wild,18878,,,1,,,,1,,,0.9995,0.9995,,0.1782,"There's all the shit I'm on, play with me. There's all the shit I'm on.",,71,high,VERIFY,,,,,,,,,noise_white_5db
+in_the_wild,18878,,,1,,,,1,,,0.9997,0.9997,,0.0814,That's all it's gonna come out and play with me. That's all it's gonna come out.,,73,high,VERIFY,,,,,,,,,noise_white_0db
+in_the_wild,18878,,,1,,,,1,,,0.991,0.991,,0.2512,They're all a stood-down on play with me. They're all a stood-down on.,,68,high,VERIFY,,,,,,,,,noise_babble_10db
+in_the_wild,18878,,,1,,,,1,,,0.9993,0.9993,,0.2768,They're gonna sit down on play with you. They're gonna sit down on...,,68,high,VERIFY,,,,,,,,,noise_pink_10db
+in_the_wild,18878,,,1,,,,1,,,0.9979,0.9979,,0.3076,They're gonna sit down on play with you. They're gonna sit down on...,,67,high,VERIFY,,,,,,,,,resample_8k
+in_the_wild,18878,,,1,,,,1,,,0.9976,0.9976,,0.3039,They're gonna sit down on play with you. They're gonna sit down on...,,67,high,VERIFY,,,,,,,,,lowpass_4k
+in_the_wild,18878,,,1,,,,1,,,0.9981,0.9981,,0.3158,They're gonna sit down on play with you. They're gonna sit down on...,,67,high,VERIFY,,,,,,,,,lowpass_3k4
+in_the_wild,18878,,,1,,,,1,,,0.999,0.999,,0.3306,They're gonna sit down on play with you. They're gonna sit down on...,,67,high,VERIFY,,,,,,,,,telephone_band
+in_the_wild,18878,,,1,,,,1,,,0.9975,0.9975,,0.3124,They're gonna sit down on play with you. They're gonna sit down on...,,67,high,VERIFY,,,,,,,,,mu_law
+in_the_wild,18878,,,1,,,,1,,,0.9989,0.9989,,0.3269,They're gonna sit down on play with you. They're gonna sit down on...,,67,high,VERIFY,,,,,,,,,telephone_chain
+in_the_wild,18878,,,1,,,,1,,,0.0203,0.0203,,0.3576,They're gonna sit down on play with you. They're gonna sit down on...,,17,insufficient_evidence,ALLOW,,,,,,,,,gain_minus_20db
+in_the_wild,18878,,,1,,,,1,,,1.0,1.0,,0.3281,They're gonna sit down on play with you. They're gonna sit down on...,,67,high,VERIFY,,,,,,,,,gain_plus_6db
+in_the_wild,18878,,,1,,,,1,,,0.9979,0.9979,,0.3286,They're gonna sit down on play with you. They're gonna sit down on...,,67,high,VERIFY,,,,,,,,,clipping
+in_the_wild,18878,,,1,,,,1,,,1.0,1.0,,0.2582,The Lord should not round play with him. The Lord should not round.,,69,high,VERIFY,,,,,,,,,reverb_300ms
+in_the_wild,18878,,,1,,,,1,,,0.9496,0.9496,,0.3475,They're gonna sit down on play with you. They're gonna sit down on...,,64,suspicious,VERIFY,,,,,,,,,packet_loss_2pct
+in_the_wild,18878,,,1,,,,1,,,0.9701,0.9701,,0.3644,They're gonna sit down on play with you. They're gonna sit down on...,,64,suspicious,VERIFY,,,,,,,,,packet_loss_5pct
+in_the_wild,19387,/Users/shriyansh/Desktop/voiceshield/data/external/InTheWild/release_in_the_wild/19387.wav,Christopher Hitchens,1,spoof,in_the_wild_collected,none,1,0.0,4.04,0.9981,0.9981,0.748,0.6167,"In Chesterton's the Secretary of Father, the brand of beloved Norman, who murdered his good for nothing.",,59,suspicious,VERIFY,challenge,voice_authenticity_anomaly;speaker_identity_inconsistency,257.15,77.55,569.66,0.06,0.03,904.46,clean
+in_the_wild,19387,/Users/shriyansh/Desktop/voiceshield/data/external/InTheWild/release_in_the_wild/19387.wav,Christopher Hitchens,1,spoof,in_the_wild_collected,none,2,1.0,5.04,0.9992,0.9992,0.749,0.5973,"I could have found the brain, a beloved Norman who murdered his good for nothing brother in a deal.",,60,suspicious,VERIFY,challenge,voice_authenticity_anomaly;speaker_identity_inconsistency,263.07,74.77,537.27,0.06,0.04,875.22,clean
+in_the_wild,19387,/Users/shriyansh/Desktop/voiceshield/data/external/InTheWild/release_in_the_wild/19387.wav,Christopher Hitchens,1,spoof,in_the_wild_collected,none,3,2.0,6.04,0.9993,0.9993,0.749,0.6315,"The beloved Norman, who murdered his good for nothing brother in a deal for years, and they were",,59,suspicious,VERIFY,challenge,voice_authenticity_anomaly;speaker_identity_inconsistency,258.59,71.92,530.7,0.05,0.03,861.3,clean
+in_the_wild,19387,/Users/shriyansh/Desktop/voiceshield/data/external/InTheWild/release_in_the_wild/19387.wav,Christopher Hitchens,1,spoof,in_the_wild_collected,none,4,3.0,7.04,0.999,0.999,0.749,0.6429,murdered his good for nothing brother in a deal for years of error chance to his hometown.,,59,suspicious,VERIFY,challenge,voice_authenticity_anomaly;speaker_identity_inconsistency,255.77,71.83,642.61,0.06,0.03,970.32,clean
+in_the_wild,19387,/Users/shriyansh/Desktop/voiceshield/data/external/InTheWild/release_in_the_wild/19387.wav,Christopher Hitchens,1,spoof,in_the_wild_collected,none,5,4.0,8.04,0.9997,0.9997,0.75,0.6303,nothing brother in a deal for years of irreterrence to his hometown rack by guilt.,,59,suspicious,VERIFY,challenge,voice_authenticity_anomaly;speaker_identity_inconsistency,248.0,72.96,521.98,0.06,0.03,843.05,clean
+in_the_wild,19387,,,1,,,,1,,,0.9971,0.9971,,0.613,"In Chesterton's the secret of Father Brem, the beloved Norman, who murdered his good for nothing.",,60,suspicious,VERIFY,,,,,,,,,noise_white_20db
+in_the_wild,19387,,,1,,,,2,,,0.9982,0.9982,,0.5814,could have found a brain that would have not been admitted as good for nothing rather in a geothermal.,,60,suspicious,VERIFY,,,,,,,,,noise_white_20db
+in_the_wild,19387,,,1,,,,3,,,0.9988,0.9988,,0.6191,"I'd love nobleman who knows his good for nothing, rather in a geophariate as a village.",,59,suspicious,VERIFY,,,,,,,,,noise_white_20db
+in_the_wild,19387,,,1,,,,4,,,0.999,0.999,,0.642,murder his good for nothing rather in a geoper year as a very chance to sometimes.,,59,suspicious,VERIFY,,,,,,,,,noise_white_20db
+in_the_wild,19387,,,1,,,,5,,,0.9991,0.9991,,0.6081,rather in a geopolitia as a very chance to sometimes act that guilt.,,60,suspicious,VERIFY,,,,,,,,,noise_white_20db
+in_the_wild,19387,,,1,,,,1,,,0.9915,0.9915,,0.6369,"In Chesterton, it's the sake of the part of the brain, the blood of northern and northern just good for now.",,59,suspicious,VERIFY,,,,,,,,,noise_white_10db
+in_the_wild,19387,,,1,,,,2,,,0.9865,0.9865,,0.5694,"It's part of the brand that the love novel in the movie. It's good for nothing, God.",,60,suspicious,VERIFY,,,,,,,,,noise_white_10db
+in_the_wild,19387,,,1,,,,3,,,0.99,0.99,,0.5772,"It's not a normal memory, but it's good for nothing. It's not a real period of the world.",,60,suspicious,VERIFY,,,,,,,,,noise_white_10db
+in_the_wild,19387,,,1,,,,4,,,0.9942,0.9942,,0.5338,"I know that it's good for nothing, but I know that you look at the years of the very chance to respond.",,61,suspicious,VERIFY,,,,,,,,,noise_white_10db
+in_the_wild,19387,,,1,,,,5,,,0.9918,0.9918,,0.4547,And if you look at the years of very chance to respond to that bill.,,63,suspicious,VERIFY,,,,,,,,,noise_white_10db
+in_the_wild,19387,,,1,,,,1,,,0.99,0.99,,0.6267,"In Chesterton's the second part of the brain, the blood not only in the other good, good, but now.",,59,suspicious,VERIFY,,,,,,,,,noise_white_5db
+in_the_wild,19387,,,1,,,,2,,,0.984,0.984,,0.5259,,,61,suspicious,VERIFY,,,,,,,,,noise_white_5db
+in_the_wild,19387,,,1,,,,3,,,0.9854,0.9854,,0.5102,"I'm not a normal man, I'm not a good man. I'm not a normal man, I'm a good man.",,62,suspicious,VERIFY,,,,,,,,,noise_white_5db
+in_the_wild,19387,,,1,,,,4,,,0.9897,0.9897,,0.4443,,,63,suspicious,VERIFY,,,,,,,,,noise_white_5db
+in_the_wild,19387,,,1,,,,5,,,0.9913,0.9913,,0.3308,,,66,high,VERIFY,,,,,,,,,noise_white_5db
+in_the_wild,19387,,,1,,,,1,,,0.9973,0.9973,,0.5861,"and just to finish the second part of the brain, you know, it's not more than a little bit good for me.",,60,suspicious,VERIFY,,,,,,,,,noise_white_0db
+in_the_wild,19387,,,1,,,,2,,,0.9962,0.9962,,0.4688,,,63,suspicious,VERIFY,,,,,,,,,noise_white_0db
+in_the_wild,19387,,,1,,,,3,,,0.9972,0.9972,,0.3764,You're not moving. You're moving. You're not moving.,,65,high,VERIFY,,,,,,,,,noise_white_0db
+in_the_wild,19387,,,1,,,,4,,,0.9959,0.9959,,0.292,Thank you.,,67,high,VERIFY,,,,,,,,,noise_white_0db
+in_the_wild,19387,,,1,,,,5,,,0.9962,0.9962,,0.2231,,,69,high,VERIFY,,,,,,,,,noise_white_0db
+in_the_wild,19387,,,1,,,,1,,,0.9956,0.9956,,0.5999,In Chesterton is the second to find a burn. If you love not being able to know that it was good for nothing.,,60,suspicious,VERIFY,,,,,,,,,noise_babble_10db
+in_the_wild,19387,,,1,,,,2,,,0.9926,0.9926,,0.5717,"because it's a side of brain, but we love not being able to split for nothing but other energy.",,60,suspicious,VERIFY,,,,,,,,,noise_babble_10db
+in_the_wild,19387,,,1,,,,3,,,0.9934,0.9934,,0.5131,"Love, no one has a spirit for nothing, but I'll do it for years and I'll reach you.",,62,suspicious,VERIFY,,,,,,,,,noise_babble_10db
+in_the_wild,19387,,,1,,,,4,,,0.9957,0.9957,,0.4666,"and ready to split from nothing, rather than do it for years and very chance to listen to it.",,63,suspicious,VERIFY,,,,,,,,,noise_babble_10db
+in_the_wild,19387,,,1,,,,5,,,0.9964,0.9964,,0.4105,and brother and do it for years and very chance to listen to that. Good.,,65,high,VERIFY,,,,,,,,,noise_babble_10db
+in_the_wild,19387,,,1,,,,1,,,0.9949,0.9949,,0.6077,"In Chesterton's the secret of Father Brem, of the love of Northern and the Lord of this good for now.",,60,suspicious,VERIFY,,,,,,,,,noise_pink_10db
+in_the_wild,19387,,,1,,,,2,,,0.9968,0.9968,,0.5584,"of the father-brem, of the love of noblemen, and noblemen, it was good for nothing to utter in the geological.",,61,suspicious,VERIFY,,,,,,,,,noise_pink_10db
+in_the_wild,19387,,,1,,,,3,,,0.9981,0.9981,,0.5801,"I'd love no one in America's good for nothing, rather than in the geopolitia as a village.",,60,suspicious,VERIFY,,,,,,,,,noise_pink_10db
+in_the_wild,19387,,,1,,,,4,,,0.9959,0.9959,,0.5918,noted this good for nothing rather in the geopolitia as a very chance to this one time.,,60,suspicious,VERIFY,,,,,,,,,noise_pink_10db
+in_the_wild,19387,,,1,,,,5,,,0.9941,0.9941,,0.5192,I think rather in the geopolitia as a very chance to respond to that field.,,62,suspicious,VERIFY,,,,,,,,,noise_pink_10db
+in_the_wild,19387,,,1,,,,1,,,0.9989,0.9989,,0.5834,"In Chesterton's the Secretary offather Brehn, a beloved Norman who murdered his good for nothing.",,60,suspicious,VERIFY,,,,,,,,,resample_8k
+in_the_wild,19387,,,1,,,,2,,,0.9996,0.9996,,0.5977,a father-bray and a beloved Norman who murdered his good for nothing brother in a geothermal,,60,suspicious,VERIFY,,,,,,,,,resample_8k
+in_the_wild,19387,,,1,,,,3,,,0.9995,0.9995,,0.6095,"The beloved Norman, who murdered his good for nothing brother in a deal for years of erudism.",,60,suspicious,VERIFY,,,,,,,,,resample_8k
+in_the_wild,19387,,,1,,,,4,,,0.9994,0.9994,,0.5435,murder is good for nothing brother in a deal for years of error chance to sometime,,61,suspicious,VERIFY,,,,,,,,,resample_8k
+in_the_wild,19387,,,1,,,,5,,,0.9995,0.9995,,0.5303,nothing brother in a deal for years of irreconcils to sometime rack by guilt.,,62,suspicious,VERIFY,,,,,,,,,resample_8k
+in_the_wild,19387,,,1,,,,1,,,0.9992,0.9992,,0.5958,"In Chesterton's the Secretary of Father, Brad, a beloved Norman, who murdered his good for nothing.",,60,suspicious,VERIFY,,,,,,,,,lowpass_4k
+in_the_wild,19387,,,1,,,,2,,,0.9998,0.9998,,0.5833,"a father-bran, a beloved Norman, who murdered his good for nothing brother and a geophotent.",,60,suspicious,VERIFY,,,,,,,,,lowpass_4k
+in_the_wild,19387,,,1,,,,3,,,0.9996,0.9996,,0.6058,"The beloved Norman, who murdered his good for nothing brother in a deal for years, of Eurich.",,60,suspicious,VERIFY,,,,,,,,,lowpass_4k
+in_the_wild,19387,,,1,,,,4,,,0.9995,0.9995,,0.5974,murder is good for nothing brother in a deal for years of irretransitence to sometime,,60,suspicious,VERIFY,,,,,,,,,lowpass_4k
+in_the_wild,19387,,,1,,,,5,,,0.9995,0.9995,,0.6002,nothing brother in a deal for years of irreterence to his hometown rack by guilt.,,60,suspicious,VERIFY,,,,,,,,,lowpass_4k
+in_the_wild,19387,,,1,,,,1,,,0.9992,0.9992,,0.5855,"In Chesterton's the Secretary offather Brehn, a beloved Norman who murdered his good for nothing.",,60,suspicious,VERIFY,,,,,,,,,lowpass_3k4
+in_the_wild,19387,,,1,,,,2,,,0.9997,0.9997,,0.5877,a father-bray and a beloved Norman who murdered his good for nothing brother in a geofr.,,60,suspicious,VERIFY,,,,,,,,,lowpass_3k4
+in_the_wild,19387,,,1,,,,3,,,0.9996,0.9996,,0.5992,"The beloved Norman, who murdered his good for nothing brother in a deal for years of a marriage.",,60,suspicious,VERIFY,,,,,,,,,lowpass_3k4
+in_the_wild,19387,,,1,,,,4,,,0.9996,0.9996,,0.557,murder is good for nothing brother in a deal for years of error chance to sometime,,61,suspicious,VERIFY,,,,,,,,,lowpass_3k4
+in_the_wild,19387,,,1,,,,5,,,0.9993,0.9993,,0.5587,nothing brother in a deal for years of irreterrence to some time rack by guilt.,,61,suspicious,VERIFY,,,,,,,,,lowpass_3k4
+in_the_wild,19387,,,1,,,,1,,,0.9995,0.9995,,0.5729,"In Chesterton as the Secretary of Honor, the beloved Norman Humor that he's good for not.",,61,suspicious,VERIFY,,,,,,,,,telephone_band
+in_the_wild,19387,,,1,,,,2,,,0.9993,0.9993,,0.5482,"a father-bran, a beloved Norman who murdered his good for nothing brother and a geofa.",,61,suspicious,VERIFY,,,,,,,,,telephone_band
+in_the_wild,19387,,,1,,,,3,,,0.998,0.998,,0.5695,"The beloved Norman Humidity is good for nothing, brother, and a deal for years of error.",,61,suspicious,VERIFY,,,,,,,,,telephone_band
+in_the_wild,19387,,,1,,,,4,,,0.9737,0.9737,,0.5267,murder is good for nothing brother in a deal for years of error chance to sometime.,,61,suspicious,VERIFY,,,,,,,,,telephone_band
+in_the_wild,19387,,,1,,,,5,,,0.9738,0.9738,,0.5166,nothing brother in a deal for years of irreconcils to sometime rack by guilt.,,61,suspicious,VERIFY,,,,,,,,,telephone_band
+in_the_wild,19387,,,1,,,,1,,,0.9985,0.9985,,0.6187,"In Chesterton's the Secretary of Father Brewn, a beloved Norman who murdered his good for nothing.",,59,suspicious,VERIFY,,,,,,,,,mu_law
+in_the_wild,19387,,,1,,,,2,,,0.9988,0.9988,,0.6314,"a father-bran, a beloved Norman, who murdered his good for nothing brother and a geological",,59,suspicious,VERIFY,,,,,,,,,mu_law
+in_the_wild,19387,,,1,,,,3,,,0.9991,0.9991,,0.6508,a beloved Norman who murdered his good for nothing brother in a geofa years of errits.,,59,suspicious,VERIFY,,,,,,,,,mu_law
+in_the_wild,19387,,,1,,,,4,,,0.9988,0.9988,,0.6484,murdered his good for nothing brother in a deal for years and there returns to his hometown.,,59,suspicious,VERIFY,,,,,,,,,mu_law
+in_the_wild,19387,,,1,,,,5,,,0.9996,0.9996,,0.6428,nothing brother in a deal for years of irretransituous humtime rack by guilt.,,59,suspicious,VERIFY,,,,,,,,,mu_law
+in_the_wild,19387,,,1,,,,1,,,0.9993,0.9993,,0.5098,"In Chesterton is the Secretary of Father Brewn, the beloved Norman who murdered his good for nothing.",,62,suspicious,VERIFY,,,,,,,,,telephone_chain
+in_the_wild,19387,,,1,,,,2,,,0.9992,0.9992,,0.5267,"because of father-brem, the beloved Norman who murdered his good for nothing brother in a deal.",,62,suspicious,VERIFY,,,,,,,,,telephone_chain
+in_the_wild,19387,,,1,,,,3,,,0.9978,0.9978,,0.5234,The beloved Norman Humidity is good for nothing brother in a deal for years of their rich.,,62,suspicious,VERIFY,,,,,,,,,telephone_chain
+in_the_wild,19387,,,1,,,,4,,,0.9748,0.9748,,0.4804,murder is good for nothing brother and a deal for years of error chance to sometime.,,62,suspicious,VERIFY,,,,,,,,,telephone_chain
+in_the_wild,19387,,,1,,,,5,,,0.9737,0.9737,,0.4569,nothing brother in a deal for years of irritants to some time rack by guilt.,,62,suspicious,VERIFY,,,,,,,,,telephone_chain
+in_the_wild,19387,,,1,,,,1,,,0.1,0.1,,0.6173,"In Chesterton's the Secretary of Father Brewn, the beloved Norman who murdered his good for nothing.",,15,insufficient_evidence,ALLOW,,,,,,,,,gain_minus_20db
+in_the_wild,19387,,,1,,,,2,,,0.0175,0.0175,,0.6006,"I could have found the brain, the beloved Norman, who murdered his good for nothing brother and a deal.",,11,insufficient_evidence,ALLOW,,,,,,,,,gain_minus_20db
+in_the_wild,19387,,,1,,,,3,,,0.2237,0.2237,,0.621,"The beloved Norman, who murdered his good for nothing brother in a deal for years, and they were",,21,low,ALLOW,,,,,,,,,gain_minus_20db
+in_the_wild,19387,,,1,,,,4,,,0.0209,0.0209,,0.6391,murder is good for nothing brother in a deal for years of irrechance to his hometown.,,10,insufficient_evidence,ALLOW,,,,,,,,,gain_minus_20db
+in_the_wild,19387,,,1,,,,5,,,0.1653,0.1653,,0.6309,,,17,insufficient_evidence,ALLOW,,,,,,,,,gain_minus_20db
+in_the_wild,19387,,,1,,,,1,,,0.9987,0.9987,,0.6163,"In Chesterton's the Secretary of Father, the brand, the beloved Norman, who murdered his good for nothing.",,60,suspicious,VERIFY,,,,,,,,,gain_plus_6db
+in_the_wild,19387,,,1,,,,2,,,0.9997,0.9997,,0.5968,"a father-bran, a beloved Norman who murdered his good for nothing brother in a geothermal",,60,suspicious,VERIFY,,,,,,,,,gain_plus_6db
+in_the_wild,19387,,,1,,,,3,,,0.9999,0.9999,,0.6313,"The beloved Norman, who murdered his good for nothing brother in a jail for years, a village.",,59,suspicious,VERIFY,,,,,,,,,gain_plus_6db
+in_the_wild,19387,,,1,,,,4,,,0.9996,0.9996,,0.6428,murdered his good for nothing brother in a deal for years of error chance to his hometown.,,59,suspicious,VERIFY,,,,,,,,,gain_plus_6db
+in_the_wild,19387,,,1,,,,5,,,1.0,1.0,,0.6299,nothing brother in a deal for years of irreterrence to his hometown rack by guilt.,,59,suspicious,VERIFY,,,,,,,,,gain_plus_6db
+in_the_wild,19387,,,1,,,,1,,,0.9969,0.9969,,0.6145,"In Chesterton's the Secretary of the Brewn, a beloved Norman who murdered his good for nothing.",,59,suspicious,VERIFY,,,,,,,,,clipping
+in_the_wild,19387,,,1,,,,2,,,0.999,0.999,,0.6001,"a father-bran, a beloved Norman who murdered his good for nothing brother in a geothermal",,60,suspicious,VERIFY,,,,,,,,,clipping
+in_the_wild,19387,,,1,,,,3,,,0.9992,0.9992,,0.6372,"The beloved Norman, who murdered his good for nothing brother in a deal for years and there were two.",,59,suspicious,VERIFY,,,,,,,,,clipping
+in_the_wild,19387,,,1,,,,4,,,0.999,0.999,,0.6429,murdered his good for nothing brother in a deal for years of error chance to his hometown.,,59,suspicious,VERIFY,,,,,,,,,clipping
+in_the_wild,19387,,,1,,,,5,,,0.9997,0.9997,,0.6303,nothing brother in a deal for years of irreterrence to his hometown rack by guilt.,,59,suspicious,VERIFY,,,,,,,,,clipping
+in_the_wild,19387,,,1,,,,1,,,0.9999,0.9999,,0.5362,"in Chesterton's The Secrets of Father Brand, of the love of no woman who murdered his good for",,62,suspicious,VERIFY,,,,,,,,,reverb_300ms
+in_the_wild,19387,,,1,,,,2,,,1.0,1.0,,0.5171,"a father-brand of love, no one in here, murdered his good for nothing, brother and a deal.",,62,suspicious,VERIFY,,,,,,,,,reverb_300ms
+in_the_wild,19387,,,1,,,,3,,,1.0,1.0,,0.5975,"I believe Norman, who murdered his good for nothing, brother, and a deal for years and a rich.",,60,suspicious,VERIFY,,,,,,,,,reverb_300ms
+in_the_wild,19387,,,1,,,,4,,,1.0,1.0,,0.5672,"and murdered is good for nothing, brother, and a deal for years, and a year of chance to sometimes.",,61,suspicious,VERIFY,,,,,,,,,reverb_300ms
+in_the_wild,19387,,,1,,,,5,,,1.0,1.0,,0.5758,I think brother in a deal for years will be a chance to sometime right by guilt.,,61,suspicious,VERIFY,,,,,,,,,reverb_300ms
+in_the_wild,19387,,,1,,,,1,,,0.9863,0.9863,,0.6139,"In Chesterton's the Secretary of the Bre and the Beloved Norman, who murdered his good for nothing.",,59,suspicious,VERIFY,,,,,,,,,packet_loss_2pct
+in_the_wild,19387,,,1,,,,2,,,0.9834,0.9834,,0.5959,"I could have found the brain, but I've never meant to murder it. It is good for nothing, brother, and a deal.",,59,suspicious,VERIFY,,,,,,,,,packet_loss_2pct
+in_the_wild,19387,,,1,,,,3,,,0.9741,0.9741,,0.6314,"I believe Norman, who murdered his good for nothing brother in a deal for years, and there",,58,suspicious,VERIFY,,,,,,,,,packet_loss_2pct
+in_the_wild,19387,,,1,,,,4,,,0.9986,0.9986,,0.6488,murdered his good for nothing brother in a deal for years of error chance to his hometown.,,59,suspicious,VERIFY,,,,,,,,,packet_loss_2pct
+in_the_wild,19387,,,1,,,,5,,,0.996,0.996,,0.6419,"nothing brother in a deal for years of irretransituous, sometimes rack by guilt.",,59,suspicious,VERIFY,,,,,,,,,packet_loss_2pct
+in_the_wild,19387,,,1,,,,1,,,0.9971,0.9971,,0.6172,"In Chesterton's The Sticker to Father, the brain, the beloved Norman, who murdered his good for nothing.",,59,suspicious,VERIFY,,,,,,,,,packet_loss_5pct
+in_the_wild,19387,,,1,,,,2,,,0.9728,0.9728,,0.5952,"a father-brand, a beloved Norman who murdered his good for nothing brother in a geothermal",,59,suspicious,VERIFY,,,,,,,,,packet_loss_5pct
+in_the_wild,19387,,,1,,,,3,,,0.9724,0.9724,,0.6278,"I believe Norman, who murdered his good for nothing brother in a jail for years, and there were",,58,suspicious,VERIFY,,,,,,,,,packet_loss_5pct
+in_the_wild,19387,,,1,,,,4,,,0.9714,0.9714,,0.6482,murdered his good for nothing brother in a deal for years of error chance to his hometown.,,57,suspicious,VERIFY,,,,,,,,,packet_loss_5pct
+in_the_wild,19387,,,1,,,,5,,,0.993,0.993,,0.6399,nothing brother in a deal for years of irreconciling to his hometown rack by guilt.,,59,suspicious,VERIFY,,,,,,,,,packet_loss_5pct
+in_the_wild,20539,/Users/shriyansh/Desktop/voiceshield/data/external/InTheWild/release_in_the_wild/20539.wav,Bill Clinton,1,spoof,in_the_wild_collected,none,1,0.0,4.04,0.9843,0.9843,0.734,0.3663,It takes to it. It takes to it. It takes to it.,,65,high,VERIFY,verify,voice_authenticity_anomaly;speaker_identity_mismatch,264.34,70.85,587.73,0.05,0.03,923.01,clean
+in_the_wild,20539,,,1,,,,1,,,0.7504,0.7504,,0.4608,We taste good. We taste good. We taste good. We taste good.,,51,suspicious,VERIFY,,,,,,,,,noise_white_20db
+in_the_wild,20539,,,1,,,,1,,,0.2062,0.2062,,0.4757,"We're taste-look, we're taste-look, we're taste-look, we're taste-look.",,23,low,ALLOW,,,,,,,,,noise_white_10db
+in_the_wild,20539,,,1,,,,1,,,0.922,0.922,,0.4502,"We're taste-let, we're taste-let, we're taste-let.",,60,suspicious,VERIFY,,,,,,,,,noise_white_5db
+in_the_wild,20539,,,1,,,,1,,,0.9958,0.9958,,0.3946,"with taste, with taste, with taste, with taste, with...",,65,high,VERIFY,,,,,,,,,noise_white_0db
+in_the_wild,20539,,,1,,,,1,,,0.765,0.765,,0.4574,It tastes good. It tastes good. It tastes good.,,52,suspicious,VERIFY,,,,,,,,,noise_babble_10db
+in_the_wild,20539,,,1,,,,1,,,0.2067,0.2067,,0.4482,"with taste good, with taste good, with taste good, with taste good.",,24,low,ALLOW,,,,,,,,,noise_pink_10db
+in_the_wild,20539,,,1,,,,1,,,0.9535,0.9535,,0.408,"it takes to it, it takes to it, it takes to it, it takes to it.",,62,suspicious,VERIFY,,,,,,,,,resample_8k
+in_the_wild,20539,,,1,,,,1,,,0.9619,0.9619,,0.4138,It takes to it. It takes to it. It takes to it.,,63,suspicious,VERIFY,,,,,,,,,lowpass_4k
+in_the_wild,20539,,,1,,,,1,,,0.9594,0.9594,,0.3911,"He takes to it, he takes to it, he takes to it.",,63,suspicious,VERIFY,,,,,,,,,lowpass_3k4
+in_the_wild,20539,,,1,,,,1,,,0.9982,0.9982,,0.3002,"It takes to it, it takes to it, it takes to it, it takes to it.",,67,high,VERIFY,,,,,,,,,telephone_band
+in_the_wild,20539,,,1,,,,1,,,0.9845,0.9845,,0.405,It takes to it. It takes to it. It takes to it. It takes to it.,,64,suspicious,VERIFY,,,,,,,,,mu_law
+in_the_wild,20539,,,1,,,,1,,,0.998,0.998,,0.2666,"It takes good. It takes good, it takes good, it takes good.",,68,high,VERIFY,,,,,,,,,telephone_chain
+in_the_wild,20539,,,1,,,,1,,,0.0145,0.0145,,0.4394,,,15,insufficient_evidence,ALLOW,,,,,,,,,gain_minus_20db
+in_the_wild,20539,,,1,,,,1,,,0.9996,0.9996,,0.3665,It takes to it. It takes to it. It takes to it.,,66,high,VERIFY,,,,,,,,,gain_plus_6db
+in_the_wild,20539,,,1,,,,1,,,0.9843,0.9843,,0.3663,It takes to it. It takes to it. It takes to it.,,65,high,VERIFY,,,,,,,,,clipping
+in_the_wild,20539,,,1,,,,1,,,0.9995,0.9995,,0.356,"you will teach them, you will teach them, you will teach them",,66,high,VERIFY,,,,,,,,,reverb_300ms
+in_the_wild,20539,,,1,,,,1,,,0.9846,0.9846,,0.3606,It takes to it. It takes to it. It takes to it.,,65,high,VERIFY,,,,,,,,,packet_loss_2pct
+in_the_wild,20539,,,1,,,,1,,,0.9748,0.9748,,0.3663,It takes to it. It takes to it. It takes to it.,,65,high,VERIFY,,,,,,,,,packet_loss_5pct
+in_the_wild,21713,/Users/shriyansh/Desktop/voiceshield/data/external/InTheWild/release_in_the_wild/21713.wav,Barack Obama,0,bonafide,none,none,1,0.0,4.04,0.9993,0.9993,0.749,0.2943,Why we failed the pass on an environment? Why we failed the pass on an environment?,,68,high,VERIFY,verify,voice_authenticity_anomaly;speaker_identity_mismatch,272.62,76.46,566.6,0.06,0.03,915.78,clean
+in_the_wild,21713,,,0,,,,1,,,0.9819,0.9819,,0.3194,Why we failed to pass on an environment? Why we failed to pass on an environment?,,66,high,VERIFY,,,,,,,,,noise_white_20db
+in_the_wild,21713,,,0,,,,1,,,0.9955,0.9955,,0.3283,and why we failed to pass on an environment. And why we failed to pass on an environment.,,67,high,VERIFY,,,,,,,,,noise_white_10db
+in_the_wild,21713,,,0,,,,1,,,0.9984,0.9984,,0.3392,Why do you feel the parasol in an environment? Why do you feel the parasol in an environment?,,66,high,VERIFY,,,,,,,,,noise_white_5db
+in_the_wild,21713,,,0,,,,1,,,0.9995,0.9995,,0.3398,Why do you feel the parasol in the environment? Why do you feel the parasol in the environment?,,66,high,VERIFY,,,,,,,,,noise_white_0db
+in_the_wild,21713,,,0,,,,1,,,0.9793,0.9793,,0.2712,Why we failed the pass on an environment? And why we failed the pass on an environment?,,67,high,VERIFY,,,,,,,,,noise_babble_10db
+in_the_wild,21713,,,0,,,,1,,,0.9978,0.9978,,0.3317,Why we failed the pass on an environment? Why we failed the pass on an environment?,,67,high,VERIFY,,,,,,,,,noise_pink_10db
+in_the_wild,21713,,,0,,,,1,,,0.9998,0.9998,,0.2661,Why we failed the pass on an environment? Why we failed the pass on an environment?,,68,high,VERIFY,,,,,,,,,resample_8k
+in_the_wild,21713,,,0,,,,1,,,0.9994,0.9994,,0.2717,Why we failed the pass on an environment? Why we failed the pass on an,,68,high,VERIFY,,,,,,,,,lowpass_4k
+in_the_wild,21713,,,0,,,,1,,,0.9994,0.9994,,0.2859,Why we failed the pass on an environment? Why we failed the pass on an environment?,,68,high,VERIFY,,,,,,,,,lowpass_3k4
+in_the_wild,21713,,,0,,,,1,,,0.9999,0.9999,,0.325,Why we failed the pass on an environment? Why we failed the pass on an environment?,,67,high,VERIFY,,,,,,,,,telephone_band
+in_the_wild,21713,,,0,,,,1,,,0.9994,0.9994,,0.2794,Why we failed the pass on an environment? Why we failed the pass on an environment?,,68,high,VERIFY,,,,,,,,,mu_law
+in_the_wild,21713,,,0,,,,1,,,0.9999,0.9999,,0.2424,Why we failed the pass on an environment? Why we failed the pass on an environment?,,69,high,VERIFY,,,,,,,,,telephone_chain
+in_the_wild,21713,,,0,,,,1,,,0.0189,0.0189,,0.2894,Why we failed the pass on an environment? Why we failed the pass on an environment?,,19,insufficient_evidence,ALLOW,,,,,,,,,gain_minus_20db
+in_the_wild,21713,,,0,,,,1,,,1.0,1.0,,0.2941,Why we failed the pass on an environment? Why we failed the pass on an environment?,,68,high,VERIFY,,,,,,,,,gain_plus_6db
+in_the_wild,21713,,,0,,,,1,,,0.9993,0.9993,,0.2943,Why we failed the pass on an environment? Why we failed the pass on an environment?,,68,high,VERIFY,,,,,,,,,clipping
+in_the_wild,21713,,,0,,,,1,,,0.9999,0.9999,,0.182,Why we failed the pass on an environment? Why we failed the pass on an environment?,,70,high,VERIFY,,,,,,,,,reverb_300ms
+in_the_wild,21713,,,0,,,,1,,,0.9999,0.9999,,0.3067,Why we failed the pass on an environment? Why we failed the pass on an environment?,,67,high,VERIFY,,,,,,,,,packet_loss_2pct
+in_the_wild,21713,,,0,,,,1,,,0.9998,0.9998,,0.3217,Why we failed the pass on an environment? Why we failed the pass on an,,67,high,VERIFY,,,,,,,,,packet_loss_5pct
+in_the_wild,22761,/Users/shriyansh/Desktop/voiceshield/data/external/InTheWild/release_in_the_wild/22761.wav,Ayn Rand,0,bonafide,none,none,1,0.0,4.04,0.9998,0.9998,0.75,0.0316,ease of by faith and the gods as in the Greek tragedies.,,74,high,VERIFY,verify,voice_authenticity_anomaly;speaker_identity_mismatch,272.21,85.67,598.9,0.05,0.03,956.88,clean
+in_the_wild,22761,,,0,,,,1,,,0.9997,0.9997,,0.0418,Eezer by Fate and the Gods as in the Greek tragedies.,,74,high,VERIFY,,,,,,,,,noise_white_20db
+in_the_wild,22761,,,0,,,,1,,,0.9997,0.9997,,-0.0069,He is a by-pate and a God as in the Greek tragedy.,,75,high,VERIFY,,,,,,,,,noise_white_10db
+in_the_wild,22761,,,0,,,,1,,,0.9998,0.9998,,-0.0369,He is a bi-fate and a god as in the great tragedy.,,75,high,VERIFY,,,,,,,,,noise_white_5db
+in_the_wild,22761,,,0,,,,1,,,0.9998,0.9998,,-0.048,"These are my faith and the God, I will make it proud of you.",,75,high,VERIFY,,,,,,,,,noise_white_0db
+in_the_wild,22761,,,0,,,,1,,,0.9998,0.9998,,0.0001,He is a bi-fate and the gods as in the Greek prejudice.,,75,high,VERIFY,,,,,,,,,noise_babble_10db
+in_the_wild,22761,,,0,,,,1,,,0.9984,0.9984,,0.018,Eezer by Faith and the Gods as in the Greek Pregnist,,74,high,VERIFY,,,,,,,,,noise_pink_10db
+in_the_wild,22761,,,0,,,,1,,,0.9998,0.9998,,0.0796,Eezer by Fate and the Gods as in the Greek tragedies.,,73,high,VERIFY,,,,,,,,,resample_8k
+in_the_wild,22761,,,0,,,,1,,,0.9999,0.9999,,0.1106,Eezer by Fate and the Gods as in the Greek tragedies.,,72,high,VERIFY,,,,,,,,,lowpass_4k
+in_the_wild,22761,,,0,,,,1,,,0.9999,0.9999,,0.085,Eezer by Fate and the Gods as in the Greek tragedies.,,73,high,VERIFY,,,,,,,,,lowpass_3k4
+in_the_wild,22761,,,0,,,,1,,,0.9999,0.9999,,0.1475,Eezer by Faith and the Gods as in the Greek tragedies.,,71,high,VERIFY,,,,,,,,,telephone_band
+in_the_wild,22761,,,0,,,,1,,,0.9998,0.9998,,0.0663,Eezer by Faith and the Gods as in the Greek tragedies.,,73,high,VERIFY,,,,,,,,,mu_law
+in_the_wild,22761,,,0,,,,1,,,0.9999,0.9999,,0.1087,ease up by faith and the gods as in the Greek tragedies.,,72,high,VERIFY,,,,,,,,,telephone_chain
+in_the_wild,22761,,,0,,,,1,,,0.0819,0.0819,,0.031,ease up by faith and the gods as in the Greek tragedies.,,28,low,ALLOW,,,,,,,,,gain_minus_20db
+in_the_wild,22761,,,0,,,,1,,,0.9998,0.9998,,0.0315,Eezer by Faith and the Gods as in the Greek Thragies.,,74,high,VERIFY,,,,,,,,,gain_plus_6db
+in_the_wild,22761,,,0,,,,1,,,0.9997,0.9997,,0.0338,ease of by faith and the gods as in the Greek tragedies.,,74,high,VERIFY,,,,,,,,,clipping
+in_the_wild,22761,,,0,,,,1,,,1.0,1.0,,0.0566,is a buffet and the gods as in the Greek tragedies.,,74,high,VERIFY,,,,,,,,,reverb_300ms
+in_the_wild,22761,,,0,,,,1,,,0.9999,0.9999,,0.0485,Eezer by Fate and the Gods as in the Greek tragedies.,,74,high,VERIFY,,,,,,,,,packet_loss_2pct
+in_the_wild,22761,,,0,,,,1,,,1.0,1.0,,0.0472,ease of by faith and the gods as in the Greek tragedies.,,74,high,VERIFY,,,,,,,,,packet_loss_5pct
+in_the_wild,24989,/Users/shriyansh/Desktop/voiceshield/data/external/InTheWild/release_in_the_wild/24989.wav,Ayn Rand,0,bonafide,none,none,1,0.0,4.04,0.9998,0.9998,0.75,0.1336,Uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh,,72,high,VERIFY,verify,voice_authenticity_anomaly;speaker_identity_mismatch,272.68,89.91,12069.54,0.11,0.03,12432.29,clean
+in_the_wild,24989,,,0,,,,1,,,0.9992,0.9992,,0.0983,"Uh, uh, uh, uh, uh.",,73,high,VERIFY,,,,,,,,,noise_white_20db
+in_the_wild,24989,,,0,,,,1,,,0.9996,0.9996,,0.0828,,,73,high,VERIFY,,,,,,,,,noise_white_10db
+in_the_wild,24989,,,0,,,,1,,,0.9997,0.9997,,0.0605,,,73,high,VERIFY,,,,,,,,,noise_white_5db
+in_the_wild,24989,,,0,,,,1,,,0.9997,0.9997,,0.0648,,,73,high,VERIFY,,,,,,,,,noise_white_0db
+in_the_wild,24989,,,0,,,,1,,,0.9993,0.9993,,0.0714,uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh,,73,high,VERIFY,,,,,,,,,noise_babble_10db
+in_the_wild,24989,,,0,,,,1,,,0.9998,0.9998,,0.1149,uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh,,72,high,VERIFY,,,,,,,,,noise_pink_10db
+in_the_wild,24989,,,0,,,,1,,,0.9998,0.9998,,0.1524,,,71,high,VERIFY,,,,,,,,,resample_8k
+in_the_wild,24989,,,0,,,,1,,,0.9998,0.9998,,0.1474,,,71,high,VERIFY,,,,,,,,,lowpass_4k
+in_the_wild,24989,,,0,,,,1,,,0.9998,0.9998,,0.1437,,,71,high,VERIFY,,,,,,,,,lowpass_3k4
+in_the_wild,24989,,,0,,,,1,,,1.0,1.0,,0.1323,Uh...,,72,high,VERIFY,,,,,,,,,telephone_band
+in_the_wild,24989,,,0,,,,1,,,0.9998,0.9998,,0.0689,,,73,high,VERIFY,,,,,,,,,mu_law
+in_the_wild,24989,,,0,,,,1,,,1.0,1.0,,0.0581,uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh,,74,high,VERIFY,,,,,,,,,telephone_chain
+in_the_wild,24989,,,0,,,,1,,,0.0291,0.0291,,0.1351,Uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh,,23,low,ALLOW,,,,,,,,,gain_minus_20db
+in_the_wild,24989,,,0,,,,1,,,1.0,1.0,,0.1339,Uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh uh,,72,high,VERIFY,,,,,,,,,gain_plus_6db
+in_the_wild,24989,,,0,,,,1,,,0.9993,0.9993,,0.1117,,,72,high,VERIFY,,,,,,,,,clipping
+in_the_wild,24989,,,0,,,,1,,,0.9996,0.9996,,0.1525,,,71,high,VERIFY,,,,,,,,,reverb_300ms
+in_the_wild,24989,,,0,,,,1,,,0.9998,0.9998,,0.1336,,,72,high,VERIFY,,,,,,,,,packet_loss_2pct
+in_the_wild,24989,,,0,,,,1,,,0.9998,0.9998,,0.1336,,,72,high,VERIFY,,,,,,,,,packet_loss_5pct
+in_the_wild,25860,/Users/shriyansh/Desktop/voiceshield/data/external/InTheWild/release_in_the_wild/25860.wav,George Carlin,0,bonafide,none,none,1,0.0,4.04,0.999,0.999,0.749,0.5392,Especially the ones that talk to you move way. Especially the ones that talk to you.,,61,suspicious,VERIFY,challenge,voice_authenticity_anomaly;speaker_identity_inconsistency,276.3,84.46,528.59,0.06,0.03,889.44,clean
+in_the_wild,25860,,,0,,,,1,,,0.9966,0.9966,,0.4692,"Especially the ones that talked to you, move away. Especially the ones that talk to you.",,63,suspicious,VERIFY,,,,,,,,,noise_white_20db
+in_the_wild,25860,,,0,,,,1,,,0.9995,0.9995,,0.3135,Especially the ones that talked move way. Especially the ones that talked move way.,,67,high,VERIFY,,,,,,,,,noise_white_10db
+in_the_wild,25860,,,0,,,,1,,,0.9997,0.9997,,0.2245,Especially the ones that walk move way. Especially the ones that walk.,,69,high,VERIFY,,,,,,,,,noise_white_5db
+in_the_wild,25860,,,0,,,,1,,,0.9998,0.9998,,0.1744,"Especially the ones who walk, move where. Especially the ones who.",,71,high,VERIFY,,,,,,,,,noise_white_0db
+in_the_wild,25860,,,0,,,,1,,,0.9971,0.9971,,0.4104,"Especially the ones that talk to you, move away. Especially the ones that talk to you.",,65,high,VERIFY,,,,,,,,,noise_babble_10db
+in_the_wild,25860,,,0,,,,1,,,0.9981,0.9981,,0.3785,Especially the ones that talked move way. Especially the ones that talk.,,65,high,VERIFY,,,,,,,,,noise_pink_10db
+in_the_wild,25860,,,0,,,,1,,,0.9999,0.9999,,0.4451,Especially the ones that talk to you move way. Especially the ones that talk to you.,,64,suspicious,VERIFY,,,,,,,,,resample_8k
+in_the_wild,25860,,,0,,,,1,,,0.9999,0.9999,,0.4777,Especially the ones that talk to you move way. Especially the ones that talk to you.,,63,suspicious,VERIFY,,,,,,,,,lowpass_4k
+in_the_wild,25860,,,0,,,,1,,,1.0,1.0,,0.4627,Especially the ones that talk to you move way. Especially the ones that talk to you.,,63,suspicious,VERIFY,,,,,,,,,lowpass_3k4
+in_the_wild,25860,,,0,,,,1,,,1.0,1.0,,0.4148,"Especially the ones that talk to you move way, especially the ones that talk to you.",,65,high,VERIFY,,,,,,,,,telephone_band
+in_the_wild,25860,,,0,,,,1,,,0.9989,0.9989,,0.5302,Especially the ones that talk to you move away. Especially the ones that talk to you.,,62,suspicious,VERIFY,,,,,,,,,mu_law
+in_the_wild,25860,,,0,,,,1,,,1.0,1.0,,0.3481,"Especially the ones that talk to you move way, especially the ones that talk to you.",,66,high,VERIFY,,,,,,,,,telephone_chain
+in_the_wild,25860,,,0,,,,1,,,0.7665,0.7665,,0.5405,Especially the ones that talk to you move way. Especially the ones that talk to you.,,50,suspicious,VERIFY,,,,,,,,,gain_minus_20db
+in_the_wild,25860,,,0,,,,1,,,0.9995,0.9995,,0.5393,Especially the ones that talk to you move way. Especially the ones that talk to you.,,61,suspicious,VERIFY,,,,,,,,,gain_plus_6db
+in_the_wild,25860,,,0,,,,1,,,0.998,0.998,,0.5527,Especially the ones that talk to you move way. Especially the ones that talk to you.,,61,suspicious,VERIFY,,,,,,,,,clipping
+in_the_wild,25860,,,0,,,,1,,,1.0,1.0,,0.4385,"Especially the ones that talk to you, move away. Especially the ones that talk to you.",,64,suspicious,VERIFY,,,,,,,,,reverb_300ms
+in_the_wild,25860,,,0,,,,1,,,0.9973,0.9973,,0.5351,"Especially the ones that talk to you move way, especially the ones that talk to you.",,61,suspicious,VERIFY,,,,,,,,,packet_loss_2pct
+in_the_wild,25860,,,0,,,,1,,,0.9995,0.9995,,0.5503,Especially the ones that talk to you move way. Especially the ones that talk to you.,,61,suspicious,VERIFY,,,,,,,,,packet_loss_5pct
+in_the_wild,27323,/Users/shriyansh/Desktop/voiceshield/data/external/InTheWild/release_in_the_wild/27323.wav,Barack Obama,0,bonafide,none,none,1,0.0,4.04,0.9967,0.9967,0.747,0.2768,The idea is a simple one. The idea is a simple one.,,68,high,VERIFY,verify,voice_authenticity_anomaly;speaker_identity_mismatch,274.16,87.15,520.7,0.05,0.03,882.09,clean
+in_the_wild,27323,,,0,,,,1,,,0.9011,0.9011,,0.2792,Я держу сэмпор. Я держу сэмпор.,,63,suspicious,VERIFY,,,,,,,,,noise_white_20db
+in_the_wild,27323,,,0,,,,1,,,0.9667,0.9667,,0.194,Я дею за сцентого. Я дею за сцентого.,,68,high,VERIFY,,,,,,,,,noise_white_10db
+in_the_wild,27323,,,0,,,,1,,,0.9977,0.9977,,0.121,Я дею за стенпора. Я дею за стенпора.,,72,high,VERIFY,,,,,,,,,noise_white_5db
+in_the_wild,27323,,,0,,,,1,,,0.9992,0.9992,,0.0915,Я деорву степла. Я деорву степла.,,73,high,VERIFY,,,,,,,,,noise_white_0db
+in_the_wild,27323,,,0,,,,1,,,0.2738,0.2738,,0.1772,Я без уцентого. Я без уцентого.,,34,low,ALLOW,,,,,,,,,noise_babble_10db
+in_the_wild,27323,,,0,,,,1,,,0.9482,0.9482,,0.266,Я держу сэмпова. Я держу сэмпова.,,66,high,VERIFY,,,,,,,,,noise_pink_10db
+in_the_wild,27323,,,0,,,,1,,,0.9995,0.9995,,0.233,The idea is a simple one. The idea is a simple one.,,69,high,VERIFY,,,,,,,,,resample_8k
+in_the_wild,27323,,,0,,,,1,,,0.9995,0.9995,,0.2681,The idea is a simple one. The idea is a simple one.,,68,high,VERIFY,,,,,,,,,lowpass_4k
+in_the_wild,27323,,,0,,,,1,,,0.9994,0.9994,,0.2574,The idea is a simple one. The idea is a simple one.,,69,high,VERIFY,,,,,,,,,lowpass_3k4
+in_the_wild,27323,,,0,,,,1,,,1.0,1.0,,0.2757,Я держу с сэпу. Я держу сэпу.,,68,high,VERIFY,,,,,,,,,telephone_band
+in_the_wild,27323,,,0,,,,1,,,0.997,0.997,,0.2458,The idea is a simple one. The idea is a simple one.,,69,high,VERIFY,,,,,,,,,mu_law
+in_the_wild,27323,,,0,,,,1,,,1.0,1.0,,0.2125,The idea is a simple. The idea is a simple.,,70,high,VERIFY,,,,,,,,,telephone_chain
+in_the_wild,27323,,,0,,,,1,,,0.022,0.022,,0.3017,,,19,insufficient_evidence,ALLOW,,,,,,,,,gain_minus_20db
+in_the_wild,27323,,,0,,,,1,,,0.9985,0.9985,,0.2767,The idea is a simple one. The idea is a simple one.,,68,high,VERIFY,,,,,,,,,gain_plus_6db
+in_the_wild,27323,,,0,,,,1,,,0.9967,0.9967,,0.2768,The idea is a simple one. The idea is a simple one.,,68,high,VERIFY,,,,,,,,,clipping
+in_the_wild,27323,,,0,,,,1,,,1.0,1.0,,0.2184,第二次下播 第二次下播,,70,high,VERIFY,,,,,,,,,reverb_300ms
+in_the_wild,27323,,,0,,,,1,,,0.9864,0.9864,,0.2686,The idea is a simple one. The idea is a simple one.,,68,high,VERIFY,,,,,,,,,packet_loss_2pct
+in_the_wild,27323,,,0,,,,1,,,0.987,0.987,,0.2851,The idea is a simple one. The idea is a simple one.,,67,high,VERIFY,,,,,,,,,packet_loss_5pct
+in_the_wild,27332,/Users/shriyansh/Desktop/voiceshield/data/external/InTheWild/release_in_the_wild/27332.wav,Donald Trump,0,bonafide,none,none,1,0.0,4.04,0.124,0.124,0.626,0.4659,Then we can never let them do that. Then we can never let them do that.,,20,low,ALLOW,allow,speaker_identity_mismatch,283.37,81.85,574.26,0.05,0.03,939.58,clean
+in_the_wild,27332,,,0,,,,1,,,0.1026,0.1026,,0.5078,And we can never let them do that. And we can never let them do that.,,17,insufficient_evidence,ALLOW,,,,,,,,,noise_white_20db
+in_the_wild,27332,,,0,,,,1,,,0.0211,0.0211,,0.3973,And we can never let them do that. And we can never let them do that.,,16,insufficient_evidence,ALLOW,,,,,,,,,noise_white_10db
+in_the_wild,27332,,,0,,,,1,,,0.0687,0.0687,,0.3502,and we can never let them do that. And we can never let them do that.,,20,low,ALLOW,,,,,,,,,noise_white_5db
+in_the_wild,27332,,,0,,,,1,,,0.035,0.035,,0.287,and we can never let them do that. And we can never let them do that.,,20,low,ALLOW,,,,,,,,,noise_white_0db
+in_the_wild,27332,,,0,,,,1,,,0.0682,0.0682,,0.4302,And we can never let them do that. And we can never let them do that.,,18,insufficient_evidence,ALLOW,,,,,,,,,noise_babble_10db
+in_the_wild,27332,,,0,,,,1,,,0.0083,0.0083,,0.478,and we can never let them do that. And we can never let them do that.,,13,insufficient_evidence,ALLOW,,,,,,,,,noise_pink_10db
+in_the_wild,27332,,,0,,,,1,,,0.1674,0.1674,,0.364,And we can never let them do that. And we can never let them do that.,,24,low,ALLOW,,,,,,,,,resample_8k
+in_the_wild,27332,,,0,,,,1,,,0.2249,0.2249,,0.4006,And we can never let them do that. And we can never let them do that.,,26,low,ALLOW,,,,,,,,,lowpass_4k
+in_the_wild,27332,,,0,,,,1,,,0.2251,0.2251,,0.3543,And we can never let them do that. And we can never let them do that.,,27,low,ALLOW,,,,,,,,,lowpass_3k4
+in_the_wild,27332,,,0,,,,1,,,0.027,0.027,,0.3529,And we can never let them do that. And we can never let them do that.,,18,insufficient_evidence,ALLOW,,,,,,,,,telephone_band
+in_the_wild,27332,,,0,,,,1,,,0.1145,0.1145,,0.505,Then we can never let them do that. Then we can never let them do that.,,18,insufficient_evidence,ALLOW,,,,,,,,,mu_law
+in_the_wild,27332,,,0,,,,1,,,0.0275,0.0275,,0.4007,And we can never let them do that. And we can never let them do that.,,16,insufficient_evidence,ALLOW,,,,,,,,,telephone_chain
+in_the_wild,27332,,,0,,,,1,,,0.0109,0.0109,,0.4775,,,14,insufficient_evidence,ALLOW,,,,,,,,,gain_minus_20db
+in_the_wild,27332,,,0,,,,1,,,0.0226,0.0226,,0.4643,Then we can never let them do that. Then we can never let them do that.,,15,insufficient_evidence,ALLOW,,,,,,,,,gain_plus_6db
+in_the_wild,27332,,,0,,,,1,,,0.124,0.124,,0.4659,Then we can never let them do that. Then we can never let them do that.,,20,low,ALLOW,,,,,,,,,clipping
+in_the_wild,27332,,,0,,,,1,,,0.8832,0.8832,,0.4309,Then we can narrow that them do that. Then we can narrow that them do that.,,58,suspicious,VERIFY,,,,,,,,,reverb_300ms
+in_the_wild,27332,,,0,,,,1,,,0.124,0.124,,0.4659,Then we can never let them do that. Then we can never let them do that.,,20,low,ALLOW,,,,,,,,,packet_loss_2pct
+in_the_wild,27332,,,0,,,,1,,,0.0268,0.0268,,0.4355,Then we can never let them do that. Then we can never let them do that.,,15,insufficient_evidence,ALLOW,,,,,,,,,packet_loss_5pct
+in_the_wild,27838,/Users/shriyansh/Desktop/voiceshield/data/external/InTheWild/release_in_the_wild/27838.wav,Ayn Rand,1,spoof,in_the_wild_collected,none,1,0.0,4.04,0.9998,0.9998,0.75,-0.0253,Our property relations in the past have continually been subject to.,,75,high,VERIFY,verify,voice_authenticity_anomaly;speaker_identity_mismatch,267.71,83.73,516.7,0.07,0.05,868.27,clean
+in_the_wild,27838,/Users/shriyansh/Desktop/voiceshield/data/external/InTheWild/release_in_the_wild/27838.wav,Ayn Rand,1,spoof,in_the_wild_collected,none,2,1.0,5.04,1.0,1.0,0.75,0.0253,in the past have continually been subject to historical change.,,74,high,VERIFY,verify,voice_authenticity_anomaly;speaker_identity_mismatch,262.72,81.55,516.18,0.05,0.03,860.54,clean
+in_the_wild,27838,/Users/shriyansh/Desktop/voiceshield/data/external/InTheWild/release_in_the_wild/27838.wav,Ayn Rand,1,spoof,in_the_wild_collected,none,3,2.0,6.04,0.9999,0.9999,0.75,0.0485,have continually been subject to historical change consequently.,,74,high,VERIFY,verify,voice_authenticity_anomaly;speaker_identity_mismatch,261.27,75.48,513.45,0.05,0.03,850.28,clean
+in_the_wild,27838,/Users/shriyansh/Desktop/voiceshield/data/external/InTheWild/release_in_the_wild/27838.wav,Ayn Rand,1,spoof,in_the_wild_collected,none,4,3.0,7.04,0.9997,0.9997,0.75,0.0527,"been subject to historical change, consequently changing his story.",,74,high,VERIFY,verify,voice_authenticity_anomaly;speaker_identity_mismatch,264.88,78.79,530.43,0.06,0.05,874.23,clean
+in_the_wild,27838,,,1,,,,1,,,0.9996,0.9996,,-0.0745,Our property relations in the past have continually been subject to.,,75,high,VERIFY,,,,,,,,,noise_white_20db
+in_the_wild,27838,,,1,,,,2,,,0.9999,0.9999,,-0.0297,in the past have continually been subject to historical change.,,75,high,VERIFY,,,,,,,,,noise_white_20db
+in_the_wild,27838,,,1,,,,3,,,0.9995,0.9995,,-0.0002,"have continually been subject to historical change, consequently.",,75,high,VERIFY,,,,,,,,,noise_white_20db
+in_the_wild,27838,,,1,,,,4,,,0.9995,0.9995,,0.0054,"de um jeito histórico, de um jeito histórico que se acança com o que a gente consegue.",,75,high,VERIFY,,,,,,,,,noise_white_20db
+in_the_wild,27838,,,1,,,,1,,,0.9995,0.9995,,-0.0682,Our proper generation in the past have continually been subjected.,,75,high,VERIFY,,,,,,,,,noise_white_10db
+in_the_wild,27838,,,1,,,,2,,,0.9996,0.9996,,-0.0419,in the past have continually been subject to historical change.,,75,high,VERIFY,,,,,,,,,noise_white_10db
+in_the_wild,27838,,,1,,,,3,,,0.9992,0.9992,,0.0026,"have continually been subject to historical change, so I'm going to have fun.",,75,high,VERIFY,,,,,,,,,noise_white_10db
+in_the_wild,27838,,,1,,,,4,,,0.9985,0.9985,,0.0069,"been subject to historical change, something to happen, the change in history.",,75,high,VERIFY,,,,,,,,,noise_white_10db
+in_the_wild,27838,,,1,,,,1,,,0.9998,0.9998,,-0.0683,Our proper coronation in the past has continually been subjected.,,75,high,VERIFY,,,,,,,,,noise_white_5db
+in_the_wild,27838,,,1,,,,2,,,0.9996,0.9996,,-0.046,in the past have continually been subject to historical change.,,75,high,VERIFY,,,,,,,,,noise_white_5db
+in_the_wild,27838,,,1,,,,3,,,0.9993,0.9993,,0.0133,have continually been subject to historical change to come to the Havana.,,75,high,VERIFY,,,,,,,,,noise_white_5db
+in_the_wild,27838,,,1,,,,4,,,0.9996,0.9996,,0.0297,"being subject to this cycle change, something to happen, the change in this cycle.",,74,high,VERIFY,,,,,,,,,noise_white_5db
+in_the_wild,27838,,,1,,,,1,,,0.9998,0.9998,,-0.0276,Our proper currination in the past has continually been subject to this.,,75,high,VERIFY,,,,,,,,,noise_white_0db
+in_the_wild,27838,,,1,,,,2,,,0.9997,0.9997,,-0.0154,and make each in the past that continually being subject to the soil for change.,,75,high,VERIFY,,,,,,,,,noise_white_0db
+in_the_wild,27838,,,1,,,,3,,,0.9992,0.9992,,0.0179,,,75,high,VERIFY,,,,,,,,,noise_white_0db
+in_the_wild,27838,,,1,,,,4,,,0.9997,0.9997,,0.0345,,,74,high,VERIFY,,,,,,,,,noise_white_0db
+in_the_wild,27838,,,1,,,,1,,,0.9995,0.9995,,0.0014,"Our proper terrain is in the past, have continually been subjected.",,75,high,VERIFY,,,,,,,,,noise_babble_10db
+in_the_wild,27838,,,1,,,,2,,,0.9991,0.9991,,0.0168,in the past have continually been subject to historical change.,,75,high,VERIFY,,,,,,,,,noise_babble_10db
+in_the_wild,27838,,,1,,,,3,,,0.9989,0.9989,,0.0461,"have continually been subject to historical change, consequently the economy.",,74,high,VERIFY,,,,,,,,,noise_babble_10db
+in_the_wild,27838,,,1,,,,4,,,0.9967,0.9967,,0.0633,"being subject to historical change, consequently, to understand the change in history.",,73,high,VERIFY,,,,,,,,,noise_babble_10db
+in_the_wild,27838,,,1,,,,1,,,0.9998,0.9998,,-0.0549,Our proper generations in the past have continually been subjected.,,75,high,VERIFY,,,,,,,,,noise_pink_10db
+in_the_wild,27838,,,1,,,,2,,,0.9999,0.9999,,-0.0266,in the past have continually been subject to historical change.,,75,high,VERIFY,,,,,,,,,noise_pink_10db
+in_the_wild,27838,,,1,,,,3,,,0.999,0.999,,0.0097,"have continually been subject to historical change, so I'm going to have fun.",,75,high,VERIFY,,,,,,,,,noise_pink_10db
+in_the_wild,27838,,,1,,,,4,,,0.9989,0.9989,,0.0028,"been subject to historical change, consequently, to have fun the change in history.",,75,high,VERIFY,,,,,,,,,noise_pink_10db
+in_the_wild,27838,,,1,,,,1,,,0.9999,0.9999,,-0.0042,Our property relations in the past have continually been subjected.,,75,high,VERIFY,,,,,,,,,resample_8k
+in_the_wild,27838,,,1,,,,2,,,1.0,1.0,,0.029,in the past have continually been subject to historical change.,,74,high,VERIFY,,,,,,,,,resample_8k
+in_the_wild,27838,,,1,,,,3,,,0.9999,0.9999,,0.0335,"have continually been subject to historical change, consequently.",,74,high,VERIFY,,,,,,,,,resample_8k
+in_the_wild,27838,,,1,,,,4,,,0.9998,0.9998,,0.0058,"bem subjeto de histórica, o change consequente apanda change em histórica.",,75,high,VERIFY,,,,,,,,,resample_8k
+in_the_wild,27838,,,1,,,,1,,,0.9999,0.9999,,0.0021,Our property relations in the past have continually been subjected.,,75,high,VERIFY,,,,,,,,,lowpass_4k
+in_the_wild,27838,,,1,,,,2,,,1.0,1.0,,0.0556,in the past have continually been subject to historical change.,,74,high,VERIFY,,,,,,,,,lowpass_4k
+in_the_wild,27838,,,1,,,,3,,,0.9999,0.9999,,0.0671,"have continually been subject to historical change, consequently.",,73,high,VERIFY,,,,,,,,,lowpass_4k
+in_the_wild,27838,,,1,,,,4,,,0.9998,0.9998,,0.0565,"bem subjeto de histórica, o change consequente apanda change em histórica.",,74,high,VERIFY,,,,,,,,,lowpass_4k
+in_the_wild,27838,,,1,,,,1,,,0.9999,0.9999,,0.002,Our property relations in the past have continually been subjected.,,75,high,VERIFY,,,,,,,,,lowpass_3k4
+in_the_wild,27838,,,1,,,,2,,,1.0,1.0,,0.0444,in the past have continually been subject to historical change.,,74,high,VERIFY,,,,,,,,,lowpass_3k4
+in_the_wild,27838,,,1,,,,3,,,0.9999,0.9999,,0.0591,"have continually been subject to historical change, consequently.",,74,high,VERIFY,,,,,,,,,lowpass_3k4
+in_the_wild,27838,,,1,,,,4,,,0.9998,0.9998,,0.0452,"been subject to historical change, consequently changing his story.",,74,high,VERIFY,,,,,,,,,lowpass_3k4
+in_the_wild,27838,,,1,,,,1,,,1.0,1.0,,-0.0139,Our property relations in the past have continually been subject to.,,75,high,VERIFY,,,,,,,,,telephone_band
+in_the_wild,27838,,,1,,,,2,,,1.0,1.0,,0.0272,in the past have continually been subject to historical change.,,74,high,VERIFY,,,,,,,,,telephone_band
+in_the_wild,27838,,,1,,,,3,,,0.9999,0.9999,,0.0148,"have continually been subject to historical change, consequently.",,75,high,VERIFY,,,,,,,,,telephone_band
+in_the_wild,27838,,,1,,,,4,,,0.9999,0.9999,,0.0031,been subject to historical change consequences upon the change in history.,,75,high,VERIFY,,,,,,,,,telephone_band
+in_the_wild,27838,,,1,,,,1,,,0.9998,0.9998,,-0.0153,Our property relations in the past have continually been subject to.,,75,high,VERIFY,,,,,,,,,mu_law
+in_the_wild,27838,,,1,,,,2,,,1.0,1.0,,0.0247,in the past have continually been subject to historical change.,,74,high,VERIFY,,,,,,,,,mu_law
+in_the_wild,27838,,,1,,,,3,,,0.9998,0.9998,,0.0567,"have continually been subject to historical change, consequently.",,74,high,VERIFY,,,,,,,,,mu_law
+in_the_wild,27838,,,1,,,,4,,,0.9997,0.9997,,0.0697,"been subject to historical change, consequently, upon the change in historical.",,73,high,VERIFY,,,,,,,,,mu_law
+in_the_wild,27838,,,1,,,,1,,,1.0,1.0,,-0.025,Our property relations in the past have continually been subject to.,,75,high,VERIFY,,,,,,,,,telephone_chain
+in_the_wild,27838,,,1,,,,2,,,1.0,1.0,,0.0067,in the past have continually been subject to historical change.,,75,high,VERIFY,,,,,,,,,telephone_chain
+in_the_wild,27838,,,1,,,,3,,,0.9999,0.9999,,0.0026,have continually been subject to historical change consequences upon,,75,high,VERIFY,,,,,,,,,telephone_chain
+in_the_wild,27838,,,1,,,,4,,,0.9999,0.9999,,-0.0128,been subject to historical change consequences upon the change in history.,,75,high,VERIFY,,,,,,,,,telephone_chain
+in_the_wild,27838,,,1,,,,1,,,0.0203,0.0203,,-0.0124,Our property relations in the past have continually been subject to him.,,26,low,ALLOW,,,,,,,,,gain_minus_20db
+in_the_wild,27838,,,1,,,,2,,,0.0136,0.0136,,0.0389,in the past have continually been subject to historical change.,,25,low,ALLOW,,,,,,,,,gain_minus_20db
+in_the_wild,27838,,,1,,,,3,,,0.0132,0.0132,,0.0574,,,24,low,ALLOW,,,,,,,,,gain_minus_20db
+in_the_wild,27838,,,1,,,,4,,,0.0095,0.0095,,0.0604,,,24,low,ALLOW,,,,,,,,,gain_minus_20db
+in_the_wild,27838,,,1,,,,1,,,1.0,1.0,,-0.0268,Our property relations in the past have continually been subject to.,,75,high,VERIFY,,,,,,,,,gain_plus_6db
+in_the_wild,27838,,,1,,,,2,,,1.0,1.0,,0.0242,in the past have continually been subject to historical change.,,74,high,VERIFY,,,,,,,,,gain_plus_6db
+in_the_wild,27838,,,1,,,,3,,,1.0,1.0,,0.048,have continually been subject to historical change consequently.,,74,high,VERIFY,,,,,,,,,gain_plus_6db
+in_the_wild,27838,,,1,,,,4,,,1.0,1.0,,0.0514,"been subject to historical change, consequently changing his story.",,74,high,VERIFY,,,,,,,,,gain_plus_6db
+in_the_wild,27838,,,1,,,,1,,,0.9997,0.9997,,-0.0248,Our property relations in the past have continually been subject to.,,75,high,VERIFY,,,,,,,,,clipping
+in_the_wild,27838,,,1,,,,2,,,1.0,1.0,,0.0253,in the past have continually been subject to historical change.,,74,high,VERIFY,,,,,,,,,clipping
+in_the_wild,27838,,,1,,,,3,,,0.9999,0.9999,,0.0485,have continually been subject to historical change consequently.,,74,high,VERIFY,,,,,,,,,clipping
+in_the_wild,27838,,,1,,,,4,,,0.9997,0.9997,,0.0527,"been subject to historical change, consequently changing his story.",,74,high,VERIFY,,,,,,,,,clipping
+in_the_wild,27838,,,1,,,,1,,,0.9999,0.9999,,0.0025,Our property relations in the past have continually been subjected.,,75,high,VERIFY,,,,,,,,,reverb_300ms
+in_the_wild,27838,,,1,,,,2,,,0.9999,0.9999,,0.0649,in the past have continually been subject to historical change.,,73,high,VERIFY,,,,,,,,,reverb_300ms
+in_the_wild,27838,,,1,,,,3,,,0.9994,0.9994,,0.0455,,,74,high,VERIFY,,,,,,,,,reverb_300ms
+in_the_wild,27838,,,1,,,,4,,,0.9987,0.9987,,0.0565,"been subject to historical change, consequently, to understand the changing history.",,74,high,VERIFY,,,,,,,,,reverb_300ms
+in_the_wild,27838,,,1,,,,1,,,0.9998,0.9998,,-0.0253,Our property relations in the past have continually been subject to.,,75,high,VERIFY,,,,,,,,,packet_loss_2pct
+in_the_wild,27838,,,1,,,,2,,,1.0,1.0,,0.0311,in the past have continually been subject to historical change.,,74,high,VERIFY,,,,,,,,,packet_loss_2pct
+in_the_wild,27838,,,1,,,,3,,,0.9999,0.9999,,0.0524,have continually been subject to historical change consequently.,,74,high,VERIFY,,,,,,,,,packet_loss_2pct
+in_the_wild,27838,,,1,,,,4,,,0.9999,0.9999,,0.0615,"been subject to historical change, consequently changing his story.",,73,high,VERIFY,,,,,,,,,packet_loss_2pct
+in_the_wild,27838,,,1,,,,1,,,0.9812,0.9812,,-0.0059,Our property relations in the past have continually been subject to.,,74,high,VERIFY,,,,,,,,,packet_loss_5pct
+in_the_wild,27838,,,1,,,,2,,,0.999,0.999,,0.0444,in the past have continually been subject to historical change.,,74,high,VERIFY,,,,,,,,,packet_loss_5pct
+in_the_wild,27838,,,1,,,,3,,,0.9968,0.9968,,0.0607,have continually been subject to historical change consequently.,,73,high,VERIFY,,,,,,,,,packet_loss_5pct
+in_the_wild,27838,,,1,,,,4,,,0.9993,0.9993,,0.0893,been subject to historical change consequently change in historical.,,73,high,VERIFY,,,,,,,,,packet_loss_5pct
+in_the_wild,28510,/Users/shriyansh/Desktop/voiceshield/data/external/InTheWild/release_in_the_wild/28510.wav,Bernie Sanders,1,spoof,in_the_wild_collected,none,1,0.0,4.04,0.9506,0.9506,0.701,0.4193,"that he receives his wages in cash, then he is set upon by the other portion.",,62,suspicious,VERIFY,challenge,voice_authenticity_anomaly;speaker_identity_mismatch,270.34,80.52,541.58,0.05,0.03,892.53,clean
+in_the_wild,28510,/Users/shriyansh/Desktop/voiceshield/data/external/InTheWild/release_in_the_wild/28510.wav,Bernie Sanders,1,spoof,in_the_wild_collected,none,2,1.0,5.04,0.9955,0.9955,0.745,0.4171,"wages in cash, then he is set upon by the other portions of the Borschwase.",,64,suspicious,VERIFY,challenge,voice_authenticity_anomaly;speaker_identity_mismatch,266.95,84.56,545.23,0.06,0.03,896.84,clean
+in_the_wild,28510,/Users/shriyansh/Desktop/voiceshield/data/external/InTheWild/release_in_the_wild/28510.wav,Bernie Sanders,1,spoof,in_the_wild_collected,none,3,2.0,6.04,0.9588,0.9588,0.709,0.4267,"Then he is set upon by the other portions of the Borshwasi, the landlady.",,62,suspicious,VERIFY,challenge,voice_authenticity_anomaly;speaker_identity_mismatch,274.31,77.33,549.1,0.05,0.03,900.83,clean
+in_the_wild,28510,/Users/shriyansh/Desktop/voiceshield/data/external/InTheWild/release_in_the_wild/28510.wav,Bernie Sanders,1,spoof,in_the_wild_collected,none,4,3.0,7.04,0.989,0.989,0.739,0.3998,"by the other portions of the Borshwasi, the landlord, the Shopeepa of the Pana.",,64,suspicious,VERIFY,challenge,voice_authenticity_anomaly;speaker_identity_mismatch,268.56,82.92,1004.21,0.05,0.03,1355.78,clean
+in_the_wild,28510,,,1,,,,1,,,0.9521,0.9521,,0.3988,that he receives his wages in cash. Then he is set upon by the other portion.,,63,suspicious,VERIFY,,,,,,,,,noise_white_20db
+in_the_wild,28510,,,1,,,,2,,,0.9885,0.9885,,0.3717,wages and cash. And he is set upon by the other portions of the Bush-Losses.,,65,high,VERIFY,,,,,,,,,noise_white_20db
+in_the_wild,28510,,,1,,,,3,,,0.9581,0.9581,,0.3344,"Then he is set upon by the other portions of the bush, and he is set upon by the other portions of the bush.",,65,high,VERIFY,,,,,,,,,noise_white_20db
+in_the_wild,28510,,,1,,,,4,,,0.9861,0.9861,,0.3228,"by the other portions of the Borshwase, the landlord, the Shepaper, the public.",,66,high,VERIFY,,,,,,,,,noise_white_20db
+in_the_wild,28510,,,1,,,,1,,,0.9931,0.9931,,0.2865,"then he receives his wages in cash, then he is settled on by the other portion.",,95,critical,HOLD,,,,,,,,,noise_white_10db
+in_the_wild,28510,,,1,,,,2,,,0.995,0.995,,0.2556,wages and cash. And you settle upon by the other portions of the portion of the portion of the portion of the portion.,,96,critical,HOLD,,,,,,,,,noise_white_10db
+in_the_wild,28510,,,1,,,,3,,,0.9916,0.9916,,0.232,"And you set up on by the other portions of the bush, you'll see the lamb will",,97,critical,HOLD,,,,,,,,,noise_white_10db
+in_the_wild,28510,,,1,,,,4,,,0.9944,0.9944,,0.3089,"on by the other portions of the bush, let's see, the landlord, the ship people to come.",,94,critical,HOLD,,,,,,,,,noise_white_10db
+in_the_wild,28510,,,1,,,,1,,,0.9982,0.9982,,0.2558,then the cheese is grated in half and you set up on by the other portion.,,69,high,VERIFY,,,,,,,,,noise_white_5db
+in_the_wild,28510,,,1,,,,2,,,0.9963,0.9963,,0.223,and you set up on by the other portions of the water or sea.,,69,high,VERIFY,,,,,,,,,noise_white_5db
+in_the_wild,28510,,,1,,,,3,,,0.994,0.994,,0.218,"And you set up on by the other portions of the water, you'll see the land there.",,69,high,VERIFY,,,,,,,,,noise_white_5db
+in_the_wild,28510,,,1,,,,4,,,0.9969,0.9969,,0.3115,on by the other portions of the grocery. The landlord will be sure people will come.,,67,high,VERIFY,,,,,,,,,noise_white_5db
+in_the_wild,28510,,,1,,,,1,,,0.9991,0.9991,,0.2281,and the trees will break into them. And the shadow pond will break into them.,,69,high,VERIFY,,,,,,,,,noise_white_0db
+in_the_wild,28510,,,1,,,,2,,,0.9993,0.9993,,0.1921,このようなカメラを使っているのが、 ご視聴ありがとうございました。,,70,high,VERIFY,,,,,,,,,noise_white_0db
+in_the_wild,28510,,,1,,,,3,,,0.9975,0.9975,,0.1762,그리고 체로 편한다는 포신부터 고맙지 마요네즈.,,70,high,VERIFY,,,,,,,,,noise_white_0db
+in_the_wild,28510,,,1,,,,4,,,0.9985,0.9985,,0.2579,ve bir şey var. Bu ne yapmaya başladı? Bu ne yapmaya başladı? Bu ne yapmaya başladı?,,68,high,VERIFY,,,,,,,,,noise_white_0db
+in_the_wild,28510,,,1,,,,1,,,0.9813,0.9813,,0.4114,"that he receives his wages in cash, and he is set upon by the other portion.",,64,suspicious,VERIFY,,,,,,,,,noise_babble_10db
+in_the_wild,28510,,,1,,,,2,,,0.9695,0.9695,,0.3885,wages and cash. And he is set upon by the other portions of the water velocity.,,64,suspicious,VERIFY,,,,,,,,,noise_babble_10db
+in_the_wild,28510,,,1,,,,3,,,0.9759,0.9759,,0.3274,And he set up on by the other portions of the grocery. The lamb was...,,66,high,VERIFY,,,,,,,,,noise_babble_10db
+in_the_wild,28510,,,1,,,,4,,,0.9714,0.9714,,0.3744,"on by the other portions of the grocery, the landlord, the shupiper, the",,64,suspicious,VERIFY,,,,,,,,,noise_babble_10db
+in_the_wild,28510,,,1,,,,1,,,0.9965,0.9965,,0.3608,that he receives his wages and cash. Then he is set upon by the other portion.,,66,high,VERIFY,,,,,,,,,noise_pink_10db
+in_the_wild,28510,,,1,,,,2,,,0.9974,0.9974,,0.3381,wages and cash. And he is set upon by the other portions of the washlessness.,,66,high,VERIFY,,,,,,,,,noise_pink_10db
+in_the_wild,28510,,,1,,,,3,,,0.9942,0.9942,,0.2893,"And he set up on by the other portions of the bush, let's see. The lamb will be there.",,67,high,VERIFY,,,,,,,,,noise_pink_10db
+in_the_wild,28510,,,1,,,,4,,,0.9982,0.9982,,0.281,"on by the other portions of the bush, let's see the landlord, the shipkeeper",,68,high,VERIFY,,,,,,,,,noise_pink_10db
+in_the_wild,28510,,,1,,,,1,,,0.9969,0.9969,,0.2587,"that he receives his wages in cash, then he is set upon by the other portion.",,68,high,VERIFY,,,,,,,,,resample_8k
+in_the_wild,28510,,,1,,,,2,,,0.9993,0.9993,,0.2547,"wages in cash, then he is set upon by the other portions of the Borshwase",,69,high,VERIFY,,,,,,,,,resample_8k
+in_the_wild,28510,,,1,,,,3,,,0.9884,0.9884,,0.2876,"Then he is set upon by the other portions of the Borshwase, the landlady.",,67,high,VERIFY,,,,,,,,,resample_8k
+in_the_wild,28510,,,1,,,,4,,,0.9991,0.9991,,0.2935,"by the other portions of the Borshwase, the landlord, the Shrippi of the Pana.",,68,high,VERIFY,,,,,,,,,resample_8k
+in_the_wild,28510,,,1,,,,1,,,0.9923,0.9923,,0.2978,"that he receives his wages in cash, then he is set upon by the other portion.",,67,high,VERIFY,,,,,,,,,lowpass_4k
+in_the_wild,28510,,,1,,,,2,,,0.9992,0.9992,,0.3067,"wages in cash, then he is set upon by the other portions of the Borshwase.",,67,high,VERIFY,,,,,,,,,lowpass_4k
+in_the_wild,28510,,,1,,,,3,,,0.9749,0.9749,,0.3412,"Then he is set upon by the other portions of the Borshwase, the landlady.",,65,high,VERIFY,,,,,,,,,lowpass_4k
+in_the_wild,28510,,,1,,,,4,,,0.9985,0.9985,,0.3534,"by the other portions of the Borshwase, the landlord, the Shrippa of the Pana.",,66,high,VERIFY,,,,,,,,,lowpass_4k
+in_the_wild,28510,,,1,,,,1,,,0.9956,0.9956,,0.2807,"that he receives his wages in cash, then he is set upon by the other portion.",,68,high,VERIFY,,,,,,,,,lowpass_3k4
+in_the_wild,28510,,,1,,,,2,,,0.9996,0.9996,,0.2789,"wages in cash, then he is set upon by the other portions of the Borshwase.",,68,high,VERIFY,,,,,,,,,lowpass_3k4
+in_the_wild,28510,,,1,,,,3,,,0.9816,0.9816,,0.3168,"Then he is set upon by the other portions of the Borshwase, the landlady.",,66,high,VERIFY,,,,,,,,,lowpass_3k4
+in_the_wild,28510,,,1,,,,4,,,0.9993,0.9993,,0.3133,"by the other portions of the Borshwase, the landlord, the Shrippi, or the public.",,67,high,VERIFY,,,,,,,,,lowpass_3k4
+in_the_wild,28510,,,1,,,,1,,,0.9856,0.9856,,0.3039,"that he receives his wages in cash, then he is set upon by the other portion.",,67,high,VERIFY,,,,,,,,,telephone_band
+in_the_wild,28510,,,1,,,,2,,,0.9968,0.9968,,0.2804,"wages in cash, then he is set upon by the other portions of the washroom.",,68,high,VERIFY,,,,,,,,,telephone_band
+in_the_wild,28510,,,1,,,,3,,,0.9835,0.9835,,0.3299,"Then he is set upon by the other portions of the Borshwasi, the landlady.",,66,high,VERIFY,,,,,,,,,telephone_band
+in_the_wild,28510,,,1,,,,4,,,0.995,0.995,,0.349,"on by the other portions of the Borshwasi, the landlord, the Shri Peepa, the",,66,high,VERIFY,,,,,,,,,telephone_band
+in_the_wild,28510,,,1,,,,1,,,0.9565,0.9565,,0.3471,"that he receives his wages in cash, then he is set upon by the other portion.",,64,suspicious,VERIFY,,,,,,,,,mu_law
+in_the_wild,28510,,,1,,,,2,,,0.9954,0.9954,,0.3329,"wages in cash, then he is set upon by the other portions of the Borshwase.",,66,high,VERIFY,,,,,,,,,mu_law
+in_the_wild,28510,,,1,,,,3,,,0.9661,0.9661,,0.3377,"Then he is set upon by the other portions of the Gorshwase, the landlady.",,65,high,VERIFY,,,,,,,,,mu_law
+in_the_wild,28510,,,1,,,,4,,,0.9886,0.9886,,0.3114,"by the other portions of the Gorshwase, the landlord, the Shopeepa, the Pahas.",,67,high,VERIFY,,,,,,,,,mu_law
+in_the_wild,28510,,,1,,,,1,,,0.985,0.985,,0.2367,"that he receives his wages in cash, then he is settled upon by the other portion.",,96,critical,HOLD,,,,,,,,,telephone_chain
+in_the_wild,28510,,,1,,,,2,,,0.9974,0.9974,,0.2055,"wages in cash, then he is set upon by the other portions of the wash-wrestling.",,98,critical,HOLD,,,,,,,,,telephone_chain
+in_the_wild,28510,,,1,,,,3,,,0.9843,0.9843,,0.2536,"Then he is set upon by the other portions of the Bush, will see the landlady.",,95,critical,HOLD,,,,,,,,,telephone_chain
+in_the_wild,28510,,,1,,,,4,,,0.996,0.996,,0.2481,"by the other portions of the Borshwasi, the landlord, the Shrippi, or the Pima.",,96,critical,HOLD,,,,,,,,,telephone_chain
+in_the_wild,28510,,,1,,,,1,,,0.2123,0.2123,,0.4094,"that he receives his wages in cash, then he is set upon by the other portion.",,25,low,ALLOW,,,,,,,,,gain_minus_20db
+in_the_wild,28510,,,1,,,,2,,,0.0141,0.0141,,0.4089,"wages in cash. Then he is set upon by the other portions of the Bush, we'll see.",,15,insufficient_evidence,ALLOW,,,,,,,,,gain_minus_20db
+in_the_wild,28510,,,1,,,,3,,,0.1861,0.1861,,0.4202,"Then he is set upon by the other portions of the bush, we'll see the landlady.",,24,low,ALLOW,,,,,,,,,gain_minus_20db
+in_the_wild,28510,,,1,,,,4,,,0.0158,0.0158,,0.3975,"by the other portions of the Borshwasi, the landlord, the Shri people of the Pau.",,16,insufficient_evidence,ALLOW,,,,,,,,,gain_minus_20db
+in_the_wild,28510,,,1,,,,1,,,0.9995,0.9995,,0.4189,"that he receives his wages in cash, then he is set upon by the other portion.",,65,high,VERIFY,,,,,,,,,gain_plus_6db
+in_the_wild,28510,,,1,,,,2,,,0.9999,0.9999,,0.4169,"wages in cash, then he is set upon by the other portions of the Borshwase.",,65,high,VERIFY,,,,,,,,,gain_plus_6db
+in_the_wild,28510,,,1,,,,3,,,0.9997,0.9997,,0.4259,"Then he is set upon by the other portions of the Borshwasi, the landlady.",,64,suspicious,VERIFY,,,,,,,,,gain_plus_6db
+in_the_wild,28510,,,1,,,,4,,,0.9999,0.9999,,0.3995,"by the other portions of the Borshwasi, the landlord, the Shri Pippa, the Pippa.",,65,high,VERIFY,,,,,,,,,gain_plus_6db
+in_the_wild,28510,,,1,,,,1,,,0.951,0.951,,0.4224,"that he receives his wages in cash, then he is set upon by the other portion.",,62,suspicious,VERIFY,,,,,,,,,clipping
+in_the_wild,28510,,,1,,,,2,,,0.9954,0.9954,,0.4201,"wages in cash, then he is set upon by the other portions of the Borshwase.",,64,suspicious,VERIFY,,,,,,,,,clipping
+in_the_wild,28510,,,1,,,,3,,,0.9567,0.9567,,0.4295,"Then he is set upon by the other portions of the Borshwasi, the landlady.",,62,suspicious,VERIFY,,,,,,,,,clipping
+in_the_wild,28510,,,1,,,,4,,,0.989,0.989,,0.3998,"by the other portions of the Borshwasee, the landlord, the Shepaper, the",,64,suspicious,VERIFY,,,,,,,,,clipping
+in_the_wild,28510,,,1,,,,1,,,0.9994,0.9994,,0.4473,"that he receives his wages in cash, that he is settled upon by the other portion.",,90,critical,HOLD,,,,,,,,,reverb_300ms
+in_the_wild,28510,,,1,,,,2,,,0.9996,0.9996,,0.4068,"wages and cash, then he is settled upon by the other portions of the Bush wants to the Bush wants to be settled upon by the other portions of the Bush wants to be settled",,91,critical,HOLD,,,,,,,,,reverb_300ms
+in_the_wild,28510,,,1,,,,3,,,0.9995,0.9995,,0.3963,"Then he is set upon by the other portions of the bush, let's see the landlord.",,92,critical,HOLD,,,,,,,,,reverb_300ms
+in_the_wild,28510,,,1,,,,4,,,0.9997,0.9997,,0.4298,"by the other portions of the bush, let's see the landlord, the shipkeeper, the",,91,critical,HOLD,,,,,,,,,reverb_300ms
+in_the_wild,28510,,,1,,,,1,,,0.9735,0.9735,,0.4081,that he receives his wages in cash. Then he is set upon by the other portion.,,63,suspicious,VERIFY,,,,,,,,,packet_loss_2pct
+in_the_wild,28510,,,1,,,,2,,,0.9951,0.9951,,0.4097,"wages in cash, then he is set upon by the other portions of the Borshwase.",,65,high,VERIFY,,,,,,,,,packet_loss_2pct
+in_the_wild,28510,,,1,,,,3,,,0.9543,0.9543,,0.4254,"Then he is set upon by the other portions of the bush, we'll see the landlady.",,62,suspicious,VERIFY,,,,,,,,,packet_loss_2pct
+in_the_wild,28510,,,1,,,,4,,,0.9998,0.9998,,0.4004,"upon by the other portions of the Borshwasi, the landlord, the Shri Pippa, the",,65,high,VERIFY,,,,,,,,,packet_loss_2pct
+in_the_wild,28510,,,1,,,,1,,,0.9735,0.9735,,0.4081,"that he receives his wages in cash, then he is set upon by the other portion.",,63,suspicious,VERIFY,,,,,,,,,packet_loss_5pct
+in_the_wild,28510,,,1,,,,2,,,0.9972,0.9972,,0.4134,"wages in cash, then he is set upon by the other portions of the Bush-Welssi.",,65,high,VERIFY,,,,,,,,,packet_loss_5pct
+in_the_wild,28510,,,1,,,,3,,,0.9656,0.9656,,0.4244,"Then he is set upon by the other portions of the bush, we'll see the landlady.",,63,suspicious,VERIFY,,,,,,,,,packet_loss_5pct
+in_the_wild,28510,,,1,,,,4,,,0.9999,0.9999,,0.3926,"upon by the other portions of the Bush-Welsey, the landlord, the shepaper of the",,65,high,VERIFY,,,,,,,,,packet_loss_5pct
+in_the_wild,28515,/Users/shriyansh/Desktop/voiceshield/data/external/InTheWild/release_in_the_wild/28515.wav,Milton Friedman,1,spoof,in_the_wild_collected,none,1,0.0,4.04,0.9996,0.9996,0.75,0.3777,"when the angels name one or, when the angels name one or.",,66,high,VERIFY,verify,voice_authenticity_anomaly;speaker_identity_mismatch,295.62,88.26,553.13,0.05,0.03,937.1,clean
+in_the_wild,28515,,,1,,,,1,,,0.9784,0.9784,,0.3353,From the end of Naimuanoi. From the end of Naimuanoi.,,66,high,VERIFY,,,,,,,,,noise_white_20db
+in_the_wild,28515,,,1,,,,1,,,0.9744,0.9744,,0.1915,"O milyen yok, milyen var. O milyen yok, milyen var.",,69,high,VERIFY,,,,,,,,,noise_white_10db
+in_the_wild,28515,,,1,,,,1,,,0.9941,0.9941,,0.1752,"...omu yan yok, yan yok, yan yok, yan yok, yan yok, yan yok.",,70,high,VERIFY,,,,,,,,,noise_white_5db
+in_the_wild,28515,,,1,,,,1,,,0.9984,0.9984,,0.1948,And you end your pain on me. And you end your pain on me.,,70,high,VERIFY,,,,,,,,,noise_white_0db
+in_the_wild,28515,,,1,,,,1,,,0.945,0.945,,0.2353,From the end of the name one. From the end of the name one.,,66,high,VERIFY,,,,,,,,,noise_babble_10db
+in_the_wild,28515,,,1,,,,1,,,0.9964,0.9964,,0.2443,four. Four. Four. Four.,,69,high,VERIFY,,,,,,,,,noise_pink_10db
+in_the_wild,28515,,,1,,,,1,,,0.9996,0.9996,,0.3372,when the angels name one or when the angels name one or,,67,high,VERIFY,,,,,,,,,resample_8k
+in_the_wild,28515,,,1,,,,1,,,0.9998,0.9998,,0.3345,when the angels name one or when the angels name one or,,67,high,VERIFY,,,,,,,,,lowpass_4k
+in_the_wild,28515,,,1,,,,1,,,0.9997,0.9997,,0.3359,when the annuals name one or when the annuals name one or,,67,high,VERIFY,,,,,,,,,lowpass_3k4
+in_the_wild,28515,,,1,,,,1,,,0.9979,0.9979,,0.3018,when the angels name one or when the angels name one or,,67,high,VERIFY,,,,,,,,,telephone_band
+in_the_wild,28515,,,1,,,,1,,,0.9996,0.9996,,0.3635,when the angels name one or when the angels name one or,,66,high,VERIFY,,,,,,,,,mu_law
+in_the_wild,28515,,,1,,,,1,,,0.9978,0.9978,,0.3804,"when the annualt name or nor, when the annualt name or nor.",,65,high,VERIFY,,,,,,,,,telephone_chain
+in_the_wild,28515,,,1,,,,1,,,0.0112,0.0112,,0.419,"When the angels name one or, when the angels name one or.",,15,insufficient_evidence,ALLOW,,,,,,,,,gain_minus_20db
+in_the_wild,28515,,,1,,,,1,,,1.0,1.0,,0.3778,when the angels name one or when the angels name one or,,66,high,VERIFY,,,,,,,,,gain_plus_6db
+in_the_wild,28515,,,1,,,,1,,,0.9996,0.9996,,0.3777,"when the angels name one or, when the angels name one or.",,66,high,VERIFY,,,,,,,,,clipping
+in_the_wild,28515,,,1,,,,1,,,1.0,1.0,,0.2563,From the end of the name one order. From the end of the name one order.,,69,high,VERIFY,,,,,,,,,reverb_300ms
+in_the_wild,28515,,,1,,,,1,,,0.8484,0.8484,,0.353,will the angels name one or. Will the angels name one or?,,59,suspicious,VERIFY,,,,,,,,,packet_loss_2pct
+in_the_wild,28515,,,1,,,,1,,,0.8493,0.8493,,0.3546,will the angels name one or will the angels name one or.,,59,suspicious,VERIFY,,,,,,,,,packet_loss_5pct
+in_the_wild,30099,/Users/shriyansh/Desktop/voiceshield/data/external/InTheWild/release_in_the_wild/30099.wav,Donald Trump,0,bonafide,none,none,1,0.0,4.04,0.9977,0.9977,0.748,0.4485,The results of the individual swing states must be over,,64,suspicious,VERIFY,challenge,voice_authenticity_anomaly;speaker_identity_mismatch,273.31,82.5,493.98,0.05,0.03,849.88,clean
+in_the_wild,30099,,,0,,,,1,,,0.9976,0.9976,,0.4126,The results of the individual swing states must be over.,,65,high,VERIFY,,,,,,,,,noise_white_20db
+in_the_wild,30099,,,0,,,,1,,,0.9964,0.9964,,0.324,the results of the individual swing states must be,,67,high,VERIFY,,,,,,,,,noise_white_10db
+in_the_wild,30099,,,0,,,,1,,,0.9988,0.9988,,0.2391,the results of the individual swing states must be,,69,high,VERIFY,,,,,,,,,noise_white_5db
+in_the_wild,30099,,,0,,,,1,,,0.9994,0.9994,,0.1203,the results of the individual swing stage must be,,72,high,VERIFY,,,,,,,,,noise_white_0db
+in_the_wild,30099,,,0,,,,1,,,0.9796,0.9796,,0.4205,the results of the individual swing states must be,,63,suspicious,VERIFY,,,,,,,,,noise_babble_10db
+in_the_wild,30099,,,0,,,,1,,,0.9908,0.9908,,0.3857,the results of the individual swing states must be over.,,65,high,VERIFY,,,,,,,,,noise_pink_10db
+in_the_wild,30099,,,0,,,,1,,,0.9993,0.9993,,0.2822,The results of the individual swing states must be,,68,high,VERIFY,,,,,,,,,resample_8k
+in_the_wild,30099,,,0,,,,1,,,0.9992,0.9992,,0.3868,The results of the individual swing states must be,,65,high,VERIFY,,,,,,,,,lowpass_4k
+in_the_wild,30099,,,0,,,,1,,,0.9997,0.9997,,0.3711,The results of the individual swing states must be,,66,high,VERIFY,,,,,,,,,lowpass_3k4
+in_the_wild,30099,,,0,,,,1,,,0.999,0.999,,0.3106,The results of the individual swing states must be,,67,high,VERIFY,,,,,,,,,telephone_band
+in_the_wild,30099,,,0,,,,1,,,0.9976,0.9976,,0.4672,The results of the individual swing states must be over,,63,suspicious,VERIFY,,,,,,,,,mu_law
+in_the_wild,30099,,,0,,,,1,,,0.9992,0.9992,,0.1921,The results of the individual swing states must be open.,,70,high,VERIFY,,,,,,,,,telephone_chain
+in_the_wild,30099,,,0,,,,1,,,0.0124,0.0124,,0.4441,,,15,insufficient_evidence,ALLOW,,,,,,,,,gain_minus_20db
+in_the_wild,30099,,,0,,,,1,,,0.9999,0.9999,,0.4479,The results of the individual swing states must be over,,64,suspicious,VERIFY,,,,,,,,,gain_plus_6db
+in_the_wild,30099,,,0,,,,1,,,0.9977,0.9977,,0.4485,The results of the individual swing states must be over,,64,suspicious,VERIFY,,,,,,,,,clipping
+in_the_wild,30099,,,0,,,,1,,,0.9993,0.9993,,0.3948,The results of the individual swing states must be over.,,65,high,VERIFY,,,,,,,,,reverb_300ms
+in_the_wild,30099,,,0,,,,1,,,0.9997,0.9997,,0.4522,The results of the individual swing states must be over,,64,suspicious,VERIFY,,,,,,,,,packet_loss_2pct
+in_the_wild,30099,,,0,,,,1,,,0.9828,0.9828,,0.3866,the results of the individual swing states must be,,64,suspicious,VERIFY,,,,,,,,,packet_loss_5pct
+in_the_wild,31235,/Users/shriyansh/Desktop/voiceshield/data/external/InTheWild/release_in_the_wild/31235.wav,Barack Obama,0,bonafide,none,none,1,0.0,4.04,0.1031,0.1031,0.647,0.3373,"not because of policies or programs, but not because of policies or programs, but not because of",,22,low,ALLOW,allow,speaker_identity_mismatch,433.83,130.07,753.3,0.06,0.03,1317.3,clean
+in_the_wild,31235,,,0,,,,1,,,0.0595,0.0595,,0.2619,"not because of policies or programs, but not because of the",,21,low,ALLOW,,,,,,,,,noise_white_20db
+in_the_wild,31235,,,0,,,,1,,,0.1715,0.1715,,0.1376,not because of policies or programs but not because of the,,30,low,ALLOW,,,,,,,,,noise_white_10db
+in_the_wild,31235,,,0,,,,1,,,0.9884,0.9884,,0.0387,"not because of policies or programs, but not because of the",,73,high,VERIFY,,,,,,,,,noise_white_5db
+in_the_wild,31235,,,0,,,,1,,,0.998,0.998,,0.043,"Not because of all of these programs, but not because of all of these programs.",,74,high,VERIFY,,,,,,,,,noise_white_0db
+in_the_wild,31235,,,0,,,,1,,,0.1466,0.1466,,0.2548,"not because of policies or programs, but not because of policies or programs, but not because of the",,26,low,ALLOW,,,,,,,,,noise_babble_10db
+in_the_wild,31235,,,0,,,,1,,,0.7931,0.7931,,0.2387,not because of policies or programs but not because of the,,59,suspicious,VERIFY,,,,,,,,,noise_pink_10db
+in_the_wild,31235,,,0,,,,1,,,0.1801,0.1801,,0.1701,not because of policies or programs but not because of policies or programs but not because of,,30,low,ALLOW,,,,,,,,,resample_8k
+in_the_wild,31235,,,0,,,,1,,,0.1939,0.1939,,0.2488,"not because of policies or programs, but not because of policies or programs, but not because of the",,28,low,ALLOW,,,,,,,,,lowpass_4k
+in_the_wild,31235,,,0,,,,1,,,0.8041,0.8041,,0.2384,"not because of policies or programs, but not because of policies or programs, but not because of",,59,suspicious,VERIFY,,,,,,,,,lowpass_3k4
+in_the_wild,31235,,,0,,,,1,,,0.9941,0.9941,,0.2482,"not because of policies or programs, but not because of the",,68,high,VERIFY,,,,,,,,,telephone_band
+in_the_wild,31235,,,0,,,,1,,,0.1188,0.1188,,0.2971,"not because of policies or programs, but not because of policies or programs, but not because of",,24,low,ALLOW,,,,,,,,,mu_law
+in_the_wild,31235,,,0,,,,1,,,0.9928,0.9928,,0.1367,"not because of policies or programs, but not because of the",,71,high,VERIFY,,,,,,,,,telephone_chain
+in_the_wild,31235,,,0,,,,1,,,0.0159,0.0159,,0.3386,,,17,insufficient_evidence,ALLOW,,,,,,,,,gain_minus_20db
+in_the_wild,31235,,,0,,,,1,,,0.017,0.017,,0.3375,"not because of policies or programs, but not because of policies or programs, but not because of",,17,insufficient_evidence,ALLOW,,,,,,,,,gain_plus_6db
+in_the_wild,31235,,,0,,,,1,,,0.1031,0.1031,,0.3373,"not because of policies or programs, but not because of policies or programs, but not because of",,22,low,ALLOW,,,,,,,,,clipping
+in_the_wild,31235,,,0,,,,1,,,0.9981,0.9981,,0.239,"not because of policies or programs, but not because of the",,69,high,VERIFY,,,,,,,,,reverb_300ms
+in_the_wild,31235,,,0,,,,1,,,0.071,0.071,,0.3317,"not because of policy for programs, but not because...",,20,low,ALLOW,,,,,,,,,packet_loss_2pct
+in_the_wild,31235,,,0,,,,1,,,0.192,0.192,,0.3178,Not because of policies or programs but not because of policies or programs but not because of,,27,low,ALLOW,,,,,,,,,packet_loss_5pct
+in_the_wild,6279,/Users/shriyansh/Desktop/voiceshield/data/external/InTheWild/release_in_the_wild/6279.wav,Barack Obama,1,spoof,in_the_wild_collected,none,1,0.0,4.04,0.9997,0.9997,0.75,0.3407,with not even a thought about the millions who put millions of American workers left behind.,,66,high,VERIFY,verify,voice_authenticity_anomaly;speaker_identity_mismatch,272.33,73.58,586.89,0.06,0.03,932.89,clean
+in_the_wild,6279,,,1,,,,1,,,0.9993,0.9993,,0.3289,would not even have thought about the millions or for millions of American workers left behind.,,67,high,VERIFY,,,,,,,,,noise_white_20db
+in_the_wild,6279,,,1,,,,1,,,0.9986,0.9986,,0.3023,would not even have thought about the millions or millions of American workers left behind.,,67,high,VERIFY,,,,,,,,,noise_white_10db
+in_the_wild,6279,,,1,,,,1,,,0.9986,0.9986,,0.2899,would not even have thought about millions or millions of American workers left behind.,,68,high,VERIFY,,,,,,,,,noise_white_5db
+in_the_wild,6279,,,1,,,,1,,,0.9985,0.9985,,0.275,You're not even a thought about knowing who can really use American Wilkes' left-back.,,68,high,VERIFY,,,,,,,,,noise_white_0db
+in_the_wild,6279,,,1,,,,1,,,0.9979,0.9979,,0.3732,would not even have thought about the millions of Americans who worked as left behind.,,66,high,VERIFY,,,,,,,,,noise_babble_10db
+in_the_wild,6279,,,1,,,,1,,,0.9984,0.9984,,0.319,would not even have thought about the millions or from millions of American workers left behind.,,67,high,VERIFY,,,,,,,,,noise_pink_10db
+in_the_wild,6279,,,1,,,,1,,,0.9997,0.9997,,0.3188,would not even have thought about the millions who put millions of American workers left behind.,,67,high,VERIFY,,,,,,,,,resample_8k
+in_the_wild,6279,,,1,,,,1,,,0.9997,0.9997,,0.344,would not even have thought about the millions who put millions of American workers left behind.,,66,high,VERIFY,,,,,,,,,lowpass_4k
+in_the_wild,6279,,,1,,,,1,,,0.9998,0.9998,,0.3342,would not even have thought about the millions who put millions of American workers left behind.,,67,high,VERIFY,,,,,,,,,lowpass_3k4
+in_the_wild,6279,,,1,,,,1,,,0.9999,0.9999,,0.3378,would not even have thought about the millions who put millions of American workers left behind.,,67,high,VERIFY,,,,,,,,,telephone_band
+in_the_wild,6279,,,1,,,,1,,,0.9997,0.9997,,0.3514,would not even have thought about the millions who put millions of American workers left behind.,,66,high,VERIFY,,,,,,,,,mu_law
+in_the_wild,6279,,,1,,,,1,,,0.9999,0.9999,,0.2759,would not even have thought about the millions who put millions of American workers left behind.,,68,high,VERIFY,,,,,,,,,telephone_chain
+in_the_wild,6279,,,1,,,,1,,,0.0147,0.0147,,0.3422,,,17,insufficient_evidence,ALLOW,,,,,,,,,gain_minus_20db
+in_the_wild,6279,,,1,,,,1,,,0.9999,0.9999,,0.3403,would not even have thought about the millions who put millions of American workers left behind.,,66,high,VERIFY,,,,,,,,,gain_plus_6db
+in_the_wild,6279,,,1,,,,1,,,0.9997,0.9997,,0.3407,with not even a thought about the millions who put millions of American workers left behind.,,66,high,VERIFY,,,,,,,,,clipping
+in_the_wild,6279,,,1,,,,1,,,0.9999,0.9999,,0.309,We're not even a phone about millions or per millions of American workers left behind.,,67,high,VERIFY,,,,,,,,,reverb_300ms
+in_the_wild,6279,,,1,,,,1,,,0.9995,0.9995,,0.3333,with not even a thought about the millions who put millions of American workers left behind.,,67,high,VERIFY,,,,,,,,,packet_loss_2pct
+in_the_wild,6279,,,1,,,,1,,,0.9918,0.9918,,0.3394,with not even a thought about the millions or per millions of American workers left behind.,,66,high,VERIFY,,,,,,,,,packet_loss_5pct

@@ -1,0 +1,90 @@
+{
+  "metadata": {
+    "timestamp": "2026-09-13 10:55:35 UTC",
+    "windows_benchmarked": 50,
+    "window_duration_seconds": 4.038,
+    "hop_duration_seconds": 1.0,
+    "device": "auto",
+    "ml_pool_workers": 2,
+    "total_benchmark_time_seconds": 27.4
+  },
+  "latencies": {
+    "aasist_authenticity": {
+      "count": 50,
+      "mean_ms": 364.7,
+      "std_ms": 34.73,
+      "min_ms": 257.8,
+      "p50_ms": 363.94,
+      "p90_ms": 400.4,
+      "p95_ms": 421.81,
+      "p99_ms": 440.9,
+      "max_ms": 445.17
+    },
+    "ecapa_speaker_identity": {
+      "count": 50,
+      "mean_ms": 72.83,
+      "std_ms": 9.58,
+      "min_ms": 50.11,
+      "p50_ms": 69.91,
+      "p90_ms": 81.84,
+      "p95_ms": 87.54,
+      "p99_ms": 103.69,
+      "max_ms": 116.03
+    },
+    "faster_whisper_stt": {
+      "count": 50,
+      "mean_ms": 110.33,
+      "std_ms": 123.3,
+      "min_ms": 71.33,
+      "p50_ms": 76.7,
+      "p90_ms": 94.76,
+      "p95_ms": 324.12,
+      "p99_ms": 638.43,
+      "max_ms": 714.59
+    },
+    "context_classifier": {
+      "count": 50,
+      "mean_ms": 0.01,
+      "std_ms": 0.02,
+      "min_ms": 0.0,
+      "p50_ms": 0.0,
+      "p90_ms": 0.0,
+      "p95_ms": 0.03,
+      "p99_ms": 0.07,
+      "max_ms": 0.09
+    },
+    "risk_engine_and_policy": {
+      "count": 50,
+      "mean_ms": 0.21,
+      "std_ms": 0.94,
+      "min_ms": 0.03,
+      "p50_ms": 0.06,
+      "p90_ms": 0.07,
+      "p95_ms": 0.32,
+      "p99_ms": 3.95,
+      "max_ms": 6.67
+    },
+    "end_to_end_window_turnaround": {
+      "count": 50,
+      "mean_ms": 548.09,
+      "std_ms": 114.54,
+      "min_ms": 413.35,
+      "p50_ms": 521.98,
+      "p90_ms": 577.92,
+      "p95_ms": 760.27,
+      "p99_ms": 1019.95,
+      "max_ms": 1145.0
+    }
+  },
+  "throughput": {
+    "windows_per_second": 1.82,
+    "real_time_factor_rtf": 0.136,
+    "hop_budget_utilization_pct": 54.8,
+    "hop_realtime_satisfied": true
+  },
+  "memory": {
+    "rss_start_mb": 59.98,
+    "rss_end_mb": 1159.16,
+    "rss_delta_mb": 1099.17
+  }
+}

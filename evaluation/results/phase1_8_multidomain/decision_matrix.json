@@ -1,0 +1,209 @@
+{
+  "metadata": {
+    "timestamp": "2026-09-13 12:27:05 UTC",
+    "total_files_evaluated": 1654,
+    "total_windows_emitted": 3659,
+    "total_eval_time_seconds": 3830.42,
+    "failed_files_count": 0,
+    "failed_files": []
+  },
+  "scorecard": {
+    "asvspoof2019la": {
+      "samples_total": 500,
+      "bonafide_count": 250,
+      "spoof_count": 250,
+      "windows_count": 559,
+      "decision_distribution": {
+        "ALLOW": 254,
+        "VERIFY": 245,
+        "HOLD": 1,
+        "BLOCK": 0,
+        "NO_WINDOW": 0
+      },
+      "authenticity_metrics": {
+        "eer_percent": 2.61,
+        "eer_threshold": 0.5783,
+        "roc_auc": 0.997,
+        "pr_auc": 0.9971,
+        "far_apcer_at_0_50": 2.41,
+        "frr_bpcer_at_0_50": 2.61,
+        "accuracy_at_0_50": 97.5
+      },
+      "ecapa_speaker_verification": {
+        "evaluated": true,
+        "mean_genuine_similarity": 0.6161,
+        "mean_clone_spoof_similarity": 0.4074,
+        "std_genuine_similarity": 0.1172
+      },
+      "policy_behavior": {
+        "policy_false_accept_rate_pct": 3.2,
+        "policy_false_reject_rate_pct": 0.0,
+        "policy_verify_rate_bona_pct": 1.6,
+        "policy_verify_rate_spoof_pct": 96.4
+      },
+      "time_to_detection_s": {
+        "mean": 0.0,
+        "median": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      }
+    },
+    "in_the_wild": {
+      "samples_total": 500,
+      "bonafide_count": 250,
+      "spoof_count": 250,
+      "windows_count": 978,
+      "decision_distribution": {
+        "ALLOW": 93,
+        "VERIFY": 401,
+        "HOLD": 6,
+        "BLOCK": 0,
+        "NO_WINDOW": 0
+      },
+      "authenticity_metrics": {
+        "eer_percent": 38.88,
+        "eer_threshold": 0.9961,
+        "roc_auc": 0.6562,
+        "pr_auc": 0.6967,
+        "far_apcer_at_0_50": 6.69,
+        "frr_bpcer_at_0_50": 82.12,
+        "accuracy_at_0_50": 60.53
+      },
+      "ecapa_speaker_verification": {
+        "evaluated": true,
+        "mean_genuine_similarity": 0.5716,
+        "mean_clone_spoof_similarity": 0.4855,
+        "std_genuine_similarity": 0.2314
+      },
+      "policy_behavior": {
+        "policy_false_accept_rate_pct": 10.4,
+        "policy_false_reject_rate_pct": 1.2,
+        "policy_verify_rate_bona_pct": 72.0,
+        "policy_verify_rate_spoof_pct": 88.4
+      },
+      "time_to_detection_s": {
+        "mean": 0.02,
+        "median": 0.0,
+        "min": 0.0,
+        "max": 2.0
+      }
+    },
+    "mlaad_tiny": {
+      "samples_total": 158,
+      "bonafide_count": 79,
+      "spoof_count": 79,
+      "windows_count": 584,
+      "decision_distribution": {
+        "ALLOW": 67,
+        "VERIFY": 90,
+        "HOLD": 1,
+        "BLOCK": 0,
+        "NO_WINDOW": 0
+      },
+      "authenticity_metrics": {
+        "eer_percent": 38.96,
+        "eer_threshold": 0.4216,
+        "roc_auc": 0.6471,
+        "pr_auc": 0.6976,
+        "far_apcer_at_0_50": 39.29,
+        "frr_bpcer_at_0_50": 38.04,
+        "accuracy_at_0_50": 61.3
+      },
+      "ecapa_speaker_verification": {
+        "evaluated": false,
+        "status": "N/A \u2014 speaker metadata insufficient or single-speaker corpus",
+        "reason": "Out-of-domain modern TTS. Speaker IDs absent -> ECAPA FMR/FNMR N/A."
+      },
+      "policy_behavior": {
+        "policy_false_accept_rate_pct": 32.91,
+        "policy_false_reject_rate_pct": 1.27,
+        "policy_verify_rate_bona_pct": 46.84,
+        "policy_verify_rate_spoof_pct": 67.09
+      },
+      "time_to_detection_s": {
+        "mean": 0.73,
+        "median": 0.0,
+        "min": 0.0,
+        "max": 10.0
+      }
+    },
+    "wavefake": {
+      "samples_total": 296,
+      "bonafide_count": 148,
+      "spoof_count": 148,
+      "windows_count": 915,
+      "decision_distribution": {
+        "ALLOW": 19,
+        "VERIFY": 271,
+        "HOLD": 6,
+        "BLOCK": 0,
+        "NO_WINDOW": 0
+      },
+      "authenticity_metrics": {
+        "eer_percent": 44.97,
+        "eer_threshold": 0.9897,
+        "roc_auc": 0.5859,
+        "pr_auc": 0.5912,
+        "far_apcer_at_0_50": 5.46,
+        "frr_bpcer_at_0_50": 91.25,
+        "accuracy_at_0_50": 51.69
+      },
+      "ecapa_speaker_verification": {
+        "evaluated": false,
+        "status": "N/A \u2014 speaker metadata insufficient or single-speaker corpus",
+        "reason": "WaveFake spoof paired with exact matching LJSpeech-1.1 utterances. Single speaker LJ."
+      },
+      "policy_behavior": {
+        "policy_false_accept_rate_pct": 5.41,
+        "policy_false_reject_rate_pct": 2.03,
+        "policy_verify_rate_bona_pct": 90.54,
+        "policy_verify_rate_spoof_pct": 92.57
+      },
+      "time_to_detection_s": {
+        "mean": 0.01,
+        "median": 0.0,
+        "min": 0.0,
+        "max": 1.0
+      }
+    },
+    "ljspeech": {
+      "samples_total": 200,
+      "bonafide_count": 200,
+      "spoof_count": 0,
+      "windows_count": 623,
+      "decision_distribution": {
+        "ALLOW": 15,
+        "VERIFY": 184,
+        "HOLD": 1,
+        "BLOCK": 0,
+        "NO_WINDOW": 0
+      },
+      "authenticity_metrics": {
+        "eer_percent": "N/A \u2014 single class or insufficient metadata",
+        "roc_auc": "N/A \u2014 single class or insufficient metadata",
+        "pr_auc": "N/A \u2014 single class or insufficient metadata",
+        "far_apcer_at_0_50": "N/A",
+        "frr_bpcer_at_0_50": 92.62,
+        "note": "Pure bona-fide reading speech baseline. EER/AUC N/A (single class). FMR N/A (single speaker)."
+      },
+      "ecapa_speaker_verification": {
+        "evaluated": false,
+        "status": "N/A \u2014 speaker metadata insufficient or single-speaker corpus",
+        "reason": "Pure bona-fide reading speech baseline. EER/AUC N/A (single class). FMR N/A (single speaker)."
+      },
+      "policy_behavior": {
+        "policy_false_accept_rate_pct": "N/A",
+        "policy_false_reject_rate_pct": 0.5,
+        "policy_verify_rate_bona_pct": 92.0,
+        "policy_verify_rate_spoof_pct": "N/A"
+      },
+      "time_to_detection_s": {
+        "mean": "N/A",
+        "median": "N/A",
+        "min": "N/A",
+        "max": "N/A"
+      }
+    }
+  },
+  "decision_distributions": {}
+}
