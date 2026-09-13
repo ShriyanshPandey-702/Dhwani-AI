@@ -1,0 +1,41 @@
+{
+  "model_version": "aasist-l-phase1-A-seed1337",
+  "checkpoint": "experiments/phase1_aasist/checkpoints/aasist-l-phase1-A-seed1337.pth",
+  "device": "cpu",
+  "streaming_contract": {
+    "sample_rate": 16000,
+    "input_samples": 64600,
+    "ANALYSIS_WINDOW_MS": 4038,
+    "ANALYSIS_HOP_MS": 1000,
+    "MIN_ANALYSIS_MS": 400,
+    "unchanged_from_baseline": true,
+    "output_schema_ok": true,
+    "loads_with_strict_true": true
+  },
+  "inference_ms": {
+    "mean": 301.7218062998836,
+    "p50": 273.7829170000623,
+    "p95": 437.38481219998005,
+    "max": 559.8227919999772,
+    "n": 20
+  },
+  "risk_and_policy_ms": {
+    "mean": 0.007923562665988964,
+    "p95": 0.00825000006443588
+  },
+  "end_to_end_budget": {
+    "window_accumulation_ms": 4038,
+    "hop_quantisation_ms": [
+      0,
+      1000
+    ],
+    "network_transport": "not measured",
+    "cold_start_s": 4.34,
+    "steady_state_s": [
+      0.3,
+      1.3
+    ],
+    "note": "never zero \u2014 a full window must accumulate before any score exists"
+  },
+  "timestamp_utc": "2026-09-10T17:13:36Z"
+}

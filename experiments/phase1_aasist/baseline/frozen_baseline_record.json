@@ -1,0 +1,91 @@
+{
+  "record_created_utc": "2026-09-10T11:43:24Z",
+  "role": "FROZEN BASELINE \u2014 never overwrite, never modify",
+  "model": {
+    "name": "AASIST-L",
+    "architecture": "AASIST graph attention over raw waveform",
+    "vendored_from": "github.com/clovaai/aasist (MIT, NAVER Corp), file unmodified",
+    "checkpoint_path": "services/api/models/aasist/AASIST-L.pth",
+    "checkpoint_sha256": "814331d088032bb4c3fa61cc014789eadeed464209dd094ab3a2dd6ffbdce27a",
+    "checkpoint_bytes": 426428,
+    "expected_sha256_pinned_in_code": "814331d088032bb4c3fa61cc014789eadeed464209dd094ab3a2dd6ffbdce27a",
+    "total_parameters": 85306,
+    "trained_on": "ASVspoof 2019 LA train (A01-A06), by the original authors"
+  },
+  "heavy_tier_checkpoint": {
+    "name": "AASIST",
+    "path": "services/api/models/aasist/AASIST.pth",
+    "sha256": "51d2d9cf0738172f61e2a384ec50a54a55363240f67c971ed55a92435bc1a1c0",
+    "expected_sha256_pinned_in_code": "51d2d9cf0738172f61e2a384ec50a54a55363240f67c971ed55a92435bc1a1c0"
+  },
+  "software": {
+    "python": "3.10.0",
+    "torch": "2.2.2",
+    "torchaudio": "2.2.2",
+    "numpy": "1.26.4",
+    "platform": "macOS-26.6.2-arm64-arm-64bit"
+  },
+  "hardware": {
+    "cpu": "Apple M4",
+    "physical_cores": 10,
+    "ram_gb": 16,
+    "cuda": false,
+    "mps": true
+  },
+  "inference_preprocessing": {
+    "sample_rate": 16000,
+    "input_samples": 64600,
+    "input_seconds": 4.0375,
+    "length_policy": "tile if short, centre-crop if long",
+    "channels": "mono (averaged)",
+    "normalisation": "none beyond float32 [-1,1]",
+    "resampling": "scipy resample_poly when sr != 16000",
+    "version": "prep-v1"
+  },
+  "streaming": {
+    "ANALYSIS_WINDOW_MS": 4038,
+    "ANALYSIS_HOP_MS": 1000,
+    "MIN_ANALYSIS_MS": 400
+  },
+  "risk_engine_thresholds": {
+    "low": 20,
+    "suspicious": 40,
+    "high": 65,
+    "critical": 85
+  },
+  "risk_engine_weights": {
+    "authenticity": 0.5,
+    "identity": 0.25,
+    "context": 0.25
+  },
+  "use_calibrated_score_for_fusion": false,
+  "frozen_benchmarks": {
+    "alpha_asvspoof_official": {
+      "roc_auc": 0.9987,
+      "eer": 0.0107,
+      "results": "evaluation/results/asvspoof_official/results.json"
+    },
+    "alpha_prime_asvspoof_speaker_disjoint": {
+      "roc_auc": 0.999,
+      "eer": 0.012,
+      "results": "evaluation/results/asvspoof_indomain/results.json"
+    },
+    "beta_mlaad_tiny": {
+      "roc_auc": 0.6055,
+      "eer": 0.434,
+      "results": "evaluation/results/mlaad_ood/results.json"
+    },
+    "gamma_wavefake": {
+      "roc_auc": 0.597,
+      "eer": 0.416,
+      "results": "evaluation/results/wavefake_ood/results.json"
+    },
+    "delta_in_the_wild_SEALED": {
+      "roc_auc": 0.6739,
+      "eer": 0.384,
+      "results": "evaluation/results/inthewild_delta_baseline/results.json",
+      "seal": "evaluation/results/TEST_DELTA_SEAL.json"
+    }
+  },
+  "git_commit": null
+}

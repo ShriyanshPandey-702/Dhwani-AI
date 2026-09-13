@@ -1,0 +1,141 @@
+{
+  "pipeline_mode_setting": "real_ml",
+  "model_versions": {
+    "authenticity": "AASIST-L+cascade@asvspoof2019la",
+    "identity": "spkrec-ecapa-voxceleb",
+    "stt": "whisper-tiny-int8",
+    "context": "rules-v0.2",
+    "authenticity_backend": "real_ml",
+    "identity_backend": "real_ml",
+    "stt_backend": "real_ml",
+    "pipeline_mode": "real_ml"
+  },
+  "chunk_ms": 100,
+  "files": 8,
+  "windows_measured": 48,
+  "note_measurement": "only chunks where the windower emitted a full analysis window are counted; buffer-fill chunks run no model",
+  "audio_window_accumulation_ms": 4038,
+  "hop_ms": 1000,
+  "cold_start_first_window": {
+    "authenticity": {
+      "stage": "authenticity",
+      "n": 1,
+      "mean_ms": 238.23,
+      "p50_ms": 238.23,
+      "p95_ms": 238.23,
+      "max_ms": 238.23
+    },
+    "identity": {
+      "stage": "identity",
+      "n": 1,
+      "mean_ms": 147.48,
+      "p50_ms": 147.48,
+      "p95_ms": 147.48,
+      "max_ms": 147.48
+    },
+    "stt": {
+      "stage": "stt",
+      "n": 1,
+      "mean_ms": 729.74,
+      "p50_ms": 729.74,
+      "p95_ms": 729.74,
+      "max_ms": 729.74
+    },
+    "context": {
+      "stage": "context",
+      "n": 1,
+      "mean_ms": 0.06,
+      "p50_ms": 0.06,
+      "p95_ms": 0.06,
+      "max_ms": 0.06
+    },
+    "risk_fusion": {
+      "stage": "risk_fusion",
+      "n": 1,
+      "mean_ms": 0.16,
+      "p50_ms": 0.16,
+      "p95_ms": 0.16,
+      "max_ms": 0.16
+    },
+    "total": {
+      "stage": "total",
+      "n": 1,
+      "mean_ms": 1116.04,
+      "p50_ms": 1116.04,
+      "p95_ms": 1116.04,
+      "max_ms": 1116.04
+    },
+    "server_event_generation": {
+      "stage": "server_event_generation",
+      "n": 1,
+      "mean_ms": 1116.4,
+      "p50_ms": 1116.4,
+      "p95_ms": 1116.4,
+      "max_ms": 1116.4
+    }
+  },
+  "steady_state": {
+    "authenticity": {
+      "stage": "authenticity",
+      "n": 47,
+      "mean_ms": 284.19,
+      "p50_ms": 261.56,
+      "p95_ms": 442.84,
+      "max_ms": 654.19
+    },
+    "identity": {
+      "stage": "identity",
+      "n": 47,
+      "mean_ms": 101.4,
+      "p50_ms": 84.08,
+      "p95_ms": 185.85,
+      "max_ms": 198.37
+    },
+    "stt": {
+      "stage": "stt",
+      "n": 47,
+      "mean_ms": 564.82,
+      "p50_ms": 537.0,
+      "p95_ms": 784.31,
+      "max_ms": 1034.88
+    },
+    "context": {
+      "stage": "context",
+      "n": 47,
+      "mean_ms": 0.05,
+      "p50_ms": 0.05,
+      "p95_ms": 0.05,
+      "max_ms": 0.06
+    },
+    "risk_fusion": {
+      "stage": "risk_fusion",
+      "n": 47,
+      "mean_ms": 0.11,
+      "p50_ms": 0.11,
+      "p95_ms": 0.13,
+      "max_ms": 0.14
+    },
+    "total": {
+      "stage": "total",
+      "n": 47,
+      "mean_ms": 950.88,
+      "p50_ms": 895.17,
+      "p95_ms": 1240.5,
+      "max_ms": 1378.73
+    },
+    "server_event_generation": {
+      "stage": "server_event_generation",
+      "n": 47,
+      "mean_ms": 815.7,
+      "p50_ms": 884.36,
+      "p95_ms": 1240.9,
+      "max_ms": 1378.97
+    }
+  },
+  "excluded_from_these_numbers": [
+    "network/WebSocket transport",
+    "client rendering",
+    "the 4038 ms of audio that must accumulate before any window can be scored"
+  ],
+  "timestamp_utc": "2026-09-10T17:45:24Z"
+}

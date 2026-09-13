@@ -1,0 +1,16 @@
+{
+  "splits": [
+    "dev",
+    "eval"
+  ],
+  "file_overlap": {
+    "dev|eval": 0
+  },
+  "speaker_overlap": {
+    "dev|eval": []
+  },
+  "system_overlap": {
+    "dev|eval": []
+  },
+  "clean": true
+}

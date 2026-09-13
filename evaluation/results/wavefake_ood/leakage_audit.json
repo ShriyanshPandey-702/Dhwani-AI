@@ -1,0 +1,37 @@
+{
+  "splits": [
+    "calib",
+    "test"
+  ],
+  "file_overlap": {
+    "calib|test": 0
+  },
+  "speaker_overlap": {
+    "calib|test": [
+      "LJ"
+    ]
+  },
+  "system_overlap": {
+    "calib|test": []
+  },
+  "clean": true,
+  "calibration_vocoders": [
+    "hifiGAN",
+    "melgan",
+    "parallel_wavegan"
+  ],
+  "test_vocoders": [
+    "full_band_melgan",
+    "melgan_large",
+    "multi_band_melgan",
+    "waveglow"
+  ],
+  "vocoder_groups_disjoint": true,
+  "utterance_overlap": [],
+  "n_utterances": {
+    "calib": 693,
+    "test": 902
+  },
+  "duplicate_paths": 0,
+  "speaker_note": "LJSpeech is a single-speaker corpus; speaker-disjoint splitting is impossible by construction and is not claimed."
+}

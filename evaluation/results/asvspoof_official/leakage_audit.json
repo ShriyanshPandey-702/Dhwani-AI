@@ -1,0 +1,57 @@
+{
+  "splits": [
+    "dev",
+    "eval"
+  ],
+  "file_overlap": {
+    "dev|eval": 0
+  },
+  "speaker_overlap": {
+    "dev|eval": []
+  },
+  "system_overlap": {
+    "dev|eval": []
+  },
+  "clean": true,
+  "duplicate_paths_dev": 0,
+  "duplicate_paths_eval": 0,
+  "stats": {
+    "dev": {
+      "split": "dev",
+      "n_total": 24844,
+      "n_bonafide": 2548,
+      "n_spoof": 22296,
+      "n_speakers": 20,
+      "systems": [
+        "A01",
+        "A02",
+        "A03",
+        "A04",
+        "A05",
+        "A06"
+      ]
+    },
+    "eval": {
+      "split": "eval",
+      "n_total": 71237,
+      "n_bonafide": 7355,
+      "n_spoof": 63882,
+      "n_speakers": 67,
+      "systems": [
+        "A07",
+        "A08",
+        "A09",
+        "A10",
+        "A11",
+        "A12",
+        "A13",
+        "A14",
+        "A15",
+        "A16",
+        "A17",
+        "A18",
+        "A19"
+      ]
+    }
+  }
+}

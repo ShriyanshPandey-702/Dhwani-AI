@@ -1,0 +1,85 @@
+{
+  "pipeline_mode_setting": "real_ml",
+  "transcriber_is_real_ml": true,
+  "requested_seconds": 60.0,
+  "sessions": 2,
+  "chunk_ms": 100,
+  "realtime_paced": true,
+  "wall_seconds": 60.1,
+  "per_session": [
+    {
+      "session_id": "soak-0",
+      "chunks_sent": 436,
+      "windows_analyzed": 42,
+      "critical_p50_ms": 236.99,
+      "critical_p95_ms": 556.55,
+      "max_queue_depth_seen": 1,
+      "context_applied_window": 28,
+      "stale_results": 0,
+      "duplicate_results": 0,
+      "risk_history_len": 120,
+      "final_risk": 50
+    },
+    {
+      "session_id": "soak-1",
+      "chunks_sent": 435,
+      "windows_analyzed": 42,
+      "critical_p50_ms": 269.74,
+      "critical_p95_ms": 630.77,
+      "max_queue_depth_seen": 1,
+      "context_applied_window": 28,
+      "stale_results": 0,
+      "duplicate_results": 0,
+      "risk_history_len": 120,
+      "final_risk": 50
+    }
+  ],
+  "stt": {
+    "submitted": 14,
+    "completed": 14,
+    "dropped_queue_full": 0,
+    "dropped_stale": 0,
+    "dropped_session_gone": 0,
+    "failed": 0,
+    "timed_out": 0,
+    "max_queue_depth": 1,
+    "wait_ms_p50": 0.62,
+    "wait_ms_p95": 18.78,
+    "exec_ms_p50": 589.39,
+    "exec_ms_p95": 803.24
+  },
+  "memory": {
+    "rss_start_mb": 966.0,
+    "rss_end_mb": 1292.5,
+    "growth_mb": 326.5,
+    "source": "psutil rss",
+    "samples": [
+      {
+        "t_s": 0.0,
+        "rss_mb": 966.0
+      },
+      {
+        "t_s": 10.2,
+        "rss_mb": 1127.1
+      },
+      {
+        "t_s": 21.1,
+        "rss_mb": 1231.3
+      },
+      {
+        "t_s": 31.1,
+        "rss_mb": 1245.2
+      },
+      {
+        "t_s": 41.2,
+        "rss_mb": 1268.5
+      },
+      {
+        "t_s": 51.5,
+        "rss_mb": 1292.4
+      }
+    ],
+    "growth_second_half_mb": 47.2
+  },
+  "timestamp_utc": "2026-09-10T18:34:00Z"
+}

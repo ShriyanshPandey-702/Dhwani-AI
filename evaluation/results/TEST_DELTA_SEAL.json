@@ -1,0 +1,28 @@
+{
+  "sealed_utc": "2026-09-10T10:48:48Z",
+  "role": "TEST \u03b4 \u2014 sealed unseen-domain corpus",
+  "dataset": {
+    "name": "In-the-Wild",
+    "paper": "M\u00fcller et al., Does Audio Deepfake Detection Generalize?, Interspeech 2022 (arXiv:2203.16263)",
+    "source": "https://huggingface.co/datasets/mueller91/In-The-Wild",
+    "licence": "CC-BY-SA-4.0 (verified from the dataset card frontmatter)",
+    "gated": false
+  },
+  "archive": {
+    "path": "data/external/InTheWild/release_in_the_wild.zip",
+    "sha256": "46665f30a6758b45642c659c7e0e80da2ba3d121b064716824a56a010ddf9e1a",
+    "bytes": 8161489023
+  },
+  "evaluated_manifest": {
+    "path": "evaluation/results/inthewild_delta_baseline/manifest_test.csv",
+    "n_files": 3000,
+    "manifest_digest_sha256": "3ad40bf70ace0c2c997004fd1ece716702e1a93c741e0771045b516ec53dfd2f"
+  },
+  "rules": [
+    "\u03b4 must not be used for training.",
+    "\u03b4 must not be used for validation, threshold selection, calibration, hyperparameter search, early stopping, or checkpoint selection.",
+    "\u03b4 may be opened exactly once more: after a candidate model has already passed its acceptance criteria on \u03b1, \u03b2 and \u03b3.",
+    "Any change to the files above invalidates the seal and the baseline."
+  ],
+  "baseline_measured_with": "frozen AASIST-L, cascade disabled, prep-v1"
+}

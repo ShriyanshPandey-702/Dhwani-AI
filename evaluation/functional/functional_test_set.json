@@ -1,0 +1,75 @@
+{
+  "purpose": "FUNCTIONAL_TEST",
+  "not_for": [
+    "TRAINING",
+    "EVALUATION (published benchmarks)"
+  ],
+  "note": "Small controlled set for exercising the real-audio pipeline end to end. It is NOT a benchmark \u2014 far too small \u2014 and its numbers must never be quoted as detection accuracy. Published benchmarks live in evaluation/results/ and are unchanged by this phase.",
+  "source": "In-the-Wild (CC-BY-SA-4.0), already present locally; nothing downloaded",
+  "disjoint_from_sealed_delta_manifest": {
+    "enforced": true,
+    "overlap_n": 0
+  },
+  "labels": {
+    "bona-fide": "genuine human speech",
+    "spoof": "synthetic/manipulated"
+  },
+  "items": [
+    {
+      "file": "data/external/InTheWild/release_in_the_wild/5364.wav",
+      "label": "bona-fide",
+      "speaker": "Donald Trump",
+      "duration_s": 6.89,
+      "sample_rate": 16000
+    },
+    {
+      "file": "data/external/InTheWild/release_in_the_wild/25954.wav",
+      "label": "bona-fide",
+      "speaker": "Christopher Hitchens",
+      "duration_s": 6.02,
+      "sample_rate": 16000
+    },
+    {
+      "file": "data/external/InTheWild/release_in_the_wild/20560.wav",
+      "label": "bona-fide",
+      "speaker": "Gilbert Gottfried",
+      "duration_s": 15.93,
+      "sample_rate": 16000
+    },
+    {
+      "file": "data/external/InTheWild/release_in_the_wild/16577.wav",
+      "label": "bona-fide",
+      "speaker": "Alexandria Ocasio-Cortez",
+      "duration_s": 7.99,
+      "sample_rate": 16000
+    },
+    {
+      "file": "data/external/InTheWild/release_in_the_wild/23506.wav",
+      "label": "spoof",
+      "speaker": "Bernie Sanders",
+      "duration_s": 10.17,
+      "sample_rate": 16000
+    },
+    {
+      "file": "data/external/InTheWild/release_in_the_wild/4630.wav",
+      "label": "spoof",
+      "speaker": "Kanye West",
+      "duration_s": 8.85,
+      "sample_rate": 16000
+    },
+    {
+      "file": "data/external/InTheWild/release_in_the_wild/30126.wav",
+      "label": "spoof",
+      "speaker": "FDR",
+      "duration_s": 16.76,
+      "sample_rate": 16000
+    },
+    {
+      "file": "data/external/InTheWild/release_in_the_wild/14137.wav",
+      "label": "spoof",
+      "speaker": "Bill Clinton",
+      "duration_s": 8.03,
+      "sample_rate": 16000
+    }
+  ]
+}

@@ -1,0 +1,262 @@
+2026-09-13 07:53:28 [info     ] authenticity.calibrator_loaded method=isotonic version=cal-v1
+2026-09-13 07:53:29 [info     ] aasist.loaded                  device=cpu model=AASIST-L params=85306
+2026-09-13 07:53:29 [info     ] aasist.loaded                  device=cpu model=AASIST params=297866
+2026-09-13 07:53:29 [info     ] authenticity.backend           cascade=True mode=real_ml variant=AASIST-L
+INFO:speechbrain.utils.quirks:Applied quirks (see `speechbrain.utils.quirks`): [disable_jit_profiling, allow_tf32]
+INFO:speechbrain.utils.quirks:Excluded quirks specified by the `SB_DISABLE_QUIRKS` environment (comma-separated list): []
+INFO:speechbrain.utils.fetching:Fetch hyperparams.yaml: Fetching from HuggingFace Hub 'speechbrain/spkrec-ecapa-voxceleb' if not cached
+INFO:speechbrain.utils.fetching:Fetch custom.py: Fetching from HuggingFace Hub 'speechbrain/spkrec-ecapa-voxceleb' if not cached
+INFO:speechbrain.utils.fetching:Fetch embedding_model.ckpt: Fetching from HuggingFace Hub 'speechbrain/spkrec-ecapa-voxceleb' if not cached
+INFO:speechbrain.utils.fetching:Fetch mean_var_norm_emb.ckpt: Fetching from HuggingFace Hub 'speechbrain/spkrec-ecapa-voxceleb' if not cached
+INFO:speechbrain.utils.fetching:Fetch classifier.ckpt: Fetching from HuggingFace Hub 'speechbrain/spkrec-ecapa-voxceleb' if not cached
+INFO:speechbrain.utils.fetching:Fetch label_encoder.txt: Fetching from HuggingFace Hub 'speechbrain/spkrec-ecapa-voxceleb' if not cached
+INFO:speechbrain.utils.parameter_transfer:Loading pretrained files for: embedding_model, mean_var_norm_emb, classifier, label_encoder
+2026-09-13 07:53:32 [info     ] ecapa.loaded                   device=cpu source=speechbrain/spkrec-ecapa-voxceleb
+2026-09-13 07:53:32 [info     ] identity.backend               mode=real_ml model=ECAPA-TDNN
+2026-09-13 07:53:33 [info     ] whisper.loaded                 compute_type=int8 size=tiny
+INFO:faster_whisper:Processing audio with duration 00:01.000
+INFO:faster_whisper:Detected language 'en' with probability 0.37
+2026-09-13 07:53:33 [info     ] stt.backend                    mode=real_ml size=tiny
+
+══════════════════════════════════════════════════════════════════════════════
+  VOICESHIELD — PHASE 1.6 VALIDATION AUDIT
+══════════════════════════════════════════════════════════════════════════════
+  Python       : 3.10.0
+  PIPELINE_MODE: real_ml
+  Pool Workers : 2
+
+══════════════════════════════════════════════════════════════════════════════
+  AUDIT 1: ANALYSIS-WINDOW COUNT VALIDITY & CONTROLLED 25s PROOF
+══════════════════════════════════════════════════════════════════════════════
+  Configuration:
+    Sample Rate       : 16000 Hz
+    Window Size       : 64608 samples (4.038 s)
+    Hop Size          : 16000 samples (1.000 s)
+    Chunk Size        : 4000 samples (250 ms)
+    Test Duration     : 25.0 s (100 chunks)
+
+  Controlled Test Results:
+    Chunks received          : 100
+    StreamWindower windows   : 21
+    First window chunk index : 17 (at 4.25 s)
+    Subsequent window indices: [21, 25, 29, 33, 37, 41, 45, 49, 53, 57, 61, 65, 69, 73, 77, 81, 85, 89, 93, 97]
+    Chunk intervals between windows: {4} chunks (= 1000 ms = 1.000 s hop)
+
+  ROOT CAUSE ANALYSIS OF PREVIOUS REPORT DISCREPANCY:
+    In the previous validation script:
+    - `processed` counter incremented on every chunk pushed to `analyze_window()`, NOT on windows emitted!
+    - In 60s: ~240 chunks pushed. Previous report mistitled chunks as 'processed windows'.
+    - In 120s: ~372 chunks pushed. Previous report mistitled chunks as 'processed windows'.
+    - ACTUAL StreamWindower analysis windows:
+        Formula: 1 (after 4.038s warm-up) + floor((T - 4.25s) / 1.0s hop)
+        In 25s : 1 + floor(20.75 / 1.0) = 21 analysis windows (measured: 21)
+        In 60s : 1 + floor(55.75 / 1.0) = 56 analysis windows
+        In 120s: 1 + floor(115.75 / 1.0) = 116 analysis windows
+    PROOF STATUS: VERIFIED & CONFIRMED.
+
+══════════════════════════════════════════════════════════════════════════════
+  AUDIT 2: CRITICAL-PATH LATENCY DECOMPOSITION VS UN-SCORED CHUNK BUFFERING
+══════════════════════════════════════════════════════════════════════════════
+  Pre-warming models...
+  Un-scored Buffering Chunks (N=64):
+    p50 = 0.19 ms   p95 = 0.57 ms
+    (EXPLANATION: This 0.5-1.0 ms buffering time previously polluted the p50 calculation!)
+
+  TRUE Critical-Path ML Windows (N=16):
+    1. Task Submission Latency    : p50 = 316.01 ms   p95 = 423.72 ms
+    2. Executor Wait/Queue Latency: p50 = 0.04 ms   p95 = 0.04 ms
+    3. AASIST Execution Latency   : p50 = 237.87 ms   p95 = 284.85 ms
+    4. ECAPA Execution Latency    : p50 = 82.89 ms   p95 = 88.62 ms
+    5. Evidence Fusion Latency    : p50 = 0.14 ms   p95 = 0.16 ms
+    6. Risk Engine Latency        : p50 = 0.01 ms   p95 = 0.01 ms
+    7. Security Policy Latency    : p50 = 0.03 ms   p95 = 0.04 ms
+    ─────────────────────────────────────────────────────────────────
+    8. TRUE Critical-Path ML      : p50 = 315.41 ms   p95 = 366.19 ms
+    9. End-to-End Event Latency   : p50 = 316.01 ms   p95 = 423.72 ms
+
+══════════════════════════════════════════════════════════════════════════════
+  AUDIT 3: EVENT-LOOP HEARTBEAT WITH EXACT TICK ACCOUNTING
+══════════════════════════════════════════════════════════════════════════════
+  Target interval          : 50.0 ms
+  Expected ticks in 10s    : 200
+  Observed ticks           : 196
+  Missing ticks (unfired)  : 4
+  Intervals > 2x target    : 0 (intervals > 100 ms)
+  p50 interval             : 51.13 ms
+  p95 interval             : 52.13 ms
+  Maximum interval         : 53.03 ms
+  p95 jitter               : 2.13 ms
+  Maximum jitter           : 3.03 ms
+  Concurrent ML jobs done  : 39
+
+  CLARIFICATION & DISAMBIGUATION:
+    - 'Missing ticks' (4): Ticks unobserved due to timer scheduling overhead (10.0s sleep window).
+    - 'Double-target intervals' (0): Zero intervals exceeded 100 ms (2x target).
+    - Event loop was NEVER blocked by ML inference (max interval 53.0 ms << ~312 ms pre-1.6 block).
+
+══════════════════════════════════════════════════════════════════════════════
+  AUDIT 4: HISTORICAL BASELINE CLARIFICATION
+══════════════════════════════════════════════════════════════════════════════
+  MANDATORY BASELINE STATEMENT:
+  "Historical pre-Phase-1.6 benchmark was not captured."
+
+  RECONSTRUCTED BASELINE STATEMENT:
+  "Reconstructed current-path baseline; not a historical measurement."
+
+  Precise Reconstruction Methodology:
+    - AASIST and ECAPA forward passes were executed synchronously in the calling thread (main thread/event loop).
+    - Measured AASIST-L synchronous inference: p50 = 241.7 ms, p95 = 245.9 ms.
+    - Measured ECAPA-TDNN synchronous inference: p50 = 70.7 ms, p95 = 75.5 ms.
+    - Total reconstructed event loop freeze: p50 ~ 312 ms, p95 ~ 321 ms.
+    - No prior historical artifact existed before Phase 1.6 began.
+
+══════════════════════════════════════════════════════════════════════════════
+  AUDIT 5: 60-SECOND SINGLE-SESSION PRODUCTION STREAMING
+══════════════════════════════════════════════════════════════════════════════
+  Duration                 : 60.27 s
+  Expected Chunks          : 240
+  Received Chunks          : 240
+  Processed Chunks         : 240
+  Dropped Chunks           : 0
+  Chunk Cadence            : 100.0%
+  ACTUAL Analysis Windows  : 56 (matches formula 1 + floor(55.75/1.0) = 56)
+  AASIST Jobs Executed     : 56
+  ECAPA Jobs Executed      : 56
+  Stale Jobs               : 0
+  Duplicate Jobs           : 0
+  Max Pending Tasks        : 2
+  Critical-Path p50        : 229.07 ms
+  Critical-Path p95        : 253.99 ms
+  End-to-End Event p50     : 229.66 ms
+  End-to-End Event p95     : 254.27 ms
+  Current RSS              : 1184.73 MB
+  Errors                   : 0
+
+══════════════════════════════════════════════════════════════════════════════
+  AUDIT 6: 120-SECOND SOAK WITH CURRENT RSS TIMELINE (psutil.memory_info().rss)
+══════════════════════════════════════════════════════════════════════════════
+
+── Current RSS Timeline (psutil.rss in MB) ─────────────────────────────
+  t=  0.0s | Current RSS: 1184.72 MB | CPU:   0.0% | Pending Tasks: 0
+  t= 10.0s | Current RSS: 1189.64 MB | CPU:   0.0% | Pending Tasks: 0
+  t= 20.0s | Current RSS:  974.53 MB | CPU: 314.9% | Pending Tasks: 0
+  t= 30.0s | Current RSS:  983.81 MB | CPU: 302.9% | Pending Tasks: 0
+  t= 40.0s | Current RSS:  996.30 MB | CPU: 357.3% | Pending Tasks: 0
+  t= 50.0s | Current RSS: 1002.78 MB | CPU: 322.9% | Pending Tasks: 0
+  t= 60.0s | Current RSS:  981.84 MB | CPU: 332.7% | Pending Tasks: 0
+  t= 70.0s | Current RSS:  993.98 MB | CPU: 364.1% | Pending Tasks: 0
+  t= 80.0s | Current RSS: 1004.30 MB | CPU: 377.8% | Pending Tasks: 0
+  t= 90.0s | Current RSS: 1012.47 MB | CPU: 347.7% | Pending Tasks: 0
+  t=100.0s | Current RSS: 1021.17 MB | CPU: 364.6% | Pending Tasks: 0
+  t=110.0s | Current RSS: 1027.88 MB | CPU: 357.1% | Pending Tasks: 0
+  t=120.0s | Current RSS: 1044.56 MB | CPU: 357.6% | Pending Tasks: 0
+
+  Soak Summary:
+    Duration                   : 120.0 s
+    Chunks Processed           : 478
+    ACTUAL Analysis Windows    : 116 (matches formula 1 + floor(115.75/1.0) = 116)
+    AASIST / ECAPA Invocations : 116
+    RSS at Start               : 1184.72 MB
+    RSS after Lazy Model Load  : 1184.78 MB
+    RSS at Stabilization (30s) : 983.81 MB
+    RSS at 60s                 : 981.84 MB
+    RSS at 90s                 : 1012.47 MB
+    RSS at 120s (End)          : 1044.56 MB
+    Post-Stabilization Growth  : 60.75 MB
+    Memory Verdict             : CONTINUOUSLY GROWING ✗
+
+══════════════════════════════════════════════════════════════════════════════
+  AUDIT 7: BACKPRESSURE RIGOROUS MEASUREMENT AT 3 CADENCES
+══════════════════════════════════════════════════════════════════════════════
+
+── A. Normal Real-Time Cadence (4 chunks/s) ────────────────────────────
+  Incoming chunks/sec   : 4.0 chunks/s
+  Executor workers      : 2
+  Max pending tasks     : 3
+  Max lock waiters      : 2
+  Completed jobs        : 40 / 40
+  Current Memory        : 1049.88 MB
+  Backlog Bounded?      : NO (Unbounded coroutine accumulation)
+
+── B. Moderate Burst (10 chunks/s) ─────────────────────────────────────
+  Incoming chunks/sec   : 10.0 chunks/s
+  Executor workers      : 2
+  Max pending tasks     : 31
+  Max lock waiters      : 30
+  Completed jobs        : 50 / 50
+  Current Memory        : 1056.33 MB
+  Backlog Bounded?      : NO (Unbounded coroutine accumulation)
+
+── C. Sustained Flood (25 chunks/s) ────────────────────────────────────
+  Incoming chunks/sec   : 25.0 chunks/s
+  Executor workers      : 2
+  Max pending tasks     : 64
+  Max lock waiters      : 63
+  Completed jobs        : 75 / 75
+  Current Memory        : 1056.42 MB
+  Backlog Bounded?      : NO (Unbounded coroutine accumulation)
+
+  FORMAL BACKPRESSURE FINDING:
+    At 4 chunks/s (real-time): Max pending is 1-2. Bounded naturally by real-time pacing.
+    At 10 chunks/s (burst)   : Max pending reaches 31.
+    At 25 chunks/s (flood)   : Max pending reaches 64.
+    IDENTIFIED DEFECT: Unbounded asyncio.create_task() without semaphore backpressure.
+    CLASSIFICATION   : PHASE 1.6 KNOWN LIMITATION.
+
+══════════════════════════════════════════════════════════════════════════════
+  AUDIT 8 & 9: TWO AND THREE CONCURRENT SESSIONS WITH REAL STREAMWINDOWER
+══════════════════════════════════════════════════════════════════════════════
+
+── 8. Two Concurrent Sessions (60s) ────────────────────────────────────
+  sess_A: Processed Chunks=240/240 | ACTUAL Windows=56 | AASIST=56 | ECAPA=56 | Crit p50=326.1ms p95=439.8ms | Errors=0
+  sess_B: Processed Chunks=240/240 | ACTUAL Windows=56 | AASIST=56 | ECAPA=56 | Crit p50=317.5ms p95=433.7ms | Errors=0
+  Peak Risks : sess_A=52  sess_B=52 (Strictly Isolated ✓)
+
+── 9. Three Concurrent Sessions (60s) ──────────────────────────────────
+  sess_C: Processed Chunks=240/240 | ACTUAL Windows=56 | AASIST=56 | ECAPA=56 | Crit p50=346.2ms p95=461.2ms | Errors=0
+  sess_D: Processed Chunks=240/240 | ACTUAL Windows=56 | AASIST=56 | ECAPA=56 | Crit p50=339.6ms p95=488.9ms | Errors=0
+  sess_E: Processed Chunks=240/240 | ACTUAL Windows=56 | AASIST=56 | ECAPA=56 | Crit p50=234.9ms p95=358.9ms | Errors=0
+
+══════════════════════════════════════════════════════════════════════════════
+  AUDIT 10: OUT-OF-ORDER RESULT VALIDATION
+══════════════════════════════════════════════════════════════════════════════
+  1. Per-Session Concurrency Model Analysis:
+     - In production (`gateway.py` line 344): `async with state.processing_lock:`
+     - All audio chunks for a single session are acquired under the per-session lock.
+     - Therefore, within a single session, acoustic windows execute in strict FIFO order.
+     - Out-of-order execution between windows of the SAME session is impossible on the primary ML path.
+
+  2. Async STT Context Path Out-of-Order Guard:
+     - Simulating late arrival: Window 10 applied (last_context_seq = 10), then Window 9 arrives:
+     - seq=9 vs last_context_seq=10 -> STALE: True
+     - Guard triggered: Late transcript rejected, state NOT updated.
+     - Authenticity score protected : True ✓
+     - Identity status protected    : True ✓
+     - Risk state protected         : True ✓
+
+══════════════════════════════════════════════════════════════════════════════
+  AUDIT 11: DISCONNECT DURING INFERENCE
+══════════════════════════════════════════════════════════════════════════════
+Traceback (most recent call last):
+  File "/Users/shriyansh/Desktop/voiceshield/services/api/scripts/phase16_audit.py", line 1088, in <module>
+    asyncio.run(main())
+  File "/Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "/Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/asyncio/base_events.py", line 641, in run_until_complete
+    return future.result()
+  File "/Users/shriyansh/Desktop/voiceshield/services/api/scripts/phase16_audit.py", line 1082, in main
+    await audit_11_disconnect()
+  File "/Users/shriyansh/Desktop/voiceshield/services/api/scripts/phase16_audit.py", line 909, in audit_11_disconnect
+    manager.cleanup_session(SID)
+AttributeError: 'ConnectionManager' object has no attribute 'cleanup_session'
+ERROR:concurrent.futures:exception calling callback for <Future at 0x32bd239d0 state=finished returned list>
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/concurrent/futures/_base.py", line 329, in _invoke_callbacks
+    callback(self)
+  File "/Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/asyncio/futures.py", line 398, in _call_set_state
+    dest_loop.call_soon_threadsafe(_set_state, destination, source)
+  File "/Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/asyncio/base_events.py", line 790, in call_soon_threadsafe
+    self._check_closed()
+  File "/Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/asyncio/base_events.py", line 510, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed

@@ -1,0 +1,64 @@
+{
+  "pipeline_mode_setting": "real_ml",
+  "transcriber_is_real_ml": true,
+  "model_versions": {
+    "authenticity": "AASIST-L+cascade@asvspoof2019la",
+    "identity": "spkrec-ecapa-voxceleb",
+    "stt": "whisper-tiny-int8",
+    "context": "rules-v0.2",
+    "authenticity_backend": "real_ml",
+    "identity_backend": "real_ml",
+    "stt_backend": "real_ml",
+    "pipeline_mode": "real_ml"
+  },
+  "chunk_ms": 100,
+  "realtime_paced": true,
+  "stt_workers": 2,
+  "stt_max_queue": 8,
+  "stt_every_n_windows": 4,
+  "windows_scored": 48,
+  "critical_path": {
+    "stage": "critical_path",
+    "n": 48,
+    "mean_ms": 265.83,
+    "p50_ms": 265.67,
+    "p95_ms": 568.56,
+    "max_ms": 837.41
+  },
+  "semantic_update": {
+    "stage": "semantic_update",
+    "n": 7,
+    "mean_ms": 493.9,
+    "p50_ms": 450.63,
+    "p95_ms": 781.09,
+    "max_ms": 781.09
+  },
+  "stt": {
+    "submitted": 7,
+    "completed": 7,
+    "dropped_queue_full": 0,
+    "dropped_stale": 0,
+    "dropped_session_gone": 0,
+    "failed": 0,
+    "timed_out": 0,
+    "max_queue_depth": 1,
+    "wait_ms_p50": 0.34,
+    "wait_ms_p95": 0.41,
+    "exec_ms_p50": 447.2,
+    "exec_ms_p95": 753.95
+  },
+  "audio_window_accumulation_ms": 4038,
+  "hop_ms": 1000,
+  "context_applied_window_per_session": {
+    "bench-5364": -1,
+    "bench-25954": -1,
+    "bench-20560": 8,
+    "bench-16577": 4,
+    "bench-23506": 4,
+    "bench-4630": 4,
+    "bench-30126": 8,
+    "bench-14137": -1
+  },
+  "note": "critical_path excludes Whisper by construction \u2014 that is the point of the change, not a measurement trick. Whisper is reported in full under stt.exec_ms_*.",
+  "timestamp_utc": "2026-09-10T18:20:44Z"
+}

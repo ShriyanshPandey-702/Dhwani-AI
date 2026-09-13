@@ -1,0 +1,70 @@
+{
+  "question": "Does any TEST \u03b4 speaker also appear in a candidate TRAIN corpus?",
+  "delta": {
+    "corpus": "In-the-Wild",
+    "speakers": 54,
+    "embedded": 54
+  },
+  "train_corpus": {
+    "corpus": "ASVspoof 2019 LA train",
+    "speakers": 20,
+    "embedded": 20
+  },
+  "method_1_identifier": {
+    "literal_id_intersection": [],
+    "note": "ASVspoof IDs are anonymised VCTK-derived readers; \u03b4 speakers are named public figures. Disjoint identifier spaces \u2014 structural argument only, not a measurement."
+  },
+  "method_2_embedding": {
+    "model": "ECAPA-TDNN spkrec-ecapa-voxceleb (existing identity stream)",
+    "utterances_per_speaker": 8,
+    "same_speaker_similarity": {
+      "n": 74,
+      "mean": 0.8366486333511971,
+      "min": 0.5284162759780884,
+      "p1": 0.6117661738395691
+    },
+    "impostor_similarity_within_asvspoof": {
+      "n": 190,
+      "mean": 0.17125296723097563,
+      "max": 0.6400192379951477,
+      "p99.9": 0.6248761585950857
+    },
+    "cross_corpus_similarity": {
+      "n": 1080,
+      "mean": 0.04751085055284892,
+      "max": 0.3552302420139313,
+      "p99.9": 0.3543670131564142
+    },
+    "flag_threshold": 0.6400192379951477,
+    "flagged_pairs": [],
+    "top_5_cross_pairs": [
+      [
+        0.3552,
+        "Billie Eilish",
+        "LA_0088"
+      ],
+      [
+        0.3546,
+        "Jimmy Carter",
+        "LA_0093"
+      ],
+      [
+        0.3512,
+        "Jimmy Carter",
+        "LA_0082"
+      ],
+      [
+        0.3408,
+        "George Carlin",
+        "LA_0093"
+      ],
+      [
+        0.3394,
+        "Mr. Rogers",
+        "LA_0093"
+      ]
+    ]
+  },
+  "verdict": "NO OVERLAP DETECTED",
+  "caveat": "ECAPA is VoxCeleb-trained, which suits celebrity speech but means similarity is not a calibrated identity decision. This audit detects overlap; it cannot prove its absence."
+}

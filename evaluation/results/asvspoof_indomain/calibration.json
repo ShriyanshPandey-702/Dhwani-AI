@@ -1,0 +1,313 @@
+{
+  "version": "cal-v1",
+  "fitted_on": "calibration speakers only",
+  "evaluated_on": "held-out speakers",
+  "platt": {
+    "brier_raw": 0.014542091251464957,
+    "brier_calibrated": 0.013228111298541435,
+    "ece_raw": 0.020157604277133954,
+    "ece_calibrated": 0.03495301243916762,
+    "n_bins": 15,
+    "reliability_raw": [
+      {
+        "bin_lower": 0.0,
+        "bin_upper": 0.1,
+        "n": 992,
+        "mean_predicted": 0.00092,
+        "observed_spoof_rate": 0.00806
+      },
+      {
+        "bin_lower": 0.1,
+        "bin_upper": 0.2,
+        "n": 8,
+        "mean_predicted": 0.1419,
+        "observed_spoof_rate": 0.5
+      },
+      {
+        "bin_lower": 0.2,
+        "bin_upper": 0.3,
+        "n": 8,
+        "mean_predicted": 0.23856,
+        "observed_spoof_rate": 0.75
+      },
+      {
+        "bin_lower": 0.3,
+        "bin_upper": 0.4,
+        "n": 10,
+        "mean_predicted": 0.33797,
+        "observed_spoof_rate": 0.8
+      },
+      {
+        "bin_lower": 0.4,
+        "bin_upper": 0.5,
+        "n": 11,
+        "mean_predicted": 0.45802,
+        "observed_spoof_rate": 0.72727
+      },
+      {
+        "bin_lower": 0.5,
+        "bin_upper": 0.6,
+        "n": 7,
+        "mean_predicted": 0.56148,
+        "observed_spoof_rate": 0.71429
+      },
+      {
+        "bin_lower": 0.6,
+        "bin_upper": 0.7,
+        "n": 17,
+        "mean_predicted": 0.65997,
+        "observed_spoof_rate": 1.0
+      },
+      {
+        "bin_lower": 0.7,
+        "bin_upper": 0.8,
+        "n": 19,
+        "mean_predicted": 0.75397,
+        "observed_spoof_rate": 1.0
+      },
+      {
+        "bin_lower": 0.8,
+        "bin_upper": 0.9,
+        "n": 35,
+        "mean_predicted": 0.85683,
+        "observed_spoof_rate": 0.97143
+      },
+      {
+        "bin_lower": 0.9,
+        "bin_upper": 1.0,
+        "n": 893,
+        "mean_predicted": 0.99423,
+        "observed_spoof_rate": 0.99776
+      }
+    ],
+    "reliability_calibrated": [
+      {
+        "bin_lower": 0.0,
+        "bin_upper": 0.1,
+        "n": 992,
+        "mean_predicted": 0.04921,
+        "observed_spoof_rate": 0.00806
+      },
+      {
+        "bin_lower": 0.1,
+        "bin_upper": 0.2,
+        "n": 8,
+        "mean_predicted": 0.13067,
+        "observed_spoof_rate": 0.5
+      },
+      {
+        "bin_lower": 0.2,
+        "bin_upper": 0.3,
+        "n": 7,
+        "mean_predicted": 0.22516,
+        "observed_spoof_rate": 0.71429
+      },
+      {
+        "bin_lower": 0.3,
+        "bin_upper": 0.4,
+        "n": 8,
+        "mean_predicted": 0.35758,
+        "observed_spoof_rate": 0.75
+      },
+      {
+        "bin_lower": 0.4,
+        "bin_upper": 0.5,
+        "n": 3,
+        "mean_predicted": 0.45492,
+        "observed_spoof_rate": 1.0
+      },
+      {
+        "bin_lower": 0.5,
+        "bin_upper": 0.6,
+        "n": 4,
+        "mean_predicted": 0.556,
+        "observed_spoof_rate": 0.75
+      },
+      {
+        "bin_lower": 0.6,
+        "bin_upper": 0.7,
+        "n": 8,
+        "mean_predicted": 0.64876,
+        "observed_spoof_rate": 0.75
+      },
+      {
+        "bin_lower": 0.7,
+        "bin_upper": 0.8,
+        "n": 4,
+        "mean_predicted": 0.77106,
+        "observed_spoof_rate": 0.75
+      },
+      {
+        "bin_lower": 0.8,
+        "bin_upper": 0.9,
+        "n": 16,
+        "mean_predicted": 0.86101,
+        "observed_spoof_rate": 0.9375
+      },
+      {
+        "bin_lower": 0.9,
+        "bin_upper": 1.0,
+        "n": 950,
+        "mean_predicted": 0.9864,
+        "observed_spoof_rate": 0.99684
+      }
+    ]
+  },
+  "isotonic": {
+    "brier_raw": 0.014542091251464957,
+    "brier_calibrated": 0.009329706083304192,
+    "ece_raw": 0.020157604277133954,
+    "ece_calibrated": 0.007488973371945193,
+    "n_bins": 15,
+    "reliability_raw": [
+      {
+        "bin_lower": 0.0,
+        "bin_upper": 0.1,
+        "n": 992,
+        "mean_predicted": 0.00092,
+        "observed_spoof_rate": 0.00806
+      },
+      {
+        "bin_lower": 0.1,
+        "bin_upper": 0.2,
+        "n": 8,
+        "mean_predicted": 0.1419,
+        "observed_spoof_rate": 0.5
+      },
+      {
+        "bin_lower": 0.2,
+        "bin_upper": 0.3,
+        "n": 8,
+        "mean_predicted": 0.23856,
+        "observed_spoof_rate": 0.75
+      },
+      {
+        "bin_lower": 0.3,
+        "bin_upper": 0.4,
+        "n": 10,
+        "mean_predicted": 0.33797,
+        "observed_spoof_rate": 0.8
+      },
+      {
+        "bin_lower": 0.4,
+        "bin_upper": 0.5,
+        "n": 11,
+        "mean_predicted": 0.45802,
+        "observed_spoof_rate": 0.72727
+      },
+      {
+        "bin_lower": 0.5,
+        "bin_upper": 0.6,
+        "n": 7,
+        "mean_predicted": 0.56148,
+        "observed_spoof_rate": 0.71429
+      },
+      {
+        "bin_lower": 0.6,
+        "bin_upper": 0.7,
+        "n": 17,
+        "mean_predicted": 0.65997,
+        "observed_spoof_rate": 1.0
+      },
+      {
+        "bin_lower": 0.7,
+        "bin_upper": 0.8,
+        "n": 19,
+        "mean_predicted": 0.75397,
+        "observed_spoof_rate": 1.0
+      },
+      {
+        "bin_lower": 0.8,
+        "bin_upper": 0.9,
+        "n": 35,
+        "mean_predicted": 0.85683,
+        "observed_spoof_rate": 0.97143
+      },
+      {
+        "bin_lower": 0.9,
+        "bin_upper": 1.0,
+        "n": 893,
+        "mean_predicted": 0.99423,
+        "observed_spoof_rate": 0.99776
+      }
+    ],
+    "reliability_calibrated": [
+      {
+        "bin_lower": 0.0,
+        "bin_upper": 0.1,
+        "n": 976,
+        "mean_predicted": 0.00307,
+        "observed_spoof_rate": 0.00102
+      },
+      {
+        "bin_lower": 0.1,
+        "bin_upper": 0.2,
+        "n": 5,
+        "mean_predicted": 0.12212,
+        "observed_spoof_rate": 0.2
+      },
+      {
+        "bin_lower": 0.2,
+        "bin_upper": 0.3,
+        "n": 5,
+        "mean_predicted": 0.25889,
+        "observed_spoof_rate": 0.6
+      },
+      {
+        "bin_lower": 0.3,
+        "bin_upper": 0.4,
+        "n": 0,
+        "mean_predicted": null,
+        "observed_spoof_rate": null
+      },
+      {
+        "bin_lower": 0.4,
+        "bin_upper": 0.5,
+        "n": 0,
+        "mean_predicted": null,
+        "observed_spoof_rate": null
+      },
+      {
+        "bin_lower": 0.5,
+        "bin_upper": 0.6,
+        "n": 0,
+        "mean_predicted": null,
+        "observed_spoof_rate": null
+      },
+      {
+        "bin_lower": 0.6,
+        "bin_upper": 0.7,
+        "n": 10,
+        "mean_predicted": 0.625,
+        "observed_spoof_rate": 0.6
+      },
+      {
+        "bin_lower": 0.7,
+        "bin_upper": 0.8,
+        "n": 9,
+        "mean_predicted": 0.8,
+        "observed_spoof_rate": 0.44444
+      },
+      {
+        "bin_lower": 0.8,
+        "bin_upper": 0.9,
+        "n": 1,
+        "mean_predicted": 0.82834,
+        "observed_spoof_rate": 1.0
+      },
+      {
+        "bin_lower": 0.9,
+        "bin_upper": 1.0,
+        "n": 994,
+        "mean_predicted": 0.99163,
+        "observed_spoof_rate": 0.98994
+      }
+    ]
+  },
+  "platt_params": {
+    "a": 7.47589165539133,
+    "b": -2.9694276390179395,
+    "method": "platt",
+    "version": "cal-v1"
+  }
+}

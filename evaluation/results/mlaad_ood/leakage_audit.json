@@ -1,0 +1,70 @@
+{
+  "splits": [
+    "calib",
+    "test"
+  ],
+  "file_overlap": {
+    "calib|test": 0
+  },
+  "speaker_overlap": {
+    "calib|test": []
+  },
+  "system_overlap": {
+    "calib|test": [
+      "Edge-TTS",
+      "FishTTS",
+      "Higgs-Audio-V2",
+      "Kani-TTS-370M"
+    ]
+  },
+  "clean": true,
+  "calibration_systems": [
+    "de/CaroTTS",
+    "de/Cartesia.ai (Sonic-3)",
+    "de/FishTTS",
+    "de/Higgs-Audio-V2",
+    "de/Kani-TTS-370M",
+    "de/Kartoffelbox",
+    "de/Llasa-1B-Multilingual",
+    "de/NVidia Magpie-TTS Multilingual",
+    "de/griffin_lim",
+    "en/Cartesia.ai (Sonic-3)",
+    "en/DeepGram",
+    "en/Edge-TTS",
+    "en/Index-TTS-1.5",
+    "en/Kitten-TTS-Nano-0.1",
+    "en/Kyutai-TTS",
+    "en/Llasa-1B-Multilingual",
+    "en/Llasa-8B",
+    "en/Marvis-TTS",
+    "en/MatchaTTS",
+    "en/Microsoft VibeVoice 1.5B",
+    "en/Nari Dia-1.6B"
+  ],
+  "test_systems": [
+    "de/Chatterbox Multilingual",
+    "de/Edge-TTS",
+    "de/OuteTTS",
+    "de/RVC",
+    "de/Resemble.ai (April 12th, 2025)",
+    "de/facebook_mms-tts-deu",
+    "en/Chatterbox",
+    "en/FireRedTTS-2.0",
+    "en/FishTTS",
+    "en/Higgs-Audio-V2",
+    "en/Index-TTS-2.0",
+    "en/Indri-TTS-0.1",
+    "en/Kani-TTS-370M",
+    "en/Kitten-TTS-Nano-0.2",
+    "en/Mars5",
+    "en/Maya1 TTS",
+    "en/MegaTTS3",
+    "en/MeloTTS",
+    "en/Metavoice-1B",
+    "en/Microsoft VibeVoice Large",
+    "en/MiniCPM-o-2.6",
+    "en/Nari Dia2"
+  ],
+  "system_groups_disjoint": true,
+  "duplicate_paths": 0
+}

@@ -1,0 +1,98 @@
+{
+  "pipeline_mode_setting": "real_ml",
+  "transcriber_is_real_ml": true,
+  "requested_seconds": 60.0,
+  "sessions": 3,
+  "chunk_ms": 100,
+  "realtime_paced": true,
+  "wall_seconds": 60.0,
+  "per_session": [
+    {
+      "session_id": "soak-0",
+      "chunks_sent": 380,
+      "windows_analyzed": 28,
+      "critical_p50_ms": 271.53,
+      "critical_p95_ms": 541.05,
+      "max_queue_depth_seen": 1,
+      "context_applied_window": 24,
+      "stale_results": 0,
+      "duplicate_results": 0,
+      "risk_history_len": 120,
+      "final_risk": 50
+    },
+    {
+      "session_id": "soak-1",
+      "chunks_sent": 379,
+      "windows_analyzed": 28,
+      "critical_p50_ms": 260.75,
+      "critical_p95_ms": 806.55,
+      "max_queue_depth_seen": 1,
+      "context_applied_window": 24,
+      "stale_results": 0,
+      "duplicate_results": 0,
+      "risk_history_len": 120,
+      "final_risk": 54
+    },
+    {
+      "session_id": "soak-2",
+      "chunks_sent": 379,
+      "windows_analyzed": 28,
+      "critical_p50_ms": 339.23,
+      "critical_p95_ms": 429.97,
+      "max_queue_depth_seen": 2,
+      "context_applied_window": 24,
+      "stale_results": 0,
+      "duplicate_results": 0,
+      "risk_history_len": 120,
+      "final_risk": 54
+    }
+  ],
+  "stt": {
+    "submitted": 18,
+    "completed": 18,
+    "dropped_queue_full": 0,
+    "dropped_stale": 0,
+    "dropped_session_gone": 0,
+    "failed": 0,
+    "timed_out": 0,
+    "max_queue_depth": 2,
+    "wait_ms_p50": 352.53,
+    "wait_ms_p95": 652.13,
+    "exec_ms_p50": 650.16,
+    "exec_ms_p95": 1496.01
+  },
+  "memory": {
+    "rss_start_mb": 968.5,
+    "rss_end_mb": 1271.0,
+    "growth_mb": 302.5,
+    "source": "psutil rss",
+    "samples": [
+      {
+        "t_s": 0.0,
+        "rss_mb": 968.5
+      },
+      {
+        "t_s": 10.0,
+        "rss_mb": 1126.2
+      },
+      {
+        "t_s": 20.4,
+        "rss_mb": 1232.8
+      },
+      {
+        "t_s": 30.4,
+        "rss_mb": 1239.6
+      },
+      {
+        "t_s": 40.4,
+        "rss_mb": 1248.9
+      },
+      {
+        "t_s": 51.1,
+        "rss_mb": 1261.8
+      }
+    ],
+    "growth_second_half_mb": 22.2
+  },
+  "timestamp_utc": "2026-09-10T18:32:36Z"
+}

@@ -1,0 +1,70 @@
+# ─── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+env/
+.env
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# ─── Node / React Native ──────────────────────────────────────────────────────
+node_modules/
+.expo/
+*.lock
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ─── Android ──────────────────────────────────────────────────────────────────
+apps/mobile/android/local.properties
+apps/mobile/android/.gradle/
+apps/mobile/android/app/build/
+apps/mobile/android/build/
+*.apk
+*.aab
+*.keystore
+!debug.keystore
+
+# ─── Secrets / env ────────────────────────────────────────────────────────────
+.env
+.env.local
+.env.production
+*.pem
+*.key
+
+# ─── Datasets / models (large files) ─────────────────────────────────────────
+datasets/raw/
+datasets/processed/
+*.pt
+*.onnx
+*.tflite
+*.bin
+
+# ─── OS ───────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── Docker ───────────────────────────────────────────────────────────────────
+docker-compose.override.yml
+
+# ─── IDE ──────────────────────────────────────────────────────────────────────
+.vscode/settings.json
+.idea/
+
+# Model checkpoints — fetched by scripts/fetch_models.py, never committed
+services/api/models/
+services/api/vendor/
+
+# Evaluation datasets — never committed. Only manifests, configs, metadata,
+# hashes and results live in the repo (see evaluation/).
+data/external/
+datasets/

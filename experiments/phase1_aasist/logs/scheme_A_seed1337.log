@@ -1,0 +1,47 @@
+[17:21:24] aasist-l-phase1-A-seed1337 | device=mps lr=1e-05 bs=8 epochs=3 freq_aug=False
+[17:21:24] train {'bonafide': 2580, 'spoof': 2580, 'total': 5160}   dev {'bonafide': 1000, 'spoof': 1000, 'total': 2000}
+[17:21:25] scheme A: 322/85306 trainable (0.38%), 18 BatchNorm modules forced to eval()
+[17:22:45] epoch 0 (pretrained, before any update): val EER 0.0060 AUC 0.9993 FAR 0.0060 FRR 0.0060
+[17:23:08]   e1 b50/645 loss 0.0018
+[17:23:23]   e1 b100/645 loss 0.0068
+[17:23:37]   e1 b150/645 loss 0.0053
+[17:23:51]   e1 b200/645 loss 0.0055
+[17:24:06]   e1 b250/645 loss 0.0048
+[17:24:20]   e1 b300/645 loss 0.0046
+[17:24:34]   e1 b350/645 loss 0.0056
+[17:24:48]   e1 b400/645 loss 0.0053
+[17:25:02]   e1 b450/645 loss 0.0049
+[17:25:16]   e1 b500/645 loss 0.0045
+[17:25:29]   e1 b550/645 loss 0.0055
+[17:25:44]   e1 b600/645 loss 0.0054
+[17:27:06] epoch 1: train_loss 0.0051 | val EER 0.0060 AUC 0.9993 FAR 0.0060 FRR 0.0060 (261s)
+[17:27:07]   -> new best (epoch 1) saved
+[17:27:20]   e2 b50/645 loss 0.0096
+[17:27:34]   e2 b100/645 loss 0.0072
+[17:27:48]   e2 b150/645 loss 0.0060
+[17:28:02]   e2 b200/645 loss 0.0048
+[17:28:16]   e2 b250/645 loss 0.0042
+[17:28:30]   e2 b300/645 loss 0.0036
+[17:28:44]   e2 b350/645 loss 0.0039
+[17:28:58]   e2 b400/645 loss 0.0040
+[17:29:13]   e2 b450/645 loss 0.0051
+[17:29:27]   e2 b500/645 loss 0.0046
+[17:29:41]   e2 b550/645 loss 0.0053
+[17:29:55]   e2 b600/645 loss 0.0054
+[17:31:16] epoch 2: train_loss 0.0053 | val EER 0.0060 AUC 0.9993 FAR 0.0060 FRR 0.0060 (249s)
+[17:31:30]   e3 b50/645 loss 0.0008
+[17:31:44]   e3 b100/645 loss 0.0098
+[17:31:58]   e3 b150/645 loss 0.0068
+[17:32:12]   e3 b200/645 loss 0.0068
+[17:32:25]   e3 b250/645 loss 0.0057
+[17:32:39]   e3 b300/645 loss 0.0054
+[17:32:53]   e3 b350/645 loss 0.0051
+[17:33:07]   e3 b400/645 loss 0.0047
+[17:33:21]   e3 b450/645 loss 0.0043
+[17:33:35]   e3 b500/645 loss 0.0054
+[17:33:48]   e3 b550/645 loss 0.0051
+[17:34:02]   e3 b600/645 loss 0.0051
+[17:35:25] epoch 3: train_loss 0.0053 | val EER 0.0070 AUC 0.9993 FAR 0.0070 FRR 0.0070 (249s)
+[17:35:25] best epoch 1: EER 0.0060 AUC 0.9993
+[17:35:25] checkpoint aasist-l-phase1-A-seed1337.pth sha256 feae312422d4b2308cceba407adebd9e80458091d63034f5e9d14db8d4192924
+[17:35:25] record -> /Users/shriyansh/Desktop/voiceshield/experiments/phase1_aasist/scheme_A/aasist-l-phase1-A-seed1337.json  (14.0 min)

@@ -1,0 +1,96 @@
+{
+  "pipeline_mode_setting": "real_ml",
+  "transcriber_is_real_ml": true,
+  "requested_seconds": 120.0,
+  "sessions": 1,
+  "chunk_ms": 100,
+  "realtime_paced": true,
+  "wall_seconds": 120.1,
+  "per_session": [
+    {
+      "session_id": "soak-0",
+      "chunks_sent": 1045,
+      "windows_analyzed": 101,
+      "critical_p50_ms": 237.49,
+      "critical_p95_ms": 401.42,
+      "max_queue_depth_seen": 1,
+      "context_applied_window": 80,
+      "stale_results": 0,
+      "duplicate_results": 0,
+      "risk_history_len": 120,
+      "final_risk": 50
+    }
+  ],
+  "stt": {
+    "submitted": 20,
+    "completed": 20,
+    "dropped_queue_full": 0,
+    "dropped_stale": 0,
+    "dropped_session_gone": 0,
+    "failed": 0,
+    "timed_out": 0,
+    "max_queue_depth": 1,
+    "wait_ms_p50": 0.48,
+    "wait_ms_p95": 0.71,
+    "exec_ms_p50": 438.89,
+    "exec_ms_p95": 828.79
+  },
+  "memory": {
+    "rss_start_mb": 980.4,
+    "rss_end_mb": 1303.2,
+    "growth_mb": 322.8,
+    "source": "psutil rss",
+    "samples": [
+      {
+        "t_s": 0.0,
+        "rss_mb": 980.4
+      },
+      {
+        "t_s": 10.0,
+        "rss_mb": 1121.7
+      },
+      {
+        "t_s": 20.0,
+        "rss_mb": 1172.1
+      },
+      {
+        "t_s": 30.0,
+        "rss_mb": 1188.0
+      },
+      {
+        "t_s": 40.0,
+        "rss_mb": 1192.7
+      },
+      {
+        "t_s": 50.1,
+        "rss_mb": 1194.9
+      },
+      {
+        "t_s": 60.1,
+        "rss_mb": 1204.2
+      },
+      {
+        "t_s": 70.1,
+        "rss_mb": 1204.4
+      },
+      {
+        "t_s": 80.1,
+        "rss_mb": 1209.2
+      },
+      {
+        "t_s": 90.1,
+        "rss_mb": 1298.5
+      },
+      {
+        "t_s": 100.1,
+        "rss_mb": 1298.6
+      },
+      {
+        "t_s": 110.1,
+        "rss_mb": 1303.1
+      }
+    ],
+    "growth_second_half_mb": 98.9
+  },
+  "timestamp_utc": "2026-09-10T18:31:17Z"
+}

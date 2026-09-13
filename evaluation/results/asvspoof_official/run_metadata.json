@@ -1,0 +1,56 @@
+{
+  "timestamp_utc": "2026-09-09T13:35:58Z",
+  "model": {
+    "name": "AASIST",
+    "variant": "AASIST-L",
+    "cascade": false,
+    "checkpoint_sha256": {
+      "AASIST-L": "814331d088032bb4c3fa61cc014789eadeed464209dd094ab3a2dd6ffbdce27a"
+    },
+    "source": "https://github.com/clovaai/aasist (MIT, NAVER Corp)",
+    "trained_on": "ASVspoof 2019 LA train (by the original authors)",
+    "device": "cpu"
+  },
+  "preprocessing": {
+    "sample_rate": 16000,
+    "input_samples": 64600,
+    "input_seconds": 4.0375,
+    "length_policy": "tile if short, centre-crop if long (upstream convention)",
+    "channels": "mono (averaged)",
+    "resampling": "scipy resample_poly when source sr != 16000",
+    "normalisation": "none beyond float32 in [-1, 1]",
+    "version": "prep-v1"
+  },
+  "software": {
+    "python": "3.10.0",
+    "torch": "2.2.2",
+    "numpy": "1.26.4",
+    "platform": "macOS-26.6.2-arm64-arm-64bit"
+  },
+  "hardware": {
+    "machine": "arm64",
+    "torch_threads": 10,
+    "cuda_available": false
+  },
+  "settings": {
+    "ANALYSIS_WINDOW_MS": 4038,
+    "ANALYSIS_HOP_MS": 1000,
+    "MIN_ANALYSIS_MS": 400
+  },
+  "run_tag": "asvspoof_official",
+  "seed": 1337,
+  "dataset": "asvspoof2019la",
+  "asvspoof_root": "/Users/shriyansh/Desktop/voiceshield/data/external/LA_extract_full",
+  "subset": {
+    "method": "stratified: bona fide uniform; spoof spread evenly over system_id",
+    "calibration_per_class": 1000,
+    "test_per_class": 1500,
+    "note": "subset results are NOT full-split benchmarks"
+  },
+  "split_roles": {
+    "calibration": "dev",
+    "test": "eval"
+  },
+  "cascade_disabled_for_evaluation": true,
+  "calibration_version": "cal-v1"
+}
