@@ -904,7 +904,7 @@ def test_16_live_microphone_stream() -> bool:
         str(script),
         "--mic",
         "--max-seconds",
-        "5.5",
+        "6.0",
         "--json",
     ]
     env = dict(os.environ)

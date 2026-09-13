@@ -134,7 +134,7 @@ The comprehensive validation suite (`services/api/scripts/phase17_validate.py`) 
 | 13 | **Frontend Reconnection** | Client disconnects and reconnects with same session | **PASS** | Session state preserved across connection boundary |
 | 14 | **Dynamic Challenge Flow** | Challenge generation, WebSocket broadcast, result post | **PASS** | Challenge `3253dadf` created, passed, and triggered re-scoring |
 | 15 | **Full Prototype Demo** | Complete end-to-end pipeline run with spoof audio | **PASS** | 44 events, 19 risk updates, spoof prob: 0.9829, decision: VERIFY |
-| 16 | **Live Microphone Stream** | Live hardware mic capture (`:0`, 16kHz mono) + real ML | **PASS** | 19 chunks (4.75s), 42 events, AASIST real-ML: 0.9760, 0 drops |
+| 16 | **Live Microphone Stream** | Live hardware mic capture (`:0`, 16kHz mono) + real ML | **PASS** | 21 chunks (5.25s), 46 events, 21 risk updates, 0 drops |
 
 **Total Score: 16/16 tests passed (100.0%)**
 
