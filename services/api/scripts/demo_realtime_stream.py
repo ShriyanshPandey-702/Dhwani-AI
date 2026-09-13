@@ -352,6 +352,7 @@ def stream_audio_session(
 
     if in_process:
         log("Running in-process against real VoiceShield ML models...", "SETUP", COLOR_GREEN)
+        from app.websocket import gateway as gw
         client, token, challenge_store = build_in_process_session(session_id, user_id)
 
         ws_url = f"/ws/sessions/{session_id}?token={token}"
@@ -421,10 +422,23 @@ def stream_audio_session(
                         events_received.append(msg)
                         display_telemetry(msg, time.perf_counter() - t_start)
 
-                if realtime:
+                if realtime and source_type != "mic":
                     time.sleep(chunk_ms / 1000.0)
 
             log("Audio stream transmission complete. Flushing analysis barrier...", "STREAM")
+
+            # Allow any in-flight async inference task to settle
+            for _ in range(25):
+                st = gw.manager.get_state(session_id)
+                if st and st.pending_audio_tasks > 0:
+                    time.sleep(0.2)
+                    if hasattr(ws, "_send_queue"):
+                        while not ws._send_queue.empty():
+                            msg = ws.receive_json()
+                            events_received.append(msg)
+                            display_telemetry(msg, time.perf_counter() - t_start)
+                else:
+                    break
 
             # Flusher barrier via ping/pong rounds
             for _ in range(250):

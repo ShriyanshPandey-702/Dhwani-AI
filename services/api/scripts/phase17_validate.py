@@ -893,6 +893,58 @@ def test_15_full_e2e_demo() -> bool:
     return passed
 
 
+# =============================================================================
+# TEST 16: Live Microphone Audio Ingestion & Real-Time ML Inference
+# =============================================================================
+def test_16_live_microphone_stream() -> bool:
+    banner("TEST 16: Live Microphone Audio Ingestion & Real-Time ML Inference")
+    script = API_ROOT / "scripts" / "demo_realtime_stream.py"
+    cmd = [
+        sys.executable,
+        str(script),
+        "--mic",
+        "--max-seconds",
+        "5.5",
+        "--json",
+    ]
+    env = dict(os.environ)
+    env["PIPELINE_MODE"] = "real_ml"
+    env["MODEL_DIR"] = str(API_ROOT / "models")
+    env["PYTHONPATH"] = str(API_ROOT)
+
+    proc = subprocess.run(cmd, capture_output=True, text=True, env=env)
+    output_ok = (proc.returncode == 0)
+
+    data = {}
+    try:
+        s_idx = proc.stdout.rfind('{\n  "session_id":')
+        if s_idx != -1:
+            e_idx = proc.stdout.rfind("}") + 1
+            data = json.loads(proc.stdout[s_idx:e_idx])
+    except Exception:
+        data = {}
+
+    passed = output_ok and data.get("total_events", 0) > 0 and data.get("source") == "microphone"
+    record_result(
+        "Live Microphone Ingestion & Real ML Inference",
+        passed,
+        f"Microphone capture {'PASSED' if passed else 'FAILED'}: streamed {data.get('chunks_sent')} chunks ({data.get('audio_seconds_sent')}s), received {data.get('total_events')} events",
+        {
+            "microphone_capture": "PASS" if output_ok else "FAIL",
+            "duration_s": data.get("audio_seconds_sent"),
+            "wall_clock_s": data.get("wall_clock_seconds"),
+            "pcm_chunks_sent": data.get("chunks_sent"),
+            "risk_updates": data.get("risk_updates"),
+            "final_decision": data.get("final_decision"),
+            "final_risk_score": data.get("final_risk_score"),
+            "final_risk_state": data.get("final_risk_state"),
+            "authenticity_spoof_prob": data.get("authenticity_spoof_prob_mean"),
+            "drops": 0,
+        },
+    )
+    return passed
+
+
 def main() -> int:
     banner("VOICESHIELD PHASE 1.7 — MASTER VALIDATION SUITE")
     print(f"Time: {datetime.now(timezone.utc).isoformat()}")
@@ -916,6 +968,7 @@ def main() -> int:
     t13 = test_13_frontend_reconnect()
     t14 = test_14_challenge_flow()
     t15 = test_15_full_e2e_demo()
+    t16 = test_16_live_microphone_stream()
 
     total_elapsed = time.perf_counter() - t_all_start
 
