@@ -82,7 +82,8 @@ The real-time streaming pipeline strictly preserves all Phase 1.6 invariants:
 - **Identity Model**: `speechbrain/spkrec-ecapa-voxceleb` (192-dim embeddings).
 - **STT Engine**: `faster-whisper` (`tiny`, int8 compute on CPU).
 - **Risk Weights**: $w_{\text{authenticity}} = 0.50$, $w_{\text{identity}} = 0.25$, $w_{\text{context}} = 0.25$.
-- **Policy Thresholds**: Low $\le 20$, Suspicious $\le 40$, High $\le 65$, Critical $> 85$.
+- **ML Thread Pool**: `ML_POOL_WORKERS = 2` (ThreadPoolExecutor in `gateway.py` strictly preserved from Phase 1.6 baseline).
+- **Policy Thresholds**: `low`: 20, `suspicious`: 40, `high`: 65, `critical`: 85.
 - **Admission Queue**: `MAX_PENDING_AUDIO_CHUNKS = 4` per session to prevent coroutine pileup under flood conditions.
 
 ---
@@ -92,7 +93,7 @@ The real-time streaming pipeline strictly preserves all Phase 1.6 invariants:
 The demonstration client `services/api/scripts/demo_realtime_stream.py` provides an interactive terminal interface for streaming audio into VoiceShield.
 
 ### Capabilities:
-1. **Live Microphone Mode**: Captures audio directly from default system microphone using `ffmpeg` (`-f avfoundation` on macOS or `pulse`/`alsa` on Linux) at 16,000 Hz, 16-bit signed PCM mono, chunked into 250ms packets.
+1. **Live Microphone Mode**: Captures audio directly from default system microphone using `ffmpeg` (`-f avfoundation -i :0` on macOS or `pulse`/`alsa` on Linux) at 16,000 Hz, 16-bit signed PCM mono, chunked into 250ms packets.
 2. **Audio File Mode**: Reads WAV/FLAC audio files, with presets for `spoof` (`data/external/InTheWild/release_in_the_wild/1.wav`) and `bonafide` (`45.wav`).
 3. **Paced WebSocket Streaming**: Paces transmissions at 250ms per chunk (4 chunks/second) to emulate realistic real-time telemetry.
 4. **Dynamic Challenge Flow**: Detects `challenge_required` WebSocket events, issues interactive verification prompts, accepts user spoken or keypad responses, and posts outcomes back to `/api/v1/challenge/{session_id}/{challenge_id}/result`.
@@ -106,15 +107,15 @@ python services/api/scripts/demo_realtime_stream.py --preset spoof
 # Stream bona-fide sample file
 python services/api/scripts/demo_realtime_stream.py --preset bonafide
 
-# Stream from live microphone
-python services/api/scripts/demo_realtime_stream.py --mic
+# Stream from live microphone (macOS MacBook Air Microphone)
+python services/api/scripts/demo_realtime_stream.py --mic --max-seconds 6.0
 ```
 
 ---
 
 ## 4. Master Validation Suite Results
 
-The comprehensive validation suite (`services/api/scripts/phase17_validate.py`) executed all 15 automated validation targets with zero exclusions.
+The comprehensive validation suite (`services/api/scripts/phase17_validate.py`) executed all 16 automated validation targets with zero exclusions.
 
 | # | Test Case | Target / Specification | Result | Details |
 |---|:---|:---|:---:|:---|
@@ -133,21 +134,23 @@ The comprehensive validation suite (`services/api/scripts/phase17_validate.py`) 
 | 13 | **Frontend Reconnection** | Client disconnects and reconnects with same session | **PASS** | Session state preserved across connection boundary |
 | 14 | **Dynamic Challenge Flow** | Challenge generation, WebSocket broadcast, result post | **PASS** | Challenge `3253dadf` created, passed, and triggered re-scoring |
 | 15 | **Full Prototype Demo** | Complete end-to-end pipeline run with spoof audio | **PASS** | 44 events, 19 risk updates, spoof prob: 0.9829, decision: VERIFY |
+| 16 | **Live Microphone Stream** | Live hardware mic capture (`:0`, 16kHz mono) + real ML | **PASS** | 19 chunks (4.75s), 42 events, AASIST real-ML: 0.9760, 0 drops |
 
-**Total Score: 15/15 tests passed (100.0%)**
+**Total Score: 16/16 tests passed (100.0%)**
 
 ---
 
 ## 5. Security & Risk Engine Policy Matrix
 
-The prototype enforces four operational decisions depending on real-time fused risk scores:
+The prototype maps the fused 0–100 risk score to states via `classify_state(score, thresholds)` in `services/api/app/risk/engine.py` using active thresholds `{"low": 20, "suspicious": 40, "high": 65, "critical": 85}`, and maps state to policy action via `evaluate()` in `policy.py`:
 
-| Risk Score | Risk State | Policy Decision | Action Taken |
-|:---:|:---:|:---:|:---|
-| 0 – 20 | `low` | `ALLOW` | Stream continues normally with green telemetry. |
-| 21 – 40 | `suspicious` | `CHALLENGE` | Issues interactive out-of-band or voice verification challenge. |
-| 41 – 65 | `high` | `HOLD` / `VERIFY` | Pauses high-risk operations; initiates dual-channel confirmation. |
-| 66 – 100 | `critical` | `BLOCK` | Terminates session; logs tamper-evident cryptographic audit incident. |
+| Risk Score Range | Evaluated Risk State | Mandatory Action | Dashboard Decision | Action Description |
+|:---:|:---:|:---:|:---:|:---|
+| $0 \le \text{Score} < 20$ | `insufficient_evidence` | `allow`* | `ALLOW`* | Initial stream baseline; *escalates to VERIFY if high-consequence request. |
+| $20 \le \text{Score} < 40$ | `low` | `allow` | `ALLOW` | Stream continues normally with green telemetry. |
+| $40 \le \text{Score} < 65$ | `suspicious` (e.g. 49, 50) | `challenge` | `VERIFY` | Issues interactive voice/keypad challenge to verify caller. |
+| $65 \le \text{Score} < 85$ | `high` | `verify` | `VERIFY` | Enforces mandatory out-of-band (OOB) independent verification. |
+| $85 \le \text{Score} \le 100$ | `critical` | `hold` | `HOLD` / `BLOCK` | Immediately halts consequential actions; creates tamper-evident incident. |
 
 ---
 
