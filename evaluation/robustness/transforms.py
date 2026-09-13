@@ -12,6 +12,7 @@ measure sensitivity to a known perturbation, nothing more.
 
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import Callable, Dict, Optional
 
 import numpy as np
@@ -77,15 +78,25 @@ def resample_roundtrip(audio, sr: int = SAMPLE_RATE, intermediate: int = 8000) -
     return _as_float32(signal.resample_poly(down, sr, intermediate))[: x.size]
 
 
+@lru_cache(maxsize=16)
+def _lowpass_filter(cutoff_hz: float, sr: int):
+    return signal.butter(6, cutoff_hz / (sr / 2), btype="low")
+
+
 def lowpass(audio, cutoff_hz: float = 4000.0, sr: int = SAMPLE_RATE) -> np.ndarray:
-    b, a = signal.butter(6, cutoff_hz / (sr / 2), btype="low")
+    b, a = _lowpass_filter(cutoff_hz, sr)
     return _as_float32(signal.lfilter(b, a, _as_float32(audio)))
+
+
+@lru_cache(maxsize=16)
+def _telephone_band_filter(sr: int):
+    return signal.butter(6, [300 / (sr / 2), 3400 / (sr / 2)], btype="band")
 
 
 def telephone_band(audio, sr: int = SAMPLE_RATE) -> np.ndarray:
     """300–3400 Hz band-limit — the classic narrowband telephony passband."""
     x = _as_float32(audio)
-    b, a = signal.butter(6, [300 / (sr / 2), 3400 / (sr / 2)], btype="band")
+    b, a = _telephone_band_filter(sr)
     return _as_float32(signal.lfilter(b, a, x))
 
 

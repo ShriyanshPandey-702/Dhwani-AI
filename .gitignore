@@ -61,6 +61,7 @@ docker-compose.override.yml
 .idea/
 
 # Model checkpoints — fetched by scripts/fetch_models.py, never committed
+models/
 services/api/models/
 services/api/vendor/
 
