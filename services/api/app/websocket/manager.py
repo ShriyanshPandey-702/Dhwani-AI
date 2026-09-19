@@ -89,6 +89,9 @@ class SessionState:
     closed: bool = False
     active_tasks: Set[asyncio.Task] = field(default_factory=set)
 
+    # Phase 1 Step 5.4 Gated Corroboration Persistence (P=2 consecutive ML analysis windows)
+    consecutive_identity_mismatches: int = 0
+
     def record_risk(self, score: int, state: str) -> None:
         self.risk_history.append(score)
         del self.risk_history[:-MAX_HISTORY]
@@ -101,6 +104,11 @@ class SessionState:
         auth = self.last_authenticity
         ident = self.last_identity
         ctx = self.last_context
+
+        P = self.policy_config.get("corroboration_persistence", 2)
+        is_confirmed = (self.consecutive_identity_mismatches >= P)
+        is_pending = (self.consecutive_identity_mismatches == 1)
+
         return EvidenceBundle(
             authenticity=(auth or {}).get("spoof_probability"),
             authenticity_confidence=(auth or {}).get("confidence", 0.0),
@@ -115,6 +123,8 @@ class SessionState:
             consequence=self.consequence,
             challenge_outcome=self.challenge_outcome,
             verification_outcome=self.verification_outcome,
+            identity_corroborated=is_confirmed,
+            identity_corroboration_pending=is_pending,
         )
 
 

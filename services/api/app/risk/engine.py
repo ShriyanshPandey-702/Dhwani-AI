@@ -60,6 +60,11 @@ class EvidenceBundle:
 
     reasons: List[str] = field(default_factory=list)
 
+    # Explicit corroboration state passed from session/pipeline (Correction 2):
+    # compute_risk() MUST NOT infer identity corroboration directly from raw identity_similarity.
+    identity_corroborated: bool = False
+    identity_corroboration_pending: bool = False
+
 
 @dataclass
 class RiskResult:
@@ -97,6 +102,12 @@ _CHALLENGE_DELTA = {"failed": 20.0, "passed": -12.0}
 _VERIFICATION_DELTA = {"rejected": 25.0, "approved": -20.0}
 
 
+_DEFAULT_UNCORROBORATED_CAP = 38.0
+_DEFAULT_AUTH_CAP = 35.0
+_DEFAULT_IDENTITY_CORROBORATION_THRESHOLD = 0.40
+_DEFAULT_CONTEXT_CORROBORATION_THRESHOLD = 0.25
+
+
 def compute_risk(
     evidence: EvidenceBundle,
     policy_config: dict | None = None,
@@ -123,10 +134,11 @@ def compute_risk(
     available: List[str] = []
     confidences: List[float] = []
 
+    raw_auth_contrib = 0.0
     # ── Authenticity stream (independent) ────────────────────────────────────
     if evidence.authenticity is not None:
         auth_raw = _clamp01(evidence.authenticity)
-        contributions["authenticity"] = auth_raw * weights.get("authenticity", 0.50) * 100
+        raw_auth_contrib = auth_raw * weights.get("authenticity", 0.50) * 100
         available.append("authenticity")
         confidences.append(_clamp01(evidence.authenticity_confidence))
         if auth_raw > 0.70:
@@ -137,6 +149,7 @@ def compute_risk(
         reasons.append("authenticity_evidence_pending")
 
     # ── Identity stream (independent) ────────────────────────────────────────
+    id_risk: Optional[float] = None
     if evidence.identity_similarity is not None:
         id_risk = _clamp01(1.0 - _clamp01(evidence.identity_similarity))
         contributions["identity"] = id_risk * weights.get("identity", 0.25) * 100
@@ -150,6 +163,7 @@ def compute_risk(
         reasons.append("no_enrolled_speaker_reference")
 
     # ── Context stream (independent) ─────────────────────────────────────────
+    ctx_raw: Optional[float] = None
     if evidence.context_risk is not None:
         ctx_raw = _clamp01(evidence.context_risk)
         contributions["context"] = ctx_raw * weights.get("context", 0.25) * 100
@@ -161,6 +175,36 @@ def compute_risk(
             reasons.append("suspicious_conversation_context")
     else:
         reasons.append("context_evidence_pending")
+
+    # ── Gated Corroboration Fusion (Model B) ──────────────────────────────────
+    # A single authenticity anomaly cannot unilaterally drive the call to
+    # SUSPICIOUS (>=40) when identity and context are uncorroborated (or missing).
+    #
+    # Corroborating signals:
+    #   - identity: explicit confirmation via persistence P=2 (speaker mismatch)
+    #   - context: context risk >= context_corroboration_threshold (suspicious intent)
+    #
+    # CRITICAL NON-BYPASS RULE:
+    #   compute_risk() consumes the explicit identity_corroborated flag.
+    #   Raw identity similarity MUST NOT independently establish corroboration here.
+    id_corroborates = bool(evidence.identity_corroborated)
+    if evidence.identity_corroboration_pending:
+        reasons.append("identity_corroboration_pending")
+    if id_corroborates:
+        reasons.append("identity_corroboration_confirmed")
+
+    ctx_thresh = cfg.get(
+        "context_corroboration_threshold",
+        cfg.get("corroboration_threshold", _DEFAULT_CONTEXT_CORROBORATION_THRESHOLD),
+    )
+    ctx_corroborates = (ctx_raw is not None) and (ctx_raw >= ctx_thresh)
+
+    is_corroborated = id_corroborates or ctx_corroborates
+
+    if evidence.authenticity is not None:
+        contributions["authenticity"] = raw_auth_contrib
+    else:
+        contributions["authenticity"] = 0.0
 
     # ── No stream at all → insufficient evidence ─────────────────────────────
     if not available:
@@ -174,7 +218,24 @@ def compute_risk(
         reasons.append(f"consequence_{evidence.consequence}")
     raw *= mult
 
+    # ── Uncorroborated total-risk cap (Model B) ──────────────────────────────
+    # Applied AFTER the consequence multiplier so consequence cannot force an
+    # uncorroborated passive score to cross SUSPICIOUS (>=40).
+    uncorroborated_total_cap = cfg.get("uncorroborated_total_cap", _DEFAULT_UNCORROBORATED_CAP)
+    auth_cap = cfg.get("authenticity_uncorroborated_cap", _DEFAULT_AUTH_CAP)
+
+    if evidence.authenticity is not None and not is_corroborated:
+        if raw > uncorroborated_total_cap:
+            raw = uncorroborated_total_cap
+            reasons.append("total_risk_uncorroborated_cap_active")
+        if raw_auth_contrib > auth_cap:
+            reasons.append("authenticity_uncorroborated_provisional")
+            if contributions["authenticity"] > auth_cap:
+                contributions["authenticity"] = auth_cap
+
     # ── Interactive evidence ─────────────────────────────────────────────────
+    # Interactive challenge/verification deltas apply AFTER the cap so an explicit
+    # failure can still escalate the call.
     if evidence.challenge_outcome in _CHALLENGE_DELTA:
         raw += _CHALLENGE_DELTA[evidence.challenge_outcome]
         reasons.append(f"challenge_{evidence.challenge_outcome}")

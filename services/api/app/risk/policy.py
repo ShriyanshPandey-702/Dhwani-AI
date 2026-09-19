@@ -48,6 +48,13 @@ DEFAULT_POLICY_CONFIG = {
     # auto-allowed — the system asks for independent verification instead of
     # guessing from a thin evidence surface.
     "min_confidence_for_allow": 0.25,
+    # Gated Corroboration Fusion (Model B with Multi-Window Persistence)
+    "authenticity_uncorroborated_cap": 35.0,
+    "uncorroborated_total_cap": 38.0,
+    "identity_corroboration_threshold": 0.40,
+    "context_corroboration_threshold": 0.25,
+    "corroboration_threshold": 0.25,
+    "corroboration_persistence": 2,
 }
 
 

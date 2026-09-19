@@ -122,6 +122,8 @@ def analyze_window(state: SessionState, pcm_bytes: bytes,
         # and the engine is not fed a fabricated observation.
         if quality.quality == "POOR":
             out.extend(_timeline(state, "audio_quality_poor"))
+        # Correction 3: Silence / invalid identity evidence: streak = 0
+        state.consecutive_identity_mismatches = 0
         return out
 
     audio = raw
@@ -146,9 +148,27 @@ def analyze_window(state: SessionState, pcm_bytes: bytes,
     _t = time.perf_counter()
     if not speaker_identity.is_enrolled(session_id):
         speaker_identity.enroll(session_id, identity_audio)
+        state.consecutive_identity_mismatches = 0
     ident = speaker_identity.analyze(session_id, identity_audio)
     stage_ms["identity"] = round((time.perf_counter() - _t) * 1000, 2)
     state.last_identity = ident.to_dict()
+
+    # Deterministic persistence update (P=2 consecutive ML analysis windows)
+    # ML inference occurs when a window is scored: in real_ml, when `window is not None`;
+    # in mock mode, on each frame.
+    window_scored = (window is not None) if speaker_identity.is_real_ml else True
+    if window_scored:
+        if ident is None or ident.enrollment_status == "NOT_ENROLLED":
+            state.consecutive_identity_mismatches = 0
+        else:
+            corroboration_sim_thresh = 1.0 - state.policy_config.get(
+                "identity_corroboration_threshold", 0.40
+            )  # 1.0 - 0.40 = 0.60
+            sim = ident.match_score / 100.0
+            if sim <= corroboration_sim_thresh:
+                state.consecutive_identity_mismatches += 1
+            else:
+                state.consecutive_identity_mismatches = 0
 
     # ── Evidence stream 3: conversation context (independent) ────────────────
     # Real transcription is slow (~537 ms p50) and must not sit in the 1 s
