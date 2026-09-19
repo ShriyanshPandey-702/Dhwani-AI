@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WS_BASE_URL } from '../../config/api';
+import { getWsBaseUrl } from '../../store/connectionStore';
 
 export type ConnectionState =
   | 'idle'
@@ -41,10 +42,6 @@ class WebSocketService {
   /** Resolves once the socket is actually OPEN, or rejects if it cannot connect. */
   async connect(sessionId: string): Promise<void> {
     const token = await AsyncStorage.getItem('access_token');
-    if (!token) {
-      this.setState('failed');
-      throw new Error('No access token');
-    }
     this.sessionId = sessionId;
     this.shouldReconnect = true;
     this.reconnectAttempts = 0;
@@ -52,7 +49,7 @@ class WebSocketService {
     return new Promise<void>((resolve, reject) => {
       this.openResolve = resolve;
       this.openReject = reject;
-      this.open(token);
+      this.open(token || undefined);
     });
   }
 
@@ -68,12 +65,18 @@ class WebSocketService {
     }
   }
 
-  private open(token: string) {
+  private open(token?: string) {
     this.setState(this.reconnectAttempts > 0 ? 'reconnecting' : 'connecting');
 
-    // The token travels as a query parameter because React Native's WebSocket
-    // cannot set request headers. The backend validates it before accepting.
-    const url = `${WS_BASE_URL}/ws/sessions/${this.sessionId}?token=${encodeURIComponent(token)}`;
+    const wsBase = getWsBaseUrl();
+    if (!wsBase) {
+      this.setState('failed');
+      this.settleOpen(new Error("WebSocket host not configured. Please set your Mac's LAN IP in Settings."));
+      return;
+    }
+
+    const tokenQuery = token ? `?token=${encodeURIComponent(token)}` : '';
+    const url = `${wsBase}/ws/sessions/${this.sessionId}${tokenQuery}`;
     const ws = new WebSocket(url);
     this.ws = ws;
 
@@ -122,11 +125,11 @@ class WebSocketService {
       this.setState('reconnecting');
       this.reconnectTimer = setTimeout(async () => {
         const nextToken = await AsyncStorage.getItem('access_token');
-        if (nextToken && this.shouldReconnect) {
-          this.open(nextToken);
+        if (this.shouldReconnect) {
+          this.open(nextToken || undefined);
         } else {
           this.setState('failed');
-          this.settleOpen(new Error('No access token on reconnect'));
+          this.settleOpen(new Error('Connection aborted during reconnect'));
         }
       }, delay);
     };

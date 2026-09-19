@@ -5,8 +5,10 @@ import {
 } from 'react-native';
 import { colors, spacing, radius, typography } from '../utils/theme';
 import { useAuthStore } from '../store/authStore';
+import { useNavigation } from '@react-navigation/native';
 
 export const LoginScreen: React.FC = () => {
+  const navigation = useNavigation();
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -103,6 +105,14 @@ export const LoginScreen: React.FC = () => {
               <Text style={styles.toggleLink}>{isRegister ? 'Sign in' : 'Register'}</Text>
             </Text>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Settings' as never)}
+            style={styles.settingsBtn}
+            accessibilityLabel="Backend Connection Settings"
+            accessibilityRole="button">
+            <Text style={styles.settingsBtnText}>⚙️ Backend Connection Settings</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -157,4 +167,18 @@ const styles = StyleSheet.create({
   toggleRow: { alignItems: 'center' },
   toggleText: { color: colors.textSecondary, fontSize: 14 },
   toggleLink: { color: colors.brand, fontWeight: '700' },
+  settingsBtn: {
+    marginTop: spacing.md,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.bgElevated,
+  },
+  settingsBtnText: {
+    color: colors.brandLight,
+    fontSize: 13,
+    fontWeight: '600',
+  },
 });

@@ -9,15 +9,16 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { SplashScreen } from './src/screens/SplashScreen';
-import { useAuthStore } from './src/store/authStore';
+import { useConnectionStore } from './src/store/connectionStore';
 import { colors } from './src/utils/theme';
+
 
 function App(): React.JSX.Element {
   const [showSplash, setShowSplash] = useState(true);
-  const { loadUser } = useAuthStore();
+  const { loadConfig } = useConnectionStore();
 
   useEffect(() => {
-    loadUser();
+    loadConfig();
   }, []);
 
   if (showSplash) {

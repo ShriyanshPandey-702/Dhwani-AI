@@ -8,7 +8,6 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, spacing, radius, typography } from '../utils/theme';
-import { useAuthStore } from '../store/authStore';
 import { useSessionStore } from '../store/sessionStore';
 import { StatCard } from '../components/StatCard';
 import { RiskStateBadge } from '../components/RiskStateBadge';
@@ -44,7 +43,6 @@ const asRiskState = (value: string | null): RiskState => {
  */
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
-  const { user, logout } = useAuthStore();
   const overview = useSessionStore(s => s.overview);
   const isRefreshing = useSessionStore(s => s.isRefreshing);
   const refreshHome = useSessionStore(s => s.refreshHome);
@@ -98,15 +96,15 @@ export const HomeScreen: React.FC = () => {
           <View>
             <Text style={styles.brand}>VOICESHIELD</Text>
             <Text style={styles.subGreeting}>
-              Security Overview · {user?.full_name || user?.email || 'signed in'}
+              Security Overview · Real-Time Active Protection
             </Text>
           </View>
           <TouchableOpacity
-            onPress={logout}
-            style={styles.logoutBtn}
-            accessibilityLabel="Sign out"
+            onPress={() => navigation.navigate('Settings')}
+            style={styles.settingsBtn}
+            accessibilityLabel="Open settings"
             accessibilityRole="button">
-            <Text style={styles.logoutText}>Sign Out</Text>
+            <Text style={styles.settingsBtnText}>⚙️ Settings</Text>
           </TouchableOpacity>
         </View>
 
@@ -245,7 +243,7 @@ const styles = StyleSheet.create({
   },
   brand: { fontSize: 20, fontWeight: '800', color: colors.textPrimary, letterSpacing: 1.5 },
   subGreeting: { ...typography.small, marginTop: 2 },
-  logoutBtn: {
+  settingsBtn: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     backgroundColor: colors.bgElevated,
@@ -253,7 +251,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  logoutText: { color: colors.textSecondary, fontSize: 13, fontWeight: '600' },
+  settingsBtnText: { color: colors.textSecondary, fontSize: 13, fontWeight: '600' },
   sectionTitle: {
     ...typography.small,
     fontWeight: '700',

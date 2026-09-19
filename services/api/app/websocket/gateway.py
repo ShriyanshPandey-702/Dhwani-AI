@@ -104,28 +104,35 @@ def shutdown_ml_pool() -> None:
 async def websocket_endpoint(
     websocket: WebSocket,
     session_id: str,
-    token: str = Query(..., description="JWT access token"),
+    token: Optional[str] = Query(None, description="Optional JWT access token"),
 ):
-    # ── Authenticate ──────────────────────────────────────────────────────────
-    try:
-        payload = decode_token(token)
-        if payload.get("type") != "access":
-            await websocket.close(code=4001, reason="Not an access token")
+    # ── Authenticate / Resolve User ──────────────────────────────────────────
+    user_id: Optional[str] = None
+    if token:
+        try:
+            payload = decode_token(token)
+            if payload.get("type") != "access":
+                await websocket.close(code=4001, reason="Not an access token")
+                return
+            user_id = payload["sub"]
+        except Exception:
+            await websocket.close(code=4001, reason="Invalid token")
             return
-        user_id: str = payload["sub"]
-    except Exception:
-        await websocket.close(code=4001, reason="Invalid token")
-        return
 
-    # ── Authorise: the session must exist, be active, and belong to the user ──
+    # ── Authorise: verify session exists and is active ───────────────────────
     async with AsyncSessionLocal() as db:
-        result = await db.execute(
-            select(Session).where(Session.id == session_id, Session.user_id == user_id)
-        )
+        if user_id:
+            query = select(Session).where(Session.id == session_id, Session.user_id == user_id)
+        else:
+            query = select(Session).where(Session.id == session_id)
+
+        result = await db.execute(query)
         session = result.scalar_one_or_none()
         if not session or session.state != "active":
             await websocket.close(code=4004, reason="Session not found or not active")
             return
+
+        effective_user_id = user_id or session.user_id
 
         p_result = await db.execute(select(Policy).where(Policy.is_active.is_(True)).limit(1))
         policy = p_result.scalar_one_or_none()
@@ -136,8 +143,8 @@ async def websocket_endpoint(
     await _ensure_stt_queue()
     stt_queue.reopen_session(session_id)
     manager.add(session_id, websocket)
-    state = manager.get_or_create_state(session_id, user_id, policy_config)
-    log.info("ws.connected", session_id=session_id, user_id=user_id,
+    state = manager.get_or_create_state(session_id, effective_user_id, policy_config)
+    log.info("ws.connected", session_id=session_id, user_id=effective_user_id,
              connections=manager.connection_count(session_id))
 
     await websocket.send_json(ev.session_started(

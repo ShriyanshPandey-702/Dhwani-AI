@@ -1,8 +1,8 @@
 // VoiceShield API Configuration
-// Using localhost:8000 works seamlessly via 'adb reverse tcp:8000 tcp:8000'
-export const API_BASE_URL = 'http://localhost:8000';
-export const WS_BASE_URL  = 'ws://localhost:8000';
+// Default USB / ADB local connection targets
+export const DEFAULT_API_BASE_URL = 'http://localhost:8000';
+export const DEFAULT_WS_BASE_URL  = 'ws://localhost:8000';
 
-// Fallbacks if not using adb reverse:
-// export const API_BASE_URL = 'http://10.0.2.2:8000';  // Android emulator
-// export const WS_BASE_URL  = 'ws://10.0.2.2:8000';
+// Fallback constants for static backwards compatibility
+export const API_BASE_URL = DEFAULT_API_BASE_URL;
+export const WS_BASE_URL  = DEFAULT_WS_BASE_URL;

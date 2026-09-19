@@ -90,18 +90,40 @@ def test_identical_passwords_get_different_hashes():
 # ── WebSocket authorisation ───────────────────────────────────────────────────
 
 @pytest.fixture
-def ws_client():
+def ws_client(monkeypatch):
     """A minimal app with only the WS router, so no DB lifespan is required."""
+    import contextlib
+    from types import SimpleNamespace
+    from app.websocket import gateway as gw
+
+    class _FakeResult:
+        def __init__(self, val):
+            self._val = val
+        def scalar_one_or_none(self):
+            return self._val
+
+    class _FakeDB:
+        async def execute(self, _stmt):
+            return _FakeResult(SimpleNamespace(id="any-session", user_id="22222222-2222-2222-2222-222222222222", state="active", config={}))
+        async def commit(self):
+            pass
+
+    @contextlib.asynccontextmanager
+    async def _fake_session():
+        yield _FakeDB()
+
+    monkeypatch.setattr(gw, "AsyncSessionLocal", _fake_session)
+
     app = FastAPI()
     app.include_router(ws_router)
     with TestClient(app) as client:
         yield client
 
 
-def test_websocket_rejects_a_missing_token(ws_client):
-    with pytest.raises(Exception):
-        with ws_client.websocket_connect("/ws/sessions/any-session"):
-            pass
+def test_websocket_accepts_a_missing_token(ws_client):
+    # Step 1 decoupled mandatory authentication from the prototype
+    with ws_client.websocket_connect("/ws/sessions/any-session") as ws:
+        pass
 
 
 def test_websocket_rejects_an_invalid_token(ws_client):
