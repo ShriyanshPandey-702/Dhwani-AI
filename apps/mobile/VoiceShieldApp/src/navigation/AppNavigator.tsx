@@ -12,6 +12,7 @@ import { IncidentHistoryScreen } from '../screens/IncidentHistoryScreen';
 import { IncidentDetailScreen } from '../screens/IncidentDetailScreen';
 import { DeviceTrustScreen } from '../screens/DeviceTrustScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
+import { ManualAnalysisScreen } from '../screens/ManualAnalysisScreen';
 
 export type RootStackParamList = {
   Login?: undefined;
@@ -23,6 +24,7 @@ export type RootStackParamList = {
   IncidentDetail: { incidentId: string };
   Devices: undefined;
   Settings: undefined;
+  ManualAnalysis: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -74,6 +76,11 @@ export const AppNavigator: React.FC = () => {
           name="Settings"
           component={SettingsScreen}
           options={{ title: 'Settings' }}
+        />
+        <Stack.Screen
+          name="ManualAnalysis"
+          component={ManualAnalysisScreen}
+          options={{ title: 'Manual Analysis' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

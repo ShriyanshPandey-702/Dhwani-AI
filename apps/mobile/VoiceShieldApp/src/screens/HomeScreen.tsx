@@ -163,6 +163,14 @@ export const HomeScreen: React.FC = () => {
           <Text style={styles.demoBtnText}>🧪  Run Demo Scenario (Mock Audio)</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity
+          style={styles.manualBtn}
+          onPress={() => navigation.navigate('ManualAnalysis')}
+          accessibilityLabel="Analyze pre-recorded audio file"
+          accessibilityRole="button">
+          <Text style={styles.manualBtnText}>📁  Analyze Audio File (Manual Analysis)</Text>
+        </TouchableOpacity>
+
         {/* ── Recent monitored calls ───────────────────────────────────────── */}
         <Text style={styles.sectionTitle}>Recent Calls</Text>
         {recent.length === 0 ? (
@@ -299,6 +307,19 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontSize: 13,
     fontWeight: '600',
+  },
+  manualBtn: {
+    backgroundColor: colors.brandDim,
+    borderRadius: radius.md,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.brand,
+  },
+  manualBtnText: {
+    color: colors.brand,
+    fontSize: 13,
+    fontWeight: '700',
   },
   emptyState: {
     backgroundColor: colors.bgCard,

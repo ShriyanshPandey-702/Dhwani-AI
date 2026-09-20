@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.database import engine, Base
-from app.api import auth, users, devices, sessions, risk, incidents, challenge, verification
+from app.api import auth, users, devices, sessions, risk, incidents, challenge, verification, analysis
 from app.websocket.gateway import router as ws_router, shutdown_ml_pool
 
 log = structlog.get_logger()
@@ -53,6 +53,7 @@ app.include_router(risk.router,         prefix="/risk",          tags=["Risk"])
 app.include_router(incidents.router,    prefix="/incidents",     tags=["Incidents"])
 app.include_router(challenge.router,    prefix="/challenge",     tags=["Challenge"])
 app.include_router(verification.router, prefix="/verification",  tags=["Verification"])
+app.include_router(analysis.router,      prefix="/analysis",      tags=["Analysis"])
 app.include_router(ws_router,                                    tags=["WebSocket"])
 
 

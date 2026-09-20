@@ -26,4 +26,12 @@ client.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
   return config;
 });
 
+export async function analyzeAudioFile(formData: FormData): Promise<any> {
+  const response = await client.post('/analysis/audio', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 60000,
+  });
+  return response.data;
+}
+
 export default client;

@@ -21,6 +21,7 @@ python-multipart==0.0.12
 
 # Audio / ML
 numpy==1.26.4
+scipy==1.14.1
 librosa==0.10.2
 soundfile==0.12.1
 
