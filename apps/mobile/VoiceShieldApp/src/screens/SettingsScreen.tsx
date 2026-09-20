@@ -16,11 +16,21 @@ import {
   getApiBaseUrl,
   getWsBaseUrl,
 } from '../store/connectionStore';
+import { useCallScreeningStore } from '../store/callScreeningStore';
 
 export const SettingsScreen: React.FC = () => {
   const navigation = useNavigation();
   const [pushEnabled, setPushEnabled] = React.useState(true);
   const [rawAudioEnabled, setRawAudioEnabled] = React.useState(false);
+
+  const isRoleHeld = useCallScreeningStore(s => s.isRoleHeld);
+  const checkRoleStatus = useCallScreeningStore(s => s.checkRoleStatus);
+  const requestRole = useCallScreeningStore(s => s.requestRole);
+  const isRoleLoading = useCallScreeningStore(s => s.isLoading);
+
+  React.useEffect(() => {
+    checkRoleStatus();
+  }, [checkRoleStatus]);
 
   const {
     mode,
@@ -162,6 +172,36 @@ export const SettingsScreen: React.FC = () => {
             accessibilityRole="button">
             <Text style={styles.linkText}>Manage Trusted Devices →</Text>
           </TouchableOpacity>
+        </Section>
+
+        {/* Call Screening Protection */}
+        <Section title="Call Screening Protection">
+          <Row
+            label="Protection Status"
+            value={isRoleHeld ? 'Active' : 'Not enabled'}
+          />
+          {!isRoleHeld ? (
+            <TouchableOpacity
+              onPress={() => requestRole()}
+              style={styles.enableRoleBtn}
+              disabled={isRoleLoading}
+              accessibilityLabel="Enable Call Screening"
+              accessibilityRole="button">
+              {isRoleLoading ? (
+                <ActivityIndicator color={colors.white} />
+              ) : (
+                <Text style={styles.enableRoleBtnText}>Enable Call Screening</Text>
+              )}
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.activeBadge}>
+              <Text style={styles.activeBadgeText}>● Active</Text>
+            </View>
+          )}
+          <Text style={styles.roleExplanation}>
+            VoiceShield needs to be selected as your Call Screening app to detect
+            incoming calls.
+          </Text>
         </Section>
 
         {/* Notifications */}
@@ -398,4 +438,40 @@ const styles = StyleSheet.create({
   },
   logoutText: { color: colors.error, fontWeight: '700', fontSize: 15 },
   version: { textAlign: 'center', color: colors.textMuted, fontSize: 11, marginTop: spacing.sm },
+  enableRoleBtn: {
+    backgroundColor: colors.brand,
+    borderRadius: radius.md,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginHorizontal: spacing.md,
+    marginVertical: spacing.sm,
+  },
+  enableRoleBtnText: {
+    color: colors.white,
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  activeBadge: {
+    backgroundColor: `${colors.success}18`,
+    borderColor: `${colors.success}44`,
+    borderWidth: 1,
+    borderRadius: radius.sm,
+    paddingVertical: 8,
+    paddingHorizontal: spacing.md,
+    marginHorizontal: spacing.md,
+    marginVertical: spacing.xs,
+    alignItems: 'center',
+  },
+  activeBadgeText: {
+    color: colors.success,
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  roleExplanation: {
+    color: colors.textMuted,
+    fontSize: 12,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.sm,
+    lineHeight: 16,
+  },
 });

@@ -13,6 +13,7 @@ import { StatCard } from '../components/StatCard';
 import { RiskStateBadge } from '../components/RiskStateBadge';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { IncidentSummary, RiskState } from '../types';
+import { useCallScreeningStore } from '../store/callScreeningStore';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -51,13 +52,20 @@ export const HomeScreen: React.FC = () => {
   const [starting, setStarting] = useState(false);
   const insets = useSafeAreaInsets();
 
+  const isRoleHeld = useCallScreeningStore(s => s.isRoleHeld);
+  const checkRoleStatus = useCallScreeningStore(s => s.checkRoleStatus);
+  const loadRecentCalls = useCallScreeningStore(s => s.loadRecentCalls);
+  const activeAlert = useCallScreeningStore(s => s.activeAlert);
+
   // Refresh on focus, not just on mount: the navigator keeps this screen
   // mounted, so returning from a monitored call must re-pull the aggregates
   // and the new incident.
   useFocusEffect(
     useCallback(() => {
       refreshHome();
-    }, [refreshHome]),
+      checkRoleStatus();
+      loadRecentCalls();
+    }, [refreshHome, checkRoleStatus, loadRecentCalls]),
   );
 
   const handleStartMonitoring = useCallback(
@@ -139,6 +147,47 @@ export const HomeScreen: React.FC = () => {
             {(overview?.suspicious_calls ?? 0) === 1 ? '' : 's'} in the last 24h
           </Text>
         </View>
+
+        {/* ── Call Screening Status ─────────────────────────────────────────── */}
+        <TouchableOpacity
+          style={styles.screeningCard}
+          onPress={() => navigation.navigate('Settings')}
+          accessibilityLabel="Call Screening Status"
+          accessibilityRole="button">
+          <View style={styles.screeningHeaderRow}>
+            <Text style={styles.screeningTitle}>VoiceShield Call Screening</Text>
+            <View style={styles.screeningStatusBadge}>
+              <Text
+                style={[
+                  styles.statusDot,
+                  isRoleHeld ? styles.screeningStatusDotActive : styles.screeningStatusDotInactive,
+                ]}>
+                {isRoleHeld ? '●' : '○'}
+              </Text>
+              <Text
+                style={[
+                  styles.screeningStatusText,
+                  isRoleHeld ? styles.screeningActiveText : styles.screeningInactiveText,
+                ]}>
+                {isRoleHeld ? 'Active' : 'Not enabled'}
+              </Text>
+            </View>
+          </View>
+          {activeAlert ? (
+            <View style={styles.screeningAlertBox}>
+              <Text style={styles.screeningAlertTitle}>⚠️ Recent Security Warning</Text>
+              <Text style={styles.screeningAlertDesc}>
+                {activeAlert.warningType === 'VERIFICATION_FAILED'
+                  ? `Caller verification failed for ${activeAlert.callerMasked}`
+                  : activeAlert.warningType === 'UNVERIFIED_CALLER'
+                  ? `Unverified caller: ${activeAlert.callerMasked}`
+                  : activeAlert.warningType === 'BLOCKLIST_MATCH'
+                  ? `Blocked caller: ${activeAlert.callerMasked}`
+                  : `Restricted number screened`}
+              </Text>
+            </View>
+          ) : null}
+        </TouchableOpacity>
 
         {/* ── Start monitoring ─────────────────────────────────────────────── */}
         <TouchableOpacity
@@ -362,4 +411,64 @@ const styles = StyleSheet.create({
   },
   quickIcon: { fontSize: 24 },
   quickLabel: { ...typography.small, fontWeight: '600', color: colors.textPrimary },
+  screeningCard: {
+    backgroundColor: colors.bgCard,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: spacing.sm,
+  },
+  screeningHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  screeningTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  screeningStatusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  statusDot: {
+    fontSize: 12,
+  },
+  screeningStatusDotActive: {
+    color: colors.success,
+  },
+  screeningStatusDotInactive: {
+    color: colors.textMuted,
+  },
+  screeningStatusText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  screeningActiveText: {
+    color: colors.success,
+  },
+  screeningInactiveText: {
+    color: colors.textMuted,
+  },
+  screeningAlertBox: {
+    marginTop: spacing.sm,
+    padding: spacing.sm,
+    backgroundColor: `${colors.warning}18`,
+    borderColor: `${colors.warning}44`,
+    borderWidth: 1,
+    borderRadius: radius.sm,
+  },
+  screeningAlertTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.warning,
+  },
+  screeningAlertDesc: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
 });

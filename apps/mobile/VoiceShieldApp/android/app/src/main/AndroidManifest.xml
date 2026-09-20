@@ -2,6 +2,7 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
       android:name=".MainApplication"
@@ -25,5 +26,15 @@
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
       </activity>
+
+      <!-- Android Telecom Call Screening Service -->
+      <service
+        android:name=".telecom.VoiceShieldCallScreeningService"
+        android:permission="android.permission.BIND_SCREENING_SERVICE"
+        android:exported="true">
+        <intent-filter>
+            <action android:name="android.telecom.CallScreeningService" />
+        </intent-filter>
+      </service>
     </application>
 </manifest>
