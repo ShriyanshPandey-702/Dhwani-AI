@@ -35,15 +35,36 @@ enum class WarningType {
 /**
  * Evaluated screening result returned by CallScreeningEvaluator.
  * Contains no raw phone numbers.
+ *
+ * Fields:
+ *  - decision: What to do with the call (ALLOW / SILENCE / REJECT)
+ *  - riskLevel: Categorical severity (LOW / MEDIUM / HIGH)
+ *  - riskState: UI-facing display state ("safe" / "low" / "suspicious" / "high" / "critical")
+ *  - riskScore: Numeric 0–100 score for dashboard display
+ *  - warningType: Specific warning category driving the risk level
+ *  - maskedCaller: Privacy-masked display number (e.g. "+91 ***** *3210")
+ *  - callerHash: SHA-256 of canonical number for idempotency
+ *  - callerName: Display name from device contacts, null if not in contacts
+ *  - contactStatus: "IN_CONTACTS" | "NOT_IN_CONTACTS" | "UNKNOWN"
+ *  - reasonCodes: Machine-readable list of reason strings
+ *  - explanation: Human-readable explanation of the evaluation outcome
+ *  - timestamp: Epoch ms of the evaluation
+ *  - screeningLatencyMs: Measured ms from onScreenCall to respondToCall
  */
 data class EvaluationResult(
     val decision: ScreeningDecision,
     val riskLevel: RiskLevel,
+    val riskState: String,         // "safe" | "low" | "suspicious" | "high" | "critical"
+    val riskScore: Int,            // 0-100
     val warningType: WarningType,
     val maskedCaller: String,
     val callerHash: String,
+    val callerName: String? = null,
+    val contactStatus: String = "UNKNOWN",  // IN_CONTACTS | NOT_IN_CONTACTS | UNKNOWN
     val reasonCodes: List<String>,
-    val timestamp: Long
+    val explanation: String,
+    val timestamp: Long,
+    val screeningLatencyMs: Long = 0L
 )
 
 /**
@@ -54,6 +75,13 @@ data class EvaluationResult(
  * - Masks phone numbers preserving country code and last 4 digits (e.g. +91 ***** *3210).
  * - Computes SHA-256 hash over canonical digits.
  * - Evaluator execution latency is < 0.1 ms on modern CPU without network or ML dependencies.
+ *
+ * Risk Classification Policy (Phase 3.1):
+ *  - An unverified carrier STIR/SHAKEN status is a metadata signal, NOT proof of fraud.
+ *  - Normal Indian cellular calls report NOT_VERIFIED because STIR/SHAKEN is not deployed.
+ *  - A call from an unknown/unverified-carrier number with no other negative signals is LOW.
+ *  - Only VERIFICATION_FAILED (active spoofing signal), BLOCKLIST_MATCH, or RESTRICTED
+ *    presentation elevate risk above LOW for metadata-only Phase 3 screening.
  *
  * Note on Android Presentation Limitation:
  * Android CallScreeningService documentation states that calls with:
@@ -152,6 +180,8 @@ object CallScreeningEvaluator {
      * @param presentation Caller ID presentation (1=ALLOWED, 2=RESTRICTED, 3=UNKNOWN, etc.)
      * @param timestamp Event epoch timestamp in milliseconds
      * @param localBlocklist Set of blocked SHA-256 hashes or canonical numbers
+     * @param isContact Whether the caller is found in device contacts (requires READ_CONTACTS)
+     * @param callerName Display name from contacts, null if not in contacts or permission absent
      */
     fun evaluate(
         rawHandle: String?,
@@ -159,7 +189,9 @@ object CallScreeningEvaluator {
         callDirection: Int = DIRECTION_INCOMING,
         presentation: Int = PRESENTATION_ALLOWED,
         timestamp: Long = System.currentTimeMillis(),
-        localBlocklist: Set<String> = emptySet()
+        localBlocklist: Set<String> = emptySet(),
+        isContact: Boolean = false,
+        callerName: String? = null
     ): EvaluationResult {
         val canonical = canonicalize(rawHandle)
         val hash = sha256(canonical)
@@ -171,87 +203,144 @@ object CallScreeningEvaluator {
             else -> mask(canonical)
         }
 
+        val contactStatus = when {
+            isContact -> "IN_CONTACTS"
+            else -> if (canonical.isNotBlank()) "NOT_IN_CONTACTS" else "UNKNOWN"
+        }
+
         val reasons = mutableListOf<String>()
 
-        // 1. Check local explicit blocklist
+        // 1. Check local explicit blocklist (highest priority)
         if (canonical.isNotEmpty() && (localBlocklist.contains(canonical) || (hash.isNotEmpty() && localBlocklist.contains(hash)))) {
             reasons.add("LOCAL_BLOCKLIST_MATCH")
             return EvaluationResult(
                 decision = ScreeningDecision.REJECT,
                 riskLevel = RiskLevel.HIGH,
+                riskState = "critical",
+                riskScore = 95,
                 warningType = WarningType.BLOCKLIST_MATCH,
                 maskedCaller = masked,
                 callerHash = hash,
+                callerName = callerName,
+                contactStatus = contactStatus,
                 reasonCodes = reasons,
+                explanation = "Caller matches local security blocklist. Incoming call rejected.",
                 timestamp = timestamp
             )
         }
 
-        // 2. Caller verification status (STIR/SHAKEN)
+        // 2. Known contact — LOW risk regardless of carrier verification status.
+        //    Carrier STIR/SHAKEN does not sign personal calls in most markets.
+        if (isContact) {
+            reasons.add("KNOWN_CONTACT")
+            return EvaluationResult(
+                decision = ScreeningDecision.ALLOW,
+                riskLevel = RiskLevel.LOW,
+                riskState = "safe",
+                riskScore = 0,
+                warningType = WarningType.NONE,
+                maskedCaller = masked,
+                callerHash = hash,
+                callerName = callerName,
+                contactStatus = contactStatus,
+                reasonCodes = reasons,
+                explanation = "Known contact. Number is saved in device contacts. Low risk — no adverse caller-screening indicators were detected.",
+                timestamp = timestamp
+            )
+        }
+
+        // 3. Caller verification status (STIR/SHAKEN)
         when (verificationStatus) {
             VERIFICATION_STATUS_FAILED -> {
-                // FAILED verification: ALLOW by default per Phase 3 conservative policy, HIGH risk warning
+                // FAILED = active carrier spoofing signal. HIGH risk.
                 reasons.add("CALLER_VERIFICATION_FAILED")
                 return EvaluationResult(
                     decision = ScreeningDecision.ALLOW,
                     riskLevel = RiskLevel.HIGH,
+                    riskState = "high",
+                    riskScore = 75,
                     warningType = WarningType.VERIFICATION_FAILED,
                     maskedCaller = masked,
                     callerHash = hash,
+                    callerName = callerName,
+                    contactStatus = contactStatus,
                     reasonCodes = reasons,
-                    timestamp = timestamp
-                )
-            }
-            VERIFICATION_STATUS_NOT_VERIFIED -> {
-                reasons.add("CALLER_NOT_VERIFIED")
-                val isRestricted = presentation == PRESENTATION_RESTRICTED
-                if (isRestricted) {
-                    reasons.add("RESTRICTED_CALLER_ID")
-                }
-                return EvaluationResult(
-                    decision = ScreeningDecision.ALLOW,
-                    riskLevel = RiskLevel.MEDIUM,
-                    warningType = if (isRestricted) WarningType.RESTRICTED_NUMBER else WarningType.UNVERIFIED_CALLER,
-                    maskedCaller = masked,
-                    callerHash = hash,
-                    reasonCodes = reasons,
+                    explanation = "Carrier verification failed (possible number spoofing). Review caller before sharing sensitive information.",
                     timestamp = timestamp
                 )
             }
             VERIFICATION_STATUS_PASSED -> {
+                // Carrier-verified. LOW risk.
                 reasons.add("CALLER_VERIFIED")
                 return EvaluationResult(
                     decision = ScreeningDecision.ALLOW,
                     riskLevel = RiskLevel.LOW,
+                    riskState = "safe",
+                    riskScore = 0,
                     warningType = WarningType.NONE,
                     maskedCaller = masked,
                     callerHash = hash,
+                    callerName = callerName,
+                    contactStatus = contactStatus,
                     reasonCodes = reasons,
+                    explanation = "Carrier verified caller identity (STIR/SHAKEN passed). Low risk — no adverse caller-screening indicators were detected.",
                     timestamp = timestamp
                 )
             }
-            else -> {
-                // Unknown / null verification
+            VERIFICATION_STATUS_NOT_VERIFIED, VERIFICATION_STATUS_UNKNOWN -> {
+                // NOT_VERIFIED is the default in India and most global markets where
+                // STIR/SHAKEN is not deployed. It is a carrier metadata signal, NOT proof of fraud.
+                // Restricted presentation is a separate, elevated signal.
                 if (presentation == PRESENTATION_RESTRICTED) {
                     reasons.add("RESTRICTED_CALLER_ID")
                     return EvaluationResult(
                         decision = ScreeningDecision.ALLOW,
                         riskLevel = RiskLevel.MEDIUM,
+                        riskState = "suspicious",
+                        riskScore = 45,
                         warningType = WarningType.RESTRICTED_NUMBER,
                         maskedCaller = masked,
                         callerHash = hash,
+                        callerName = callerName,
+                        contactStatus = contactStatus,
                         reasonCodes = reasons,
+                        explanation = "Incoming call from a private or restricted number. Caller intentionally hid their number.",
                         timestamp = timestamp
                     )
                 }
+                // Plain unverified caller: carrier doesn't sign calls in this market.
+                // LOW risk — no negative indicators detected.
+                reasons.add("CALLER_NOT_VERIFIED")
+                return EvaluationResult(
+                    decision = ScreeningDecision.ALLOW,
+                    riskLevel = RiskLevel.LOW,
+                    riskState = "low",
+                    riskScore = 15,
+                    warningType = WarningType.UNVERIFIED_CALLER,
+                    maskedCaller = masked,
+                    callerHash = hash,
+                    callerName = callerName,
+                    contactStatus = contactStatus,
+                    reasonCodes = reasons,
+                    explanation = "Caller identity could not be verified by carrier. Low risk — no adverse caller-screening indicators were detected. This is normal in markets where STIR/SHAKEN is not deployed.",
+                    timestamp = timestamp
+                )
+            }
+            else -> {
+                // Unknown/null: default safe-allow
                 reasons.add("DEFAULT_ALLOW")
                 return EvaluationResult(
                     decision = ScreeningDecision.ALLOW,
                     riskLevel = RiskLevel.LOW,
+                    riskState = "low",
+                    riskScore = 10,
                     warningType = WarningType.NONE,
                     maskedCaller = masked,
                     callerHash = hash,
+                    callerName = callerName,
+                    contactStatus = contactStatus,
                     reasonCodes = reasons,
+                    explanation = "No adverse caller-screening indicators were detected. Low risk.",
                     timestamp = timestamp
                 )
             }

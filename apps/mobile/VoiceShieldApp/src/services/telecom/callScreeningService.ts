@@ -100,6 +100,76 @@ class CallScreeningService {
     });
     return () => subscription.remove();
   }
+
+  /**
+   * Opens Android system settings for Default Apps / Call Screening role management.
+   */
+  async openCallScreeningSettings(): Promise<boolean> {
+    const mod = getNativeModule();
+    if (Platform.OS !== 'android' || !mod?.openCallScreeningSettings) {
+      return false;
+    }
+    return mod.openCallScreeningSettings();
+  }
+
+  /**
+   * Gets a bundled demo audio sample as a real file:// URI.
+   */
+  async getDemoAudioSample(sampleType: 'synthetic' | 'benign' | 'short'): Promise<{ uri: string; name: string; type: string; size: number }> {
+    const mod = getNativeModule();
+    if (Platform.OS !== 'android' || !mod?.getDemoAudioSample) {
+      throw new Error('Platform not supported for demo audio samples');
+    }
+    return mod.getDemoAudioSample(sampleType);
+  }
+
+  /**
+   * Prompts user to pick an audio file from local storage using Android's document picker.
+   */
+  async pickAudioFile(): Promise<{ uri: string; name: string; type: string; size: number } | null> {
+    const mod = getNativeModule();
+    if (Platform.OS !== 'android' || !mod?.pickAudioFile) {
+      throw new Error('Platform not supported for picking audio files');
+    }
+    return mod.pickAudioFile();
+  }
+
+  /**
+   * Triggers a local-only test notification to verify channel, priority, and permissions.
+   * Creates NO call/session/risk records and affects NO statistics.
+   */
+  async testSecurityNotification(): Promise<boolean> {
+    const mod = getNativeModule();
+    if (Platform.OS !== 'android' || !mod?.testSecurityNotification) {
+      return false;
+    }
+    return mod.testSecurityNotification();
+  }
+
+  /**
+   * Checks whether READ_CONTACTS permission is currently granted.
+   * READ_CONTACTS is needed for Android Telecom to pass contact calls to CallScreeningService.
+   */
+  async hasContactsPermission(): Promise<boolean> {
+    const mod = getNativeModule();
+    if (Platform.OS !== 'android' || !mod?.hasContactsPermission) {
+      return false;
+    }
+    return mod.hasContactsPermission();
+  }
+
+  /**
+   * Checks current contacts permission state.
+   * Note: READ_CONTACTS is declared in the manifest and granted at install time.
+   * If not granted, the user must go to App Settings → Permissions → Contacts.
+   */
+  async requestContactsPermission(): Promise<boolean> {
+    const mod = getNativeModule();
+    if (Platform.OS !== 'android' || !mod?.requestContactsPermission) {
+      return false;
+    }
+    return mod.requestContactsPermission();
+  }
 }
 
 export const callScreeningService = new CallScreeningService();

@@ -12,8 +12,9 @@ import { useSessionStore } from '../store/sessionStore';
 import { StatCard } from '../components/StatCard';
 import { RiskStateBadge } from '../components/RiskStateBadge';
 import { RootStackParamList } from '../navigation/AppNavigator';
-import { IncidentSummary, RiskState } from '../types';
+import { RiskState } from '../types';
 import { useCallScreeningStore } from '../store/callScreeningStore';
+import { ScreenedCallEvent } from '../types/telecom';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -26,6 +27,21 @@ const formatTime = (iso: string) => {
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
 
+/**
+ * Maps a native riskState string to the RiskState union used by RiskStateBadge.
+ * Falls back to 'insufficient_evidence' for unknown values.
+ */
+const asCallRiskState = (riskState: string | undefined | null): RiskState => {
+  switch (riskState) {
+    case 'safe':   return 'low';
+    case 'low':    return 'low';
+    case 'suspicious': return 'suspicious';
+    case 'high':   return 'high';
+    case 'critical': return 'critical';
+    default:       return 'insufficient_evidence';
+  }
+};
+
 const asRiskState = (value: string | null): RiskState => {
   const allowed: RiskState[] = [
     'insufficient_evidence', 'low', 'suspicious', 'high', 'critical',
@@ -35,12 +51,39 @@ const asRiskState = (value: string | null): RiskState => {
     : 'insufficient_evidence';
 };
 
+type FeedItem =
+  | {
+      kind: 'incident';
+      id: string;
+      timeMs: number;
+      timeIso: string;
+      sessionId: string;
+      riskScore: number;
+      action?: string;
+      state: RiskState;
+    }
+  | {
+      kind: 'screened';
+      id: string;
+      timeMs: number;
+      timeIso: string;
+      callerMasked: string;
+      callerName: string | null;
+      decision: string;
+      riskLevel: string;
+      riskState: string;
+      warningType: string;
+      explanation: string;
+      state: RiskState;
+      record: ScreenedCallEvent;
+    };
+
 /**
  * Home — Security Overview dashboard.
  *
- * Historical/aggregate counterpart to the live call dashboard. Figures come
- * from GET /incidents/stats/overview; when the backend has no data the screen
- * shows an explicit empty state rather than placeholder numbers.
+ * Provides a unified, idempotent security overview:
+ * 1. Automatic SIM Call Screening (independent Android Telecom path).
+ * 2. On-Demand Live Audio Analysis (microphone path).
  */
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
@@ -55,11 +98,10 @@ export const HomeScreen: React.FC = () => {
   const isRoleHeld = useCallScreeningStore(s => s.isRoleHeld);
   const checkRoleStatus = useCallScreeningStore(s => s.checkRoleStatus);
   const loadRecentCalls = useCallScreeningStore(s => s.loadRecentCalls);
+  const recentCalls = useCallScreeningStore(s => s.recentCalls);
   const activeAlert = useCallScreeningStore(s => s.activeAlert);
+  const requestRole = useCallScreeningStore(s => s.requestRole);
 
-  // Refresh on focus, not just on mount: the navigator keeps this screen
-  // mounted, so returning from a monitored call must re-pull the aggregates
-  // and the new incident.
   useFocusEffect(
     useCallback(() => {
       refreshHome();
@@ -86,7 +128,74 @@ export const HomeScreen: React.FC = () => {
     [createSession, startSession, navigation],
   );
 
-  const recent: IncidentSummary[] = overview?.recent ?? [];
+  // Idempotent reconciliation:
+  // 1 SIM call = 1 screened record in native storage; 1 live session = 1 backend session
+  const startOfTodayMs = React.useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d.getTime();
+  }, []);
+
+  const screenedToday = React.useMemo(() => {
+    return recentCalls.filter(c => c.timestamp >= startOfTodayMs);
+  }, [recentCalls, startOfTodayMs]);
+
+  const screenedSafeCount = React.useMemo(() => {
+    return screenedToday.filter(c => c.riskState === 'safe' || c.riskState === 'low').length;
+  }, [screenedToday]);
+
+  const screenedAlertsCount = React.useMemo(() => {
+    return screenedToday.filter(c => c.riskState === 'suspicious' || c.riskState === 'high' || c.riskState === 'critical').length;
+  }, [screenedToday]);
+
+  const screenedHighCount = React.useMemo(() => {
+    return screenedToday.filter(c => c.riskState === 'high' || c.riskState === 'critical').length;
+  }, [screenedToday]);
+
+  const totalCalls = (overview?.total_calls_today ?? 0) + screenedToday.length;
+  const totalAlerts = (overview?.active_alerts ?? 0) + screenedAlertsCount;
+  const totalHighCritical = (overview?.high_critical_calls ?? 0) + screenedHighCount;
+  const totalSafe = (overview?.safe_calls ?? 0) + screenedSafeCount;
+
+  // Unified recent activity feed combining screened SIM calls and live audio sessions
+  const feedItems: FeedItem[] = React.useMemo(() => {
+    const items: FeedItem[] = [];
+
+    (overview?.recent ?? []).forEach(inc => {
+      const ms = new Date(inc.created_at).getTime();
+      items.push({
+        kind: 'incident',
+        id: inc.id,
+        timeMs: isNaN(ms) ? 0 : ms,
+        timeIso: inc.created_at,
+        sessionId: inc.session_id,
+        riskScore: inc.peak_risk_score ?? 0,
+        action: inc.action_taken ?? undefined,
+        state: asRiskState(inc.peak_risk_state ?? inc.final_state),
+      });
+    });
+
+    recentCalls.forEach(sc => {
+      items.push({
+        kind: 'screened',
+        id: sc.eventId,
+        timeMs: sc.timestamp,
+        timeIso: new Date(sc.timestamp).toISOString(),
+        callerMasked: sc.callerMasked,
+        callerName: sc.callerName,
+        decision: sc.decision,
+        riskLevel: sc.riskLevel,
+        riskState: sc.riskState,
+        warningType: sc.warningType,
+        explanation: sc.explanation,
+        state: asCallRiskState(sc.riskState),
+        record: sc,
+      });
+    });
+
+    items.sort((a, b) => b.timeMs - a.timeMs);
+    return items.slice(0, 25);
+  }, [overview?.recent, recentCalls]);
 
   return (
     <View style={styles.container}>
@@ -116,24 +225,33 @@ export const HomeScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        {/* ── Today's activity ─────────────────────────────────────────────── */}
+        {/* ── Backend offline banner ────────────────────────────────────────── */}
+        {overview === null && (
+          <View style={styles.offlineBanner}>
+            <Text style={styles.offlineBannerText}>
+              ⚡ Backend offline (FastAPI port 8000) · Local call screening active
+            </Text>
+          </View>
+        )}
+
+        {/* ── Today's activity (Reconciled) ─────────────────────────────────── */}
         <Text style={styles.sectionTitle}>Today's Activity</Text>
         <View style={styles.statRow}>
-          <StatCard value={overview?.total_calls_today ?? 0} label="Calls" />
+          <StatCard value={totalCalls} label="Calls" />
           <StatCard
-            value={overview?.active_alerts ?? 0}
+            value={totalAlerts}
             label="Alerts"
-            tone={(overview?.active_alerts ?? 0) > 0 ? 'warn' : 'neutral'}
+            tone={totalAlerts > 0 ? 'warn' : 'neutral'}
           />
         </View>
         <View style={styles.statRow}>
           <StatCard
-            value={overview?.high_critical_calls ?? 0}
+            value={totalHighCritical}
             label="High / Critical"
-            tone={(overview?.high_critical_calls ?? 0) > 0 ? 'bad' : 'neutral'}
+            tone={totalHighCritical > 0 ? 'bad' : 'neutral'}
           />
           <StatCard
-            value={overview?.safe_calls ?? 0}
+            value={totalSafe}
             label="Safe"
             tone="good"
           />
@@ -151,7 +269,13 @@ export const HomeScreen: React.FC = () => {
         {/* ── Call Screening Status ─────────────────────────────────────────── */}
         <TouchableOpacity
           style={styles.screeningCard}
-          onPress={() => navigation.navigate('Settings')}
+          onPress={() => {
+            if (!isRoleHeld) {
+              requestRole();
+            } else {
+              navigation.navigate('Settings');
+            }
+          }}
           accessibilityLabel="Call Screening Status"
           accessibilityRole="button">
           <View style={styles.screeningHeaderRow}>
@@ -169,9 +293,19 @@ export const HomeScreen: React.FC = () => {
                   styles.screeningStatusText,
                   isRoleHeld ? styles.screeningActiveText : styles.screeningInactiveText,
                 ]}>
-                {isRoleHeld ? 'Active' : 'Not enabled'}
+                {isRoleHeld ? 'Active' : 'Inactive'}
               </Text>
             </View>
+          </View>
+          <View style={styles.screeningActionRow}>
+            <Text style={styles.screeningDesc}>
+              {isRoleHeld
+                ? 'Incoming cellular calls are screened automatically via Android Telecom.'
+                : 'Role required to screen incoming cellular calls.'}
+            </Text>
+            <Text style={styles.screeningActionText}>
+              {isRoleHeld ? 'Manage Call Screening →' : 'Enable Call Screening →'}
+            </Text>
           </View>
           {activeAlert ? (
             <View style={styles.screeningAlertBox}>
@@ -189,17 +323,17 @@ export const HomeScreen: React.FC = () => {
           ) : null}
         </TouchableOpacity>
 
-        {/* ── Start monitoring ─────────────────────────────────────────────── */}
+        {/* ── Start Live Audio Analysis ───────────────────────────────────── */}
         <TouchableOpacity
           style={[styles.startBtn, starting && styles.startBtnDisabled]}
           onPress={() => handleStartMonitoring('live')}
           disabled={starting}
-          accessibilityLabel="Start monitoring a call with live microphone"
+          accessibilityLabel="Start live audio analysis with microphone"
           accessibilityRole="button">
           {starting ? (
             <ActivityIndicator color={colors.white} />
           ) : (
-            <Text style={styles.startBtnText}>▶  Start Live Monitoring</Text>
+            <Text style={styles.startBtnText}>▶  Start Live Audio Analysis</Text>
           )}
         </TouchableOpacity>
 
@@ -220,38 +354,59 @@ export const HomeScreen: React.FC = () => {
           <Text style={styles.manualBtnText}>📁  Analyze Audio File (Manual Analysis)</Text>
         </TouchableOpacity>
 
-        {/* ── Recent monitored calls ───────────────────────────────────────── */}
-        <Text style={styles.sectionTitle}>Recent Calls</Text>
-        {recent.length === 0 ? (
+        {/* ── Recent Activity Feed ────────────────────────────────────────── */}
+        <Text style={styles.sectionTitle}>Recent Activity</Text>
+        {feedItems.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyText}>
-              No monitored calls recorded yet. Start monitoring to build your
-              security history.
+              No call screening or live audio sessions recorded yet.
             </Text>
           </View>
         ) : (
-          recent.map(incident => {
-            const state = asRiskState(incident.peak_risk_state ?? incident.final_state);
+          feedItems.map(item => {
+            if (item.kind === 'screened') {
+              return (
+                <TouchableOpacity
+                  key={`screened_${item.id}`}
+                  style={styles.callRow}
+                  onPress={() =>
+                    navigation.navigate('CallSecurityDetails', { callRecord: item.record })
+                  }
+                  accessibilityLabel={`View security details for call from ${item.callerMasked}`}
+                  accessibilityRole="button">
+                  <Text style={styles.callTime}>{formatTime(item.timeIso)}</Text>
+                  <View style={styles.callBody}>
+                    <Text style={styles.callSession}>
+                      📞 {item.callerName ? item.callerName : 'SIM Call'}: {item.callerMasked}
+                    </Text>
+                    <Text style={styles.callMeta}>
+                      {item.decision} · {item.riskState !== 'safe' && item.riskState !== 'low' ? item.warningType : 'Low risk'}
+                    </Text>
+                  </View>
+                  <RiskStateBadge state={item.state} size="sm" />
+                </TouchableOpacity>
+              );
+            }
             return (
               <TouchableOpacity
-                key={incident.id}
+                key={`incident_${item.id}`}
                 style={styles.callRow}
                 onPress={() =>
-                  navigation.navigate('IncidentDetail', { incidentId: incident.id })
+                  navigation.navigate('IncidentDetail', { incidentId: item.id })
                 }
-                accessibilityLabel={`Open incident from ${formatTime(incident.created_at)}`}
+                accessibilityLabel={`Open incident from ${formatTime(item.timeIso)}`}
                 accessibilityRole="button">
-                <Text style={styles.callTime}>{formatTime(incident.created_at)}</Text>
+                <Text style={styles.callTime}>{formatTime(item.timeIso)}</Text>
                 <View style={styles.callBody}>
                   <Text style={styles.callSession}>
-                    Session {incident.session_id.slice(0, 8)}…
+                    🎙️ Audio Session {item.sessionId.slice(0, 8)}…
                   </Text>
                   <Text style={styles.callMeta}>
-                    Risk {incident.peak_risk_score ?? 0}
-                    {incident.action_taken ? ` · ${incident.action_taken.toUpperCase()}` : ''}
+                    Risk {item.riskScore}
+                    {item.action ? ` · ${item.action.toUpperCase()}` : ''}
                   </Text>
                 </View>
-                <RiskStateBadge state={state} size="sm" />
+                <RiskStateBadge state={item.state} size="sm" />
               </TouchableOpacity>
             );
           })
@@ -298,52 +453,100 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: spacing.sm,
   },
-  brand: { fontSize: 20, fontWeight: '800', color: colors.textPrimary, letterSpacing: 1.5 },
-  subGreeting: { ...typography.small, marginTop: 2 },
+  offlineBanner: {
+    backgroundColor: `${colors.warning}22`,
+    borderColor: `${colors.warning}55`,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  offlineBannerText: {
+    fontSize: 12,
+    color: colors.warning,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  brand: {
+    ...typography.h3,
+    color: colors.brand,
+    letterSpacing: 1.5,
+  },
+  subGreeting: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
   settingsBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
     backgroundColor: colors.bgElevated,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: spacing.xs + 2,
     borderRadius: radius.full,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  settingsBtnText: { color: colors.textSecondary, fontSize: 13, fontWeight: '600' },
+  settingsBtnText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontWeight: '600',
+  },
   sectionTitle: {
-    ...typography.small,
+    fontSize: 12,
     fontWeight: '700',
+    color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 1.2,
-    marginTop: spacing.sm,
+    marginTop: spacing.xs,
   },
-  statRow: { flexDirection: 'row', gap: spacing.md },
+  statRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
   avgCard: {
     backgroundColor: colors.bgCard,
     borderRadius: radius.md,
+    padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: spacing.md,
     alignItems: 'center',
-    gap: 2,
   },
   avgLabel: {
-    fontSize: 10,
-    color: colors.textSecondary,
-    letterSpacing: 1,
+    fontSize: 12,
+    color: colors.textMuted,
     textTransform: 'uppercase',
-    fontWeight: '700',
+    letterSpacing: 1,
+    fontWeight: '600',
   },
-  avgValue: { fontSize: 34, fontWeight: '800', color: colors.textPrimary },
-  avgSub: { fontSize: 11, color: colors.textMuted },
+  avgValue: {
+    fontSize: 36,
+    fontWeight: '800',
+    color: colors.textPrimary,
+    marginVertical: 2,
+  },
+  avgSub: {
+    fontSize: 12,
+    color: colors.textSecondary,
+  },
   startBtn: {
     backgroundColor: colors.brand,
     borderRadius: radius.md,
-    paddingVertical: 15,
+    paddingVertical: 16,
     alignItems: 'center',
-    marginTop: spacing.sm,
+    shadowColor: colors.brand,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  startBtnDisabled: { opacity: 0.6 },
-  startBtnText: { color: colors.white, fontWeight: '700', fontSize: 16 },
+  startBtnDisabled: {
+    opacity: 0.6,
+  },
+  startBtnText: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
   demoBtn: {
     backgroundColor: colors.bgElevated,
     borderRadius: radius.md,
@@ -417,7 +620,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   screeningHeaderRow: {
     flexDirection: 'row',
@@ -452,6 +655,26 @@ const styles = StyleSheet.create({
   },
   screeningInactiveText: {
     color: colors.textMuted,
+  },
+  screeningActionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: spacing.xs,
+    paddingTop: spacing.xs,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  screeningDesc: {
+    fontSize: 12,
+    color: colors.textMuted,
+    flex: 1,
+  },
+  screeningActionText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.brand,
+    marginLeft: spacing.sm,
   },
   screeningAlertBox: {
     marginTop: spacing.sm,

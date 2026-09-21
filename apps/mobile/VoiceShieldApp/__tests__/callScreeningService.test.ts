@@ -44,12 +44,21 @@ describe('Call Screening Service & Store', () => {
     eventId: 'evt-1234',
     timestamp: 1726830000000,
     callerMasked: '+91 ***** *3210',
+    callerName: null,
     callerHash: 'b4661448dbd54e4c2957b49aa4c965b3992fa68c0b5614917fbfd00346a099a4',
+    contactStatus: 'NOT_IN_CONTACTS',
     verificationStatus: 'FAILED',
+    riskScore: 75,
+    riskState: 'high',
     decision: 'ALLOW',
     riskLevel: 'HIGH',
     warningType: 'VERIFICATION_FAILED',
+    category: 'SIM Call',
+    explanation: 'Carrier verification failed (possible number spoofing).',
     reasonCodes: ['CALLER_VERIFICATION_FAILED'],
+    screeningLatencyMs: 3,
+    source: 'SIM_CALL',
+    audioAnalysisStatus: 'NOT_PERFORMED',
   };
 
   beforeEach(() => {

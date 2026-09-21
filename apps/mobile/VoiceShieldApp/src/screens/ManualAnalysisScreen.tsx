@@ -10,7 +10,9 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, radius, typography } from '../utils/theme';
-import { analyzeAudioFile } from '../services/api/client';
+import { analyzeAudioFile, formatApiError } from '../services/api/client';
+import { callScreeningService } from '../services/telecom/callScreeningService';
+import { AudioFileInfo } from '../types/telecom';
 import { RiskGauge } from '../components/RiskGauge';
 import { DecisionPanel } from '../components/DecisionPanel';
 import { AuthenticityPanel } from '../components/AuthenticityPanel';
@@ -22,34 +24,56 @@ import { RiskState, Decision } from '../types';
 export const ManualAnalysisScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const [analyzing, setAnalyzing] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<AudioFileInfo | null>(null);
   const [report, setReport] = useState<any>(null);
 
-  const handleAnalyzeSample = async (sampleType: 'synthetic' | 'benign' | 'short') => {
+  const handlePickAudioFile = async () => {
+    try {
+      const picked = await callScreeningService.pickAudioFile();
+      if (picked) {
+        setSelectedFile(picked);
+      }
+    } catch (err: any) {
+      Alert.alert('File Picker Error', err?.message || 'Could not pick audio file.');
+    }
+  };
+
+  const handleAnalyzeAudio = async (source: 'selected' | 'synthetic' | 'benign' | 'short') => {
     setAnalyzing(true);
     setReport(null);
 
     try {
-      const formData = new FormData();
+      let audioTarget: AudioFileInfo;
 
-      if (sampleType === 'short') {
-        formData.append('file', {
-          uri: 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=',
-          name: 'short_sample.wav',
-          type: 'audio/wav',
-        } as any);
+      if (source === 'selected') {
+        if (!selectedFile) {
+          Alert.alert('No File Selected', 'Please choose an audio file from your device first.');
+          setAnalyzing(false);
+          return;
+        }
+        audioTarget = selectedFile;
       } else {
-        formData.append('file', {
-          uri: 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=',
-          name: `${sampleType}_sample.wav`,
-          type: 'audio/wav',
-        } as any);
+        try {
+          audioTarget = await callScreeningService.getDemoAudioSample(source);
+        } catch (err: any) {
+          Alert.alert('Demo Sample Unavailable', 'Demo audio sample is unavailable.');
+          setAnalyzing(false);
+          return;
+        }
       }
+
+      const formData = new FormData();
+      formData.append('file', {
+        uri: audioTarget.uri,
+        name: audioTarget.name,
+        type: audioTarget.type || 'audio/wav',
+      } as any);
 
       const data = await analyzeAudioFile(formData);
       setReport(data);
     } catch (err: any) {
-      const msg = err?.response?.data?.detail?.message || err?.message || 'Analysis failed';
-      Alert.alert('Analysis Error', msg);
+      const errorMsg = formatApiError(err);
+      Alert.alert('Analysis Error', errorMsg);
     } finally {
       setAnalyzing(false);
     }
@@ -69,36 +93,90 @@ export const ManualAnalysisScreen: React.FC = () => {
           </Text>
         </View>
 
-        {/* Action Panel */}
+        {/* User File Selection Section */}
         <View style={styles.actionCard}>
-          <Text style={styles.cardTitle}>Select Audio Source</Text>
+          <Text style={styles.cardTitle}>Device Audio File</Text>
           <Text style={styles.cardDesc}>
-            Run VoiceShield Core (AASIST-L + ECAPA-TDNN + Whisper) on pre-recorded audio:
+            Select a WAV, FLAC, OGG, MP3, or M4A file from device storage:
+          </Text>
+
+          <TouchableOpacity
+            style={[styles.btn, styles.btnFilePicker]}
+            onPress={handlePickAudioFile}
+            disabled={analyzing}
+            accessibilityLabel="Choose Audio File"
+            accessibilityRole="button">
+            <Text style={styles.btnFilePickerText}>📁  Choose Audio File</Text>
+          </TouchableOpacity>
+
+          {selectedFile ? (
+            <View style={styles.selectedFileCard}>
+              <Text style={styles.selectedFileHeader}>Selected File</Text>
+              <Text style={styles.selectedFileRow}>
+                <Text style={styles.metaLabel}>Name: </Text>
+                <Text style={styles.metaValue}>{selectedFile.name}</Text>
+              </Text>
+              <Text style={styles.selectedFileRow}>
+                <Text style={styles.metaLabel}>Size: </Text>
+                <Text style={styles.metaValue}>{(selectedFile.size / 1024).toFixed(1)} KB</Text>
+              </Text>
+              <Text style={styles.selectedFileRow}>
+                <Text style={styles.metaLabel}>Type: </Text>
+                <Text style={styles.metaValue}>{selectedFile.type}</Text>
+              </Text>
+
+              <TouchableOpacity
+                style={[styles.btn, styles.btnPrimary, { marginTop: spacing.md }]}
+                onPress={() => handleAnalyzeAudio('selected')}
+                disabled={analyzing}
+                accessibilityLabel="Analyze Selected Audio"
+                accessibilityRole="button">
+                {analyzing ? (
+                  <ActivityIndicator color={colors.white} />
+                ) : (
+                  <Text style={styles.btnText}>⚡  Analyze Selected Audio</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          ) : null}
+        </View>
+
+        {/* Demo Samples Section */}
+        <View style={styles.actionCard}>
+          <Text style={styles.cardTitle}>Demo Audio Samples</Text>
+          <Text style={styles.cardDesc}>
+            Test VoiceShield Core (AASIST-L + ECAPA-TDNN + Whisper) with bundled test audio:
           </Text>
 
           <TouchableOpacity
             style={[styles.btn, styles.btnPrimary]}
-            onPress={() => handleAnalyzeSample('synthetic')}
-            disabled={analyzing}>
+            onPress={() => handleAnalyzeAudio('synthetic')}
+            disabled={analyzing}
+            accessibilityLabel="Analyze Deepfake Sample Audio"
+            accessibilityRole="button">
             {analyzing ? (
               <ActivityIndicator color={colors.white} />
             ) : (
-              <Text style={styles.btnText}>🧪 Analyze Deepfake Sample Audio</Text>
+              <Text style={styles.btnText}>🧪  Analyze Deepfake Sample Audio</Text>
             )}
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.btn, styles.btnSecondary]}
-            onPress={() => handleAnalyzeSample('benign')}
-            disabled={analyzing}>
-            <Text style={styles.btnSecondaryText}>🟢 Analyze Benign Human Audio</Text>
+            onPress={() => handleAnalyzeAudio('benign')}
+            disabled={analyzing}
+            accessibilityLabel="Analyze Benign Human Audio"
+            accessibilityRole="button">
+            <Text style={styles.btnSecondaryText}>🟢  Analyze Benign Human Audio</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.btn, styles.btnOutline]}
-            onPress={() => handleAnalyzeSample('short')}
-            disabled={analyzing}>
-            <Text style={styles.btnOutlineText}>⏱ Test Short Audio Gate (&lt; 4.038s)</Text>
+            onPress={() => handleAnalyzeAudio('short')}
+            disabled={analyzing}
+            accessibilityLabel="Test Short Audio Gate"
+            accessibilityRole="button">
+            <Text style={styles.btnOutlineText}>⏱  Test Short Audio Gate (&lt; 4.038s)</Text>
           </TouchableOpacity>
         </View>
 
@@ -113,7 +191,7 @@ export const ManualAnalysisScreen: React.FC = () => {
             <View style={styles.telemetryCard}>
               <Text style={styles.metaRow}>
                 <Text style={styles.metaLabel}>Status: </Text>
-                <Text style={styles.metaValue}>{report.status.toUpperCase()}</Text>
+                <Text style={styles.metaValue}>{report.status?.toUpperCase()}</Text>
               </Text>
               <Text style={styles.metaRow}>
                 <Text style={styles.metaLabel}>File: </Text>
@@ -121,7 +199,9 @@ export const ManualAnalysisScreen: React.FC = () => {
               </Text>
               <Text style={styles.metaRow}>
                 <Text style={styles.metaLabel}>Duration: </Text>
-                <Text style={styles.metaValue}>{report.duration_seconds.toFixed(2)}s</Text>
+                <Text style={styles.metaValue}>
+                  {report.duration_seconds !== undefined ? `${report.duration_seconds.toFixed(2)}s` : '--'}
+                </Text>
               </Text>
               <Text style={styles.metaRow}>
                 <Text style={styles.metaLabel}>Analysis Windows: </Text>
@@ -148,35 +228,42 @@ export const ManualAnalysisScreen: React.FC = () => {
             <DecisionPanel
               decision={decision}
               reasons={report.reasons || []}
+              evidenceConfidence={report.evidence_confidence || 0}
               recommendedAction={report.recommended_action || ''}
-              evidenceConfidence={report.evidence_confidence ?? 0.0}
             />
 
-            {/* Authenticity Panel */}
-            <AuthenticityPanel authenticity={report.authenticity || null} />
+            {/* Multi-modal breakdown */}
+            {report.analysis_completed && (
+              <>
+                <AuthenticityPanel
+                  authenticity={report.authenticity}
+                />
 
-            {/* Identity Panel */}
-            <IdentityPanel identity={report.identity || null} />
+                <IdentityPanel
+                  identity={report.identity}
+                />
 
-            {/* Context Panel */}
-            <ContextPanel context={report.context || null} />
+                <ContextPanel
+                  context={report.context}
+                />
+              </>
+            )}
 
-            {/* Window Timeline Breakdown */}
+            {/* Window Timeline (if available) */}
             {report.window_timeline && report.window_timeline.length > 0 && (
               <View style={styles.timelineCard}>
-                <Text style={styles.cardTitle}>Window Breakdown (Exact 4038ms / 1000ms Hop)</Text>
-                {report.window_timeline.map((w: any) => (
-                  <View key={w.window_index} style={styles.windowRow}>
+                <Text style={styles.cardTitle}>Window Timeline</Text>
+                {report.window_timeline.map((win: any) => (
+                  <View key={win.window_index} style={styles.windowRow}>
                     <Text style={styles.windowTime}>
-                      W{w.window_index + 1} ({w.offset_ms / 1000}s)
+                      {(win.offset_ms / 1000).toFixed(1)}s - {((win.offset_ms + 4038) / 1000).toFixed(1)}s
                     </Text>
                     <Text style={styles.windowSpoof}>
-                      Spoof: {(w.authenticity_spoof_prob * 100).toFixed(0)}%
+                      Spoof: {(win.spoof_score * 100).toFixed(0)}%
                     </Text>
                     <Text style={styles.windowRisk}>
-                      Risk: {w.window_risk_score}
+                      Risk: {win.risk_score}
                     </Text>
-                    <RiskStateBadge state={w.window_risk_state as RiskState} size="sm" />
                   </View>
                 ))}
               </View>
@@ -194,10 +281,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg,
   },
   scroll: {
-    padding: spacing.md,
+    padding: spacing.lg,
   },
   header: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.lg,
   },
   title: {
     ...typography.h2,
@@ -205,7 +292,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   subtitle: {
-    ...typography.body,
+    fontSize: 14,
     color: colors.textSecondary,
     lineHeight: 20,
   },
@@ -218,21 +305,56 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   cardTitle: {
-    ...typography.h3,
+    fontSize: 16,
+    fontWeight: '700',
     color: colors.textPrimary,
-    marginBottom: spacing.xs,
+    marginBottom: 4,
   },
   cardDesc: {
-    ...typography.body,
+    fontSize: 13,
     color: colors.textSecondary,
     marginBottom: spacing.md,
+    lineHeight: 18,
   },
   btn: {
-    borderRadius: radius.sm,
-    paddingVertical: spacing.sm + 2,
+    borderRadius: radius.md,
+    paddingVertical: 14,
     paddingHorizontal: spacing.md,
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: spacing.sm,
+  },
+  btnFilePicker: {
+    backgroundColor: colors.bgElevated,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderStyle: 'dashed',
+  },
+  btnFilePickerText: {
+    color: colors.brand,
+    fontWeight: '700',
+    fontSize: 15,
+  },
+  selectedFileCard: {
+    backgroundColor: colors.bgElevated,
+    borderRadius: radius.sm,
+    padding: spacing.sm,
+    marginTop: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  selectedFileHeader: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.brand,
+    marginBottom: spacing.xs,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  selectedFileRow: {
+    fontSize: 13,
+    color: colors.textPrimary,
+    marginBottom: 2,
   },
   btnPrimary: {
     backgroundColor: colors.brand,
@@ -246,6 +368,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: colors.border,
+    marginBottom: 0,
   },
   btnText: {
     color: colors.white,

@@ -58,26 +58,29 @@ object CallNotificationHelper {
                 }
             }
 
-            val (title, message) = when (evaluation.warningType) {
-                WarningType.VERIFICATION_FAILED -> Pair(
-                    "VoiceShield Warning",
-                    "Caller verification failed for ${evaluation.maskedCaller} — exercise caution"
+            // Safe/low calls do not require an intrusive heads-up notification.
+            // Records are persisted and reflected on the dashboard/history without alerting the user.
+            if (evaluation.riskState == "safe" || evaluation.riskState == "low") {
+                return
+            }
+
+            val callerDisplay = evaluation.callerName ?: evaluation.maskedCaller
+            val (title, message) = when (evaluation.riskState) {
+                "critical" -> Pair(
+                    "VoiceShield: Critical call risk",
+                    "Strong impersonation/fraud indicators detected for call from $callerDisplay. Follow the recommended verification steps before trusting this caller."
                 )
-                WarningType.UNVERIFIED_CALLER -> Pair(
-                    "VoiceShield Security Check",
-                    "Caller could not be verified by carrier for ${evaluation.maskedCaller}"
+                "high" -> Pair(
+                    "VoiceShield: High-risk call",
+                    "Incoming call from $callerDisplay shows high-risk indicators. ${evaluation.explanation}"
                 )
-                WarningType.RESTRICTED_NUMBER -> Pair(
-                    "VoiceShield Security Check",
-                    "Incoming call from Restricted/Private caller"
+                "suspicious" -> Pair(
+                    "VoiceShield: Caller needs caution",
+                    "Incoming call from $callerDisplay. ${evaluation.explanation} Call allowed — avoid sharing OTPs, passwords, or payment details."
                 )
-                WarningType.BLOCKLIST_MATCH -> Pair(
-                    "VoiceShield Blocked Call",
-                    "Blocked incoming call from ${evaluation.maskedCaller}"
-                )
-                WarningType.NONE -> Pair(
+                else -> Pair(
                     "VoiceShield Call Security",
-                    "Incoming call detected from ${evaluation.maskedCaller}"
+                    "Elevated risk detected for call from $callerDisplay."
                 )
             }
 
@@ -112,6 +115,59 @@ object CallNotificationHelper {
             notificationManager?.notify(notificationId, notification)
         } catch (e: Exception) {
             // Notification failure must never crash CallScreeningService
+        }
+    }
+
+    /**
+     * Local-only test notification to verify channel, priority, and permissions on device.
+     * Strictly creates NO call, session, incident, or risk records and affects NO dashboard stats.
+     */
+    fun showTestNotification(context: Context) {
+        try {
+            ensureChannel(context)
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (ContextCompat.checkSelfPermission(
+                        context,
+                        "android.permission.POST_NOTIFICATIONS"
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    return
+                }
+            }
+
+            val launchIntent = Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+            val pendingIntent = PendingIntent.getActivity(
+                context,
+                0,
+                launchIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val smallIconRes = context.applicationInfo.icon.takeIf { it != 0 }
+                ?: android.R.drawable.ic_dialog_info
+
+            val title = "VoiceShield Security Test"
+            val message = "Notification channel and alert delivery verified successfully. (Test only — no calls or stats affected)"
+
+            val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(smallIconRes)
+                .setContentTitle(title)
+                .setContentText(message)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_CALL)
+                .setAutoCancel(true)
+                .setContentIntent(pendingIntent)
+                .build()
+
+            val notificationManager =
+                context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+            notificationManager?.notify(99999, notification)
+        } catch (e: Exception) {
+            // Notification failure must not crash
         }
     }
 }

@@ -9,31 +9,53 @@ import java.util.UUID
 /**
  * Persisted record of a screened call event.
  * Contains strictly masked and hashed caller data, no raw phone numbers.
+ *
+ * Expanded in Phase 3.1 to include: riskScore, riskState, callerName, contactStatus,
+ * screeningLatencyMs, explanation, category, source, audioAnalysisStatus.
+ * Backwards-compatible deserialization: older records without new fields get safe defaults.
  */
 data class ScreenedCallRecord(
     val eventId: String,
     val timestamp: Long,
     val callerMasked: String,
+    val callerName: String? = null,
     val callerHash: String,
+    val contactStatus: String = "NOT_IN_CONTACTS",   // IN_CONTACTS | NOT_IN_CONTACTS | UNKNOWN
     val verificationStatus: String,
-    val decision: String,
-    val riskLevel: String,
-    val warningType: String,
-    val reasonCodes: List<String>
+    val riskScore: Int = 0,
+    val riskState: String = "low",                   // safe | low | suspicious | high | critical
+    val decision: String,                             // ALLOW | SILENCE | REJECT
+    val riskLevel: String,                            // LOW | MEDIUM | HIGH
+    val warningType: String,                          // NONE | UNVERIFIED_CALLER | ...
+    val category: String = "SIM Call",
+    val explanation: String = "",
+    val reasonCodes: List<String>,
+    val screeningLatencyMs: Long = 0L,
+    val source: String = "SIM_CALL",
+    val audioAnalysisStatus: String = "NOT_PERFORMED"
 ) {
     fun toJsonObject(): JSONObject {
         return JSONObject().apply {
             put("eventId", eventId)
             put("timestamp", timestamp)
             put("callerMasked", callerMasked)
+            if (callerName != null) put("callerName", callerName) else put("callerName", JSONObject.NULL)
             put("callerHash", callerHash)
+            put("contactStatus", contactStatus)
             put("verificationStatus", verificationStatus)
+            put("riskScore", riskScore)
+            put("riskState", riskState)
             put("decision", decision)
             put("riskLevel", riskLevel)
             put("warningType", warningType)
+            put("category", category)
+            put("explanation", explanation)
             val reasonsArray = JSONArray()
             reasonCodes.forEach { reasonsArray.put(it) }
             put("reasonCodes", reasonsArray)
+            put("screeningLatencyMs", screeningLatencyMs)
+            put("source", source)
+            put("audioAnalysisStatus", audioAnalysisStatus)
         }
     }
 
@@ -46,16 +68,31 @@ data class ScreenedCallRecord(
                     reasonsList.add(reasonsArray.getString(i))
                 }
             }
+            // callerName is stored as JSONObject.NULL when absent; handle both null and absent
+            val callerNameRaw = json.opt("callerName")
+            val callerName = if (callerNameRaw != null && callerNameRaw != JSONObject.NULL) {
+                callerNameRaw.toString()
+            } else null
+
             return ScreenedCallRecord(
                 eventId = json.optString("eventId", UUID.randomUUID().toString()),
                 timestamp = json.optLong("timestamp", System.currentTimeMillis()),
                 callerMasked = json.optString("callerMasked", "Unknown Number"),
+                callerName = callerName,
                 callerHash = json.optString("callerHash", ""),
+                contactStatus = json.optString("contactStatus", "NOT_IN_CONTACTS"),
                 verificationStatus = json.optString("verificationStatus", "UNKNOWN"),
+                riskScore = json.optInt("riskScore", 0),
+                riskState = json.optString("riskState", "low"),
                 decision = json.optString("decision", "ALLOW"),
                 riskLevel = json.optString("riskLevel", "LOW"),
                 warningType = json.optString("warningType", "NONE"),
-                reasonCodes = reasonsList
+                category = json.optString("category", "SIM Call"),
+                explanation = json.optString("explanation", ""),
+                reasonCodes = reasonsList,
+                screeningLatencyMs = json.optLong("screeningLatencyMs", 0L),
+                source = json.optString("source", "SIM_CALL"),
+                audioAnalysisStatus = json.optString("audioAnalysisStatus", "NOT_PERFORMED")
             )
         }
     }
@@ -81,19 +118,34 @@ class CallScreeningStorage(context: Context) {
     /**
      * Persists an evaluated screening event to local storage.
      * Inserts at the head of the list and trims to MAX_HISTORY_EVENTS.
+     *
+     * Must be called BEFORE respondToCall() to avoid event loss on service unbind.
      */
     @Synchronized
-    fun saveEvent(evaluation: EvaluationResult, verificationStatusString: String): ScreenedCallRecord {
+    fun saveEvent(
+        evaluation: EvaluationResult,
+        verificationStatusString: String,
+        screeningLatencyMs: Long = 0L
+    ): ScreenedCallRecord {
         val record = ScreenedCallRecord(
             eventId = UUID.randomUUID().toString(),
             timestamp = evaluation.timestamp,
             callerMasked = evaluation.maskedCaller,
+            callerName = evaluation.callerName,
             callerHash = evaluation.callerHash,
+            contactStatus = evaluation.contactStatus,
             verificationStatus = verificationStatusString,
+            riskScore = evaluation.riskScore,
+            riskState = evaluation.riskState,
             decision = evaluation.decision.name,
             riskLevel = evaluation.riskLevel.name,
             warningType = evaluation.warningType.name,
-            reasonCodes = evaluation.reasonCodes
+            category = "SIM Call",
+            explanation = evaluation.explanation,
+            reasonCodes = evaluation.reasonCodes,
+            screeningLatencyMs = screeningLatencyMs,
+            source = "SIM_CALL",
+            audioAnalysisStatus = "NOT_PERFORMED"
         )
 
         val existing = getRecentEvents().toMutableList()

@@ -8,8 +8,9 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { colors, spacing, radius, typography } from '../utils/theme';
 import {
   useConnectionStore,
@@ -17,6 +18,7 @@ import {
   getWsBaseUrl,
 } from '../store/connectionStore';
 import { useCallScreeningStore } from '../store/callScreeningStore';
+import { callScreeningService } from '../services/telecom/callScreeningService';
 
 export const SettingsScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -26,11 +28,29 @@ export const SettingsScreen: React.FC = () => {
   const isRoleHeld = useCallScreeningStore(s => s.isRoleHeld);
   const checkRoleStatus = useCallScreeningStore(s => s.checkRoleStatus);
   const requestRole = useCallScreeningStore(s => s.requestRole);
+  const openSettings = useCallScreeningStore(s => s.openSettings);
   const isRoleLoading = useCallScreeningStore(s => s.isLoading);
 
-  React.useEffect(() => {
-    checkRoleStatus();
-  }, [checkRoleStatus]);
+  const [hasContactsPermission, setHasContactsPermission] = React.useState<boolean | null>(null);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      checkRoleStatus();
+      // Check contacts permission status on focus
+      callScreeningService.hasContactsPermission?.().then(granted => {
+        setHasContactsPermission(granted);
+      }).catch(() => setHasContactsPermission(false));
+    }, [checkRoleStatus]),
+  );
+
+  const handleTestNotification = async () => {
+    try {
+      await callScreeningService.testSecurityNotification();
+      Alert.alert('Notification Sent', 'A local test security alert was sent. Check your notifications shade.');
+    } catch (err: any) {
+      Alert.alert('Notification Test Failed', err?.message || 'Could not send test notification.');
+    }
+  };
 
   const {
     mode,
@@ -178,7 +198,7 @@ export const SettingsScreen: React.FC = () => {
         <Section title="Call Screening Protection">
           <Row
             label="Protection Status"
-            value={isRoleHeld ? 'Active' : 'Not enabled'}
+            value={isRoleHeld ? 'Active' : 'Inactive'}
           />
           {!isRoleHeld ? (
             <TouchableOpacity
@@ -194,14 +214,57 @@ export const SettingsScreen: React.FC = () => {
               )}
             </TouchableOpacity>
           ) : (
-            <View style={styles.activeBadge}>
-              <Text style={styles.activeBadgeText}>● Active</Text>
+            <View style={styles.roleControlsContainer}>
+              <View style={styles.activeBadge}>
+                <Text style={styles.activeBadgeText}>● Active</Text>
+              </View>
+
+              <TouchableOpacity
+                onPress={() => openSettings()}
+                style={styles.roleActionBtn}
+                disabled={isRoleLoading}
+                accessibilityLabel="Change Call Screening App"
+                accessibilityRole="button">
+                <Text style={styles.roleActionBtnText}>Change Call Screening App</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => openSettings()}
+                style={[styles.roleActionBtn, styles.roleDisableBtn]}
+                disabled={isRoleLoading}
+                accessibilityLabel="Disable VoiceShield Screening"
+                accessibilityRole="button">
+                <Text style={styles.roleDisableBtnText}>Disable VoiceShield Screening</Text>
+              </TouchableOpacity>
             </View>
           )}
           <Text style={styles.roleExplanation}>
-            VoiceShield needs to be selected as your Call Screening app to detect
-            incoming calls.
+            Android requires user control over call screening. To change or disable VoiceShield, select 'Caller ID & spam app' in Android system settings.
           </Text>
+        </Section>
+
+        {/* Contacts Permission */}
+        <Section title="Contacts Permission">
+          <Row
+            label="Status"
+            value={
+              hasContactsPermission === null
+                ? 'Checking…'
+                : hasContactsPermission
+                ? '✅ Granted'
+                : '⚠️ Not Granted'
+            }
+          />
+          <Text style={styles.roleExplanation}>
+            Allow VoiceShield to detect known contacts so calls from friends and family are
+            recognized as safe and screened seamlessly. Without this permission, all calls
+            appear as "unknown" to the screening service.
+          </Text>
+          {!hasContactsPermission && hasContactsPermission !== null && (
+            <Text style={styles.roleExplanation}>
+              To grant access: Android Settings → Apps → VoiceShield → Permissions → Contacts.
+            </Text>
+          )}
         </Section>
 
         {/* Notifications */}
@@ -212,6 +275,16 @@ export const SettingsScreen: React.FC = () => {
             onChange={setPushEnabled}
             description="Receive push alerts for high-risk events"
           />
+          <TouchableOpacity
+            onPress={handleTestNotification}
+            style={styles.testNotificationBtn}
+            accessibilityLabel="Test Security Notification"
+            accessibilityRole="button">
+            <Text style={styles.testNotificationBtnText}>🔔  Test Security Notification</Text>
+          </TouchableOpacity>
+          <Text style={styles.testNotificationDesc}>
+            Fires a local test alert to verify heads-up display, sound, and notification permission. (Does not affect dashboard stats or create call records).
+          </Text>
         </Section>
 
         {/* Privacy */}
@@ -473,5 +546,55 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.sm,
     lineHeight: 16,
+  },
+  roleControlsContainer: {
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.xs,
+    gap: spacing.xs,
+  },
+  roleActionBtn: {
+    backgroundColor: colors.bgElevated,
+    borderRadius: radius.sm,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  roleActionBtnText: {
+    color: colors.brand,
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  roleDisableBtn: {
+    backgroundColor: `${colors.error}10`,
+    borderColor: `${colors.error}33`,
+  },
+  roleDisableBtnText: {
+    color: colors.error,
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  testNotificationBtn: {
+    backgroundColor: colors.bgElevated,
+    borderRadius: radius.sm,
+    paddingVertical: 10,
+    alignItems: 'center',
+    marginHorizontal: spacing.md,
+    marginTop: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  testNotificationBtnText: {
+    color: colors.brand,
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  testNotificationDesc: {
+    color: colors.textMuted,
+    fontSize: 11,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.sm,
+    lineHeight: 15,
   },
 });
