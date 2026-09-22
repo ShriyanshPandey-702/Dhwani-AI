@@ -23,8 +23,10 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+from enum import Enum
 import json
 import logging
+import os
 import signal
 import sys
 from typing import Dict, Optional, Tuple
@@ -40,6 +42,32 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 log = logging.getLogger("voiceshield.telephony_gateway")
+
+
+class EnforcementMode(str, Enum):
+    OBSERVE_ONLY = "observe_only"
+    DRY_RUN = "dry_run"
+    ENFORCE = "enforce"
+
+    @classmethod
+    def from_str(cls, val: Optional[str]) -> EnforcementMode:
+        if not val:
+            return cls.OBSERVE_ONLY
+        normalized = val.strip().lower()
+        for member in cls:
+            if member.value == normalized:
+                return member
+        log.warning(f"Invalid enforcement mode '{val}', defaulting to {cls.OBSERVE_ONLY.value}")
+        return cls.OBSERVE_ONLY
+
+
+class CallState(str, Enum):
+    INIT = "INIT"
+    ACTIVE = "ACTIVE"
+    CHALLENGED = "CHALLENGED"
+    HOLD = "HOLD"
+    TERMINATING = "TERMINATING"
+    TERMINATED = "TERMINATED"
 
 
 def _get_active_user_id() -> str:
@@ -98,6 +126,8 @@ class ActiveCallSession:
         self.caller_channel_id = caller_channel_id
         self.caller_number = caller_number
         self.sip_call_id = sip_call_id
+        self.state: CallState = CallState.INIT
+        self.enforcement_action_taken: Optional[str] = None
         self.external_channel_id: Optional[str] = None
         self.bridge_id: Optional[str] = None
         self.session_id: Optional[str] = None
@@ -106,6 +136,9 @@ class ActiveCallSession:
         self.accumulator = PcmAccumulator(sample_rate=16000, chunk_duration_ms=250)
         self.chunks_sent = 0
         self.ws_receive_task: Optional[asyncio.Task] = None
+        self.is_terminating: bool = False
+        self.is_terminated: bool = False
+        self.ari_actions_log: list[dict] = []
 
 
 class TelephonyGateway:
@@ -121,6 +154,12 @@ class TelephonyGateway:
         rtp_bind_host: str = "0.0.0.0",
         rtp_bind_port: int = 20000,
         asterisk_external_host: str = "host.docker.internal:20000",
+        enforcement_mode: EnforcementMode = EnforcementMode.OBSERVE_ONLY,
+        challenge_sound: str = "sound:challenge_prompt",
+        test_verdict: Optional[str] = None,
+        test_verdict_delay: float = 3.0,
+        test_verdict_repeat: int = 1,
+        http_client: Optional[httpx.AsyncClient] = None,
     ):
         self.ari_url = ari_url.rstrip("/")
         self.ari_ws_url = ari_ws_url
@@ -132,18 +171,24 @@ class TelephonyGateway:
         self.rtp_bind_host = rtp_bind_host
         self.rtp_bind_port = rtp_bind_port
         self.asterisk_external_host = asterisk_external_host
+        self.enforcement_mode = enforcement_mode
+        self.challenge_sound = challenge_sound
+        self.test_verdict = test_verdict
+        self.test_verdict_delay = test_verdict_delay
+        self.test_verdict_repeat = test_verdict_repeat
 
-        self.http_client: Optional[httpx.AsyncClient] = None
+        self.http_client: Optional[httpx.AsyncClient] = http_client
         self.udp_transport: Optional[asyncio.DatagramTransport] = None
         self.active_session: Optional[ActiveCallSession] = None
         self.running = False
 
     async def start(self) -> None:
         self.running = True
-        self.http_client = httpx.AsyncClient(
-            auth=(self.ari_username, self.ari_password),
-            timeout=10.0,
-        )
+        if self.http_client is None:
+            self.http_client = httpx.AsyncClient(
+                auth=(self.ari_username, self.ari_password),
+                timeout=10.0,
+            )
 
         loop = asyncio.get_running_loop()
         log.info(f"Binding RTP UDP socket on {self.rtp_bind_host}:{self.rtp_bind_port}...")
@@ -297,13 +342,73 @@ class TelephonyGateway:
                 params={"channel": f"{session.caller_channel_id},{session.external_channel_id}"},
             )
             add_res.raise_for_status()
+            session.state = CallState.ACTIVE
             log.info(f"Bridged caller channel and externalMedia channel into bridge {session.bridge_id}")
-            log.info("Media bridge active. Streaming RTP audio to VoiceShield pipeline.")
+            log.info(f"Media bridge active. Streaming RTP audio to VoiceShield pipeline (CallState={session.state.value}).")
+
+            if self.test_verdict:
+                asyncio.create_task(
+                    self._schedule_test_verdicts(
+                        session=session,
+                        verdict=self.test_verdict,
+                        delay=self.test_verdict_delay,
+                        repeat=self.test_verdict_repeat,
+                    )
+                )
 
         except Exception as e:
             log.error(f"Failed to set up call media session: {e}", exc_info=True)
             await self._teardown_session(session)
             self.active_session = None
+
+    async def _schedule_test_verdicts(
+        self, session: ActiveCallSession, verdict: str, delay: float, repeat: int = 1
+    ) -> None:
+        try:
+            await asyncio.sleep(delay)
+            if not session or session.is_terminated or session.state == CallState.TERMINATED:
+                return
+
+            v_upper = verdict.upper()
+            action = v_upper.lower()
+            if v_upper == "BLOCK":
+                score = 95
+                state = "critical"
+                reasons = ["voice_authenticity_anomaly", "synthetic_speech_detected"]
+            elif v_upper in ("VERIFY", "CHALLENGE"):
+                score = 65
+                state = "high"
+                reasons = ["interactive_challenge_required"]
+            elif v_upper == "HOLD":
+                score = 80
+                state = "critical"
+                reasons = ["high_consequence_hold"]
+            else:
+                score = 10
+                state = "low"
+                reasons = ["benign_audio_verified"]
+
+            for i in range(max(1, repeat)):
+                if session.is_terminated or session.state == CallState.TERMINATED:
+                    break
+                log.info(
+                    f"Emitting Policy Decision Event [{i+1}/{repeat}] for session {session.session_id}: "
+                    f"Decision={v_upper}, Action={action}, Score={score}, State={state}"
+                )
+                await self._handle_policy_verdict(
+                    session=session,
+                    decision=v_upper,
+                    action=action,
+                    risk_state=state,
+                    risk_score=score,
+                    reasons=reasons,
+                )
+                if repeat > 1:
+                    await asyncio.sleep(0.05)
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            log.error(f"Error in test verdict scheduler: {e}", exc_info=True)
 
     # ── RTP Datagram Processing ───────────────────────────────────────────────
 
@@ -332,27 +437,51 @@ class TelephonyGateway:
         except Exception as e:
             log.warning(f"Error sending audio chunk to VoiceShield: {e}")
 
-    # ── VoiceShield WebSocket Listener (Observation Only) ────────────────────
+    # ── VoiceShield WebSocket Listener & Enforcement Dispatcher ──────────────
 
     async def _listen_voiceshield_ws(self, session: ActiveCallSession) -> None:
         log.info(f"Starting VoiceShield event listener for session {session.session_id}")
         try:
             async for raw in session.ws:
+                if session.is_terminated or session.state == CallState.TERMINATED:
+                    break
                 try:
                     event = json.loads(raw)
                     ev_type = event.get("type")
                     if ev_type == "risk_update":
-                        score = event.get("risk_score")
-                        state = event.get("risk_state")
-                        decision = event.get("decision")
+                        score = event.get("risk_score", 0)
+                        state = event.get("risk_state", "")
+                        decision = event.get("decision", "")
                         log.info(
                             f"Live Risk Observation [Session {session.session_id[:8]}]: "
                             f"Score={score}, State={state}, Decision={decision}"
                         )
+                        await self._handle_policy_verdict(
+                            session=session,
+                            decision=decision,
+                            action=event.get("action", ""),
+                            risk_state=state,
+                            risk_score=score,
+                            reasons=event.get("reasons", []),
+                        )
                     elif ev_type == "policy_decision":
-                        dec = event.get("decision")
-                        action = event.get("action")
-                        log.info(f"Policy Decision Emitted [OBSERVATION ONLY]: {dec} (Action: {action})")
+                        dec = event.get("decision", "")
+                        action = event.get("action", "")
+                        risk_score = event.get("risk_score", 0)
+                        risk_state = event.get("risk_state", "")
+                        reasons = event.get("reasons", [])
+                        log.info(
+                            f"Policy Decision Emitted [Session {session.session_id[:8]}]: "
+                            f"Decision={dec}, Action={action}, Score={risk_score}, State={risk_state}"
+                        )
+                        await self._handle_policy_verdict(
+                            session=session,
+                            decision=dec,
+                            action=action,
+                            risk_state=risk_state,
+                            risk_score=risk_score,
+                            reasons=reasons,
+                        )
                     elif ev_type == "alert":
                         log.warning(f"VoiceShield Alert [OBSERVATION ONLY]: {event.get('message')}")
                 except Exception as e:
@@ -362,10 +491,230 @@ class TelephonyGateway:
         except Exception as e:
             log.error(f"Error in VoiceShield WebSocket listener: {e}")
 
+    # ── Enforcement State Machine ─────────────────────────────────────────────
+
+    async def _handle_policy_verdict(
+        self,
+        session: ActiveCallSession,
+        decision: str,
+        action: str,
+        risk_state: str,
+        risk_score: int,
+        reasons: list[str],
+    ) -> None:
+        """
+        Idempotent enforcement state machine handling VoiceShield decisions.
+        """
+        if session.is_terminating or session.is_terminated or session.state in (CallState.TERMINATING, CallState.TERMINATED):
+            log.info(
+                f"Policy decision '{decision}' ignored: session is already in state {session.state.value}"
+            )
+            return
+
+        decision_upper = decision.upper() if decision else ""
+        action_lower = action.lower() if action else ""
+
+        if decision_upper in ("BLOCK", "ESCALATE") or action_lower in ("block", "escalate"):
+            await self._enforce_block(session, reasons, risk_score)
+        elif decision_upper == "HOLD" or action_lower == "hold":
+            await self._enforce_hold(session, reasons, risk_score)
+        elif decision_upper == "VERIFY" or action_lower in ("challenge", "verify"):
+            await self._enforce_challenge(session, reasons, risk_score)
+        elif decision_upper == "ALLOW" or action_lower == "allow":
+            await self._enforce_allow(session)
+
+    async def _enforce_allow(self, session: ActiveCallSession) -> None:
+        if session.state == CallState.HOLD:
+            log.info(f"Transitioning from HOLD to ACTIVE under ALLOW decision on channel {session.caller_channel_id}")
+            if self.enforcement_mode == EnforcementMode.ENFORCE and self.http_client:
+                try:
+                    res = await self.http_client.delete(f"{self.ari_url}/channels/{session.caller_channel_id}/hold")
+                    if res.status_code in (200, 204):
+                        log.info(f"[ENFORCE] Channel {session.caller_channel_id} removed from hold")
+                except Exception as e:
+                    log.warning(f"Failed unholding channel {session.caller_channel_id}: {e}")
+        session.state = CallState.ACTIVE
+        log.info(f"Policy Decision [ALLOW]: Call on channel {session.caller_channel_id} remains ACTIVE")
+
+    async def _enforce_challenge(
+        self,
+        session: ActiveCallSession,
+        reasons: list[str],
+        risk_score: int,
+    ) -> None:
+        if session.state == CallState.CHALLENGED:
+            return
+        session.state = CallState.CHALLENGED
+        session.enforcement_action_taken = "CHALLENGE"
+
+        action_record = {
+            "action": "CHALLENGE",
+            "channel_id": session.caller_channel_id,
+            "mode": self.enforcement_mode.value,
+            "media": self.challenge_sound,
+            "executed": False,
+        }
+        session.ari_actions_log.append(action_record)
+
+        if self.enforcement_mode == EnforcementMode.OBSERVE_ONLY:
+            log.info(
+                f"[OBSERVE_ONLY] Policy Decision VERIFY/CHALLENGE (Score={risk_score}, Reasons={reasons}). Zero ARI action performed."
+            )
+            return
+
+        if self.enforcement_mode == EnforcementMode.DRY_RUN:
+            log.info(
+                f"[DRY_RUN] Would execute ARI: POST {self.ari_url}/channels/{session.caller_channel_id}/play?media={self.challenge_sound}"
+            )
+            return
+
+        if self.enforcement_mode == EnforcementMode.ENFORCE:
+            log.info(
+                f"[ENFORCE] Executing ARI: POST {self.ari_url}/channels/{session.caller_channel_id}/play?media={self.challenge_sound}"
+            )
+            if self.http_client:
+                try:
+                    res = await self.http_client.post(
+                        f"{self.ari_url}/channels/{session.caller_channel_id}/play",
+                        params={"media": self.challenge_sound},
+                    )
+                    action_record["status_code"] = res.status_code
+                    if res.status_code in (200, 201):
+                        action_record["executed"] = True
+                        log.info(f"[ENFORCE] Challenge audio playback started on channel {session.caller_channel_id}")
+                    elif res.status_code == 404:
+                        log.info(f"[ENFORCE] Channel {session.caller_channel_id} not found for challenge play (404)")
+                    else:
+                        log.warning(f"[ENFORCE] Unexpected ARI play status {res.status_code}: {res.text}")
+                except httpx.TimeoutException:
+                    log.error(f"[ENFORCE] ARI request timed out playing challenge on {session.caller_channel_id}")
+                except httpx.RequestError as e:
+                    log.error(f"[ENFORCE] ARI connection error playing challenge: {e}")
+                except Exception as e:
+                    log.error(f"[ENFORCE] Error playing challenge prompt: {e}", exc_info=True)
+
+    async def _enforce_hold(
+        self,
+        session: ActiveCallSession,
+        reasons: list[str],
+        risk_score: int,
+    ) -> None:
+        if session.state == CallState.HOLD:
+            return
+        session.state = CallState.HOLD
+        session.enforcement_action_taken = "HOLD"
+
+        action_record = {
+            "action": "HOLD",
+            "channel_id": session.caller_channel_id,
+            "mode": self.enforcement_mode.value,
+            "executed": False,
+        }
+        session.ari_actions_log.append(action_record)
+
+        if self.enforcement_mode == EnforcementMode.OBSERVE_ONLY:
+            log.info(
+                f"[OBSERVE_ONLY] Policy Decision HOLD (Score={risk_score}, Reasons={reasons}). Zero ARI action performed."
+            )
+            return
+
+        if self.enforcement_mode == EnforcementMode.DRY_RUN:
+            log.info(
+                f"[DRY_RUN] Would execute ARI: POST {self.ari_url}/channels/{session.caller_channel_id}/hold"
+            )
+            return
+
+        if self.enforcement_mode == EnforcementMode.ENFORCE:
+            log.info(
+                f"[ENFORCE] Executing ARI: POST {self.ari_url}/channels/{session.caller_channel_id}/hold"
+            )
+            if self.http_client:
+                try:
+                    res = await self.http_client.post(f"{self.ari_url}/channels/{session.caller_channel_id}/hold")
+                    action_record["status_code"] = res.status_code
+                    if res.status_code in (200, 204):
+                        action_record["executed"] = True
+                        log.info(f"[ENFORCE] Channel {session.caller_channel_id} placed on HOLD")
+                    elif res.status_code == 404:
+                        log.info(f"[ENFORCE] Channel {session.caller_channel_id} not found for hold (404)")
+                    else:
+                        log.warning(f"[ENFORCE] Unexpected ARI hold status {res.status_code}: {res.text}")
+                except httpx.TimeoutException:
+                    log.error(f"[ENFORCE] ARI request timed out putting {session.caller_channel_id} on hold")
+                except httpx.RequestError as e:
+                    log.error(f"[ENFORCE] ARI connection error during hold: {e}")
+                except Exception as e:
+                    log.error(f"[ENFORCE] Error placing channel on hold: {e}", exc_info=True)
+
+    async def _enforce_block(
+        self,
+        session: ActiveCallSession,
+        reasons: list[str],
+        risk_score: int,
+    ) -> None:
+        # Idempotency guard: if already terminating or terminated, drop
+        if session.is_terminating or session.is_terminated or session.state in (CallState.TERMINATING, CallState.TERMINATED):
+            log.info(f"Duplicate BLOCK event ignored; channel {session.caller_channel_id} already in state {session.state.value}")
+            return
+
+        session.is_terminating = True
+        session.state = CallState.TERMINATING
+        session.enforcement_action_taken = "BLOCK"
+
+        action_record = {
+            "action": "BLOCK",
+            "channel_id": session.caller_channel_id,
+            "mode": self.enforcement_mode.value,
+            "executed": False,
+        }
+        session.ari_actions_log.append(action_record)
+
+        if self.enforcement_mode == EnforcementMode.OBSERVE_ONLY:
+            log.info(
+                f"[OBSERVE_ONLY] Policy Decision BLOCK (Score={risk_score}, Reasons={reasons}). Zero ARI action performed."
+            )
+            return
+
+        if self.enforcement_mode == EnforcementMode.DRY_RUN:
+            log.info(
+                f"[DRY_RUN] Would execute ARI: DELETE {self.ari_url}/channels/{session.caller_channel_id}?reason=congestion"
+            )
+            return
+
+        if self.enforcement_mode == EnforcementMode.ENFORCE:
+            log.info(
+                f"[ENFORCE] Executing ARI: DELETE {self.ari_url}/channels/{session.caller_channel_id}?reason=congestion"
+            )
+            if self.http_client:
+                try:
+                    res = await self.http_client.delete(
+                        f"{self.ari_url}/channels/{session.caller_channel_id}",
+                        params={"reason": "congestion"},
+                    )
+                    action_record["status_code"] = res.status_code
+                    if res.status_code in (200, 204):
+                        action_record["executed"] = True
+                        log.info(f"[ENFORCE] Successfully terminated channel {session.caller_channel_id} via ARI DELETE")
+                    elif res.status_code == 404:
+                        log.info(f"[ENFORCE] Channel {session.caller_channel_id} already terminated (404 Not Found)")
+                    else:
+                        log.warning(f"[ENFORCE] Unexpected ARI hangup status {res.status_code}: {res.text}")
+                except httpx.TimeoutException:
+                    log.error(f"[ENFORCE] ARI request timed out deleting channel {session.caller_channel_id}")
+                except httpx.RequestError as e:
+                    log.error(f"[ENFORCE] ARI connection error during block: {e}")
+                except Exception as e:
+                    log.error(f"[ENFORCE] Unexpected error terminating channel: {e}", exc_info=True)
+
     # ── Teardown ─────────────────────────────────────────────────────────────
 
     async def _teardown_session(self, session: ActiveCallSession) -> None:
-        log.info(f"Tearing down call session for channel {session.caller_channel_id}...")
+        if session.is_terminated:
+            return
+        session.is_terminated = True
+        session.state = CallState.TERMINATED
+
+        log.info(f"Tearing down call session for channel {session.caller_channel_id} (State={session.state.value})...")
 
         # 1. Cancel WebSocket listener
         if session.ws_receive_task and not session.ws_receive_task.done():
@@ -383,15 +732,15 @@ class TelephonyGateway:
         if self.http_client:
             if session.bridge_id:
                 try:
-                    await self.http_client.delete(f"{self.ari_url}/bridges/{session.bridge_id}")
-                    log.info(f"Destroyed bridge {session.bridge_id}")
+                    res = await self.http_client.delete(f"{self.ari_url}/bridges/{session.bridge_id}")
+                    log.info(f"Destroyed bridge {session.bridge_id} (status={res.status_code})")
                 except Exception as e:
                     log.warning(f"Failed deleting bridge: {e}")
 
             if session.external_channel_id:
                 try:
-                    await self.http_client.delete(f"{self.ari_url}/channels/{session.external_channel_id}")
-                    log.info(f"Destroyed externalMedia channel {session.external_channel_id}")
+                    res = await self.http_client.delete(f"{self.ari_url}/channels/{session.external_channel_id}")
+                    log.info(f"Destroyed externalMedia channel {session.external_channel_id} (status={res.status_code})")
                 except Exception as e:
                     log.warning(f"Failed deleting externalMedia channel: {e}")
 
@@ -401,7 +750,8 @@ class TelephonyGateway:
             f"Session Telemetry Summary [Channel {session.caller_channel_id}]: "
             f"RTP Packets Received={t.packets_received}, Bytes={t.bytes_received}, "
             f"Samples={t.samples_received}, Sequence Gaps={t.sequence_gaps}, "
-            f"Invalid Packets={t.packets_invalid}, Chunks Forwarded={session.chunks_sent}"
+            f"Invalid Packets={t.packets_invalid}, Chunks Forwarded={session.chunks_sent}, "
+            f"Final State={session.state.value}, Enforcement={session.enforcement_action_taken}"
         )
 
 
@@ -417,7 +767,39 @@ async def main():
     parser.add_argument("--rtp-host", default="0.0.0.0", help="RTP UDP bind host")
     parser.add_argument("--rtp-port", type=int, default=20000, help="RTP UDP bind port")
     parser.add_argument("--external-host", default="host.docker.internal:20000", help="Target external_host for Asterisk")
+    parser.add_argument(
+        "--enforcement-mode",
+        default=os.getenv("VOICESHIELD_ENFORCEMENT_MODE", "observe_only"),
+        choices=["observe_only", "dry_run", "enforce"],
+        help="Enforcement mode: observe_only (default), dry_run, or enforce",
+    )
+    parser.add_argument(
+        "--challenge-sound",
+        default="sound:challenge_prompt",
+        help="ARI sound URI to play for challenge/verify",
+    )
+    parser.add_argument(
+        "--test-verdict",
+        default=None,
+        choices=["BLOCK", "CHALLENGE", "VERIFY", "HOLD", "ALLOW", "block", "challenge", "verify", "hold", "allow"],
+        help="Deterministic policy decision trigger for controlled tests",
+    )
+    parser.add_argument(
+        "--test-verdict-delay",
+        type=float,
+        default=3.0,
+        help="Delay in seconds before triggering test policy decision",
+    )
+    parser.add_argument(
+        "--test-verdict-repeat",
+        type=int,
+        default=1,
+        help="Number of times to repeat the test policy decision (for idempotency testing)",
+    )
     args = parser.parse_args()
+
+    mode = EnforcementMode.from_str(args.enforcement_mode)
+    log.info(f"Initializing Telephony Gateway with EnforcementMode={mode.value.upper()}")
 
     gateway = TelephonyGateway(
         ari_url=args.ari_url,
@@ -430,6 +812,11 @@ async def main():
         rtp_bind_host=args.rtp_host,
         rtp_bind_port=args.rtp_port,
         asterisk_external_host=args.external_host,
+        enforcement_mode=mode,
+        challenge_sound=args.challenge_sound,
+        test_verdict=args.test_verdict,
+        test_verdict_delay=args.test_verdict_delay,
+        test_verdict_repeat=args.test_verdict_repeat,
     )
 
     loop = asyncio.get_running_loop()

@@ -18,6 +18,7 @@ services:
       - ./asterisk/ari.conf:/etc/asterisk/ari.conf:ro
       - ./asterisk/http.conf:/etc/asterisk/http.conf:ro
       - ./asterisk/rtp.conf:/etc/asterisk/rtp.conf:ro
+      - ./sounds:/var/lib/asterisk/sounds/en:ro
       - ../..:/workspace:ro
     environment:
       - ASTERISK_TERMINAL_OPTS=-n

@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import os
 import re
+import select
 import socket
 import struct
 import time
@@ -70,6 +71,7 @@ class SipUacClient:
         self.to_tag: Optional[str] = None
         self.remote_rtp_port: Optional[int] = None
         self.cseq = 1
+        self.remote_hungup = False
 
         self.sip_sock: Optional[socket.socket] = None
         self.rtp_sock: Optional[socket.socket] = None
@@ -203,6 +205,24 @@ class SipUacClient:
         )
         self._send_sip(msg)
 
+    def _send_200_ok_for_bye(self, bye_msg: str):
+        cseq_m = re.search(r"CSeq:\s*(\d+)\s+BYE", bye_msg, re.IGNORECASE)
+        cseq_num = cseq_m.group(1) if cseq_m else "2"
+        via_proto = "TCP" if self.transport == "tcp" else "UDP"
+        to_hdr = f"<sip:{self.callee_number}@{self.server_ip}:{self.server_port}>"
+        if self.to_tag:
+            to_hdr += f";tag={self.to_tag}"
+        resp = (
+            f"SIP/2.0 200 OK\r\n"
+            f"Via: SIP/2.0/{via_proto} 127.0.0.1:{self.local_sip_port}\r\n"
+            f"From: <sip:{self.caller_number}@127.0.0.1>;tag={self.from_tag}\r\n"
+            f"To: {to_hdr}\r\n"
+            f"Call-ID: {self.call_id}\r\n"
+            f"CSeq: {cseq_num} BYE\r\n"
+            f"Content-Length: 0\r\n\r\n"
+        )
+        self._send_sip(resp)
+
     def stream_wav_file(self, wav_path: str, duration_sec: Optional[float] = None) -> int:
         """
         Reads a WAV file, resamples to 8000 Hz PCMU (G.711u), and streams 20 ms packets.
@@ -292,6 +312,25 @@ class SipUacClient:
             if sleep_t > 0:
                 time.sleep(sleep_t)
 
+            # Check if remote hung up (e.g. Asterisk sent BYE on BLOCK)
+            if self.sip_sock:
+                try:
+                    r, _, _ = select.select([self.sip_sock], [], [], 0)
+                    if r:
+                        if self.transport == "tcp":
+                            data = self.sip_sock.recv(4096)
+                        else:
+                            data, _ = self.sip_sock.recvfrom(4096)
+                        if data:
+                            text = data.decode("utf-8", errors="ignore")
+                            if "BYE" in text:
+                                print(f"      [REMOTE HANGUP] SIP BYE received from Asterisk! Remote terminated call.")
+                                self.remote_hungup = True
+                                self._send_200_ok_for_bye(text)
+                                break
+                except Exception:
+                    pass
+
         return packets_sent
 
 
@@ -337,10 +376,13 @@ def run_call(
         pkts = uac.stream_wav_file(wav_path, duration_sec=duration)
         print(f"      Audio streaming complete! {pkts} RTP packets sent.")
 
-        print("[5/5] Sending SIP BYE to terminate call...")
-        uac.send_bye()
-        time.sleep(0.5)
-        print("      Call hung up cleanly.")
+        if not uac.remote_hungup:
+            print("[5/5] Sending SIP BYE to terminate call...")
+            uac.send_bye()
+            time.sleep(0.5)
+            print("      Call hung up cleanly.")
+        else:
+            print("[5/5] Call was terminated remotely by Asterisk (SIP BYE received and acknowledged).")
 
     finally:
         uac.close()

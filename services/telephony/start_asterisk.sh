@@ -17,6 +17,7 @@ docker run -d --name voiceshield_asterisk --restart unless-stopped \
   -v "${SCRIPT_DIR}/asterisk/ari.conf":/etc/asterisk/ari.conf:ro \
   -v "${SCRIPT_DIR}/asterisk/http.conf":/etc/asterisk/http.conf:ro \
   -v "${SCRIPT_DIR}/asterisk/rtp.conf":/etc/asterisk/rtp.conf:ro \
+  -v "${SCRIPT_DIR}/sounds":/var/lib/asterisk/sounds/en:ro \
   -v "${SCRIPT_DIR}/../..":/workspace:ro \
   -e ASTERISK_TERMINAL_OPTS=-n \
   andrius/asterisk:20
