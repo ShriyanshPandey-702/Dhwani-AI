@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  asterisk:
+    image: andrius/asterisk:20
+    container_name: voiceshield_asterisk
+    restart: unless-stopped
+    ports:
+      - "5060:5060/udp"
+      - "5060:5060/tcp"
+      - "8088:8088/tcp"
+      - "10000-10020:10000-10020/udp"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./asterisk/pjsip.conf:/etc/asterisk/pjsip.conf:ro
+      - ./asterisk/extensions.conf:/etc/asterisk/extensions.conf:ro
+      - ./asterisk/ari.conf:/etc/asterisk/ari.conf:ro
+      - ./asterisk/http.conf:/etc/asterisk/http.conf:ro
+      - ./asterisk/rtp.conf:/etc/asterisk/rtp.conf:ro
+      - ../..:/workspace:ro
+    environment:
+      - ASTERISK_TERMINAL_OPTS=-n
