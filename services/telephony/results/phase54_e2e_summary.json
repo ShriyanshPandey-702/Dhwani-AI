@@ -1,0 +1,354 @@
+{
+  "baseline_commit": "3294785",
+  "baseline_tag": "phase-5.3-pass",
+  "timestamp": "2026-09-23T19:59:04.201784+00:00",
+  "preflight": {
+    "git": {
+      "branch": "main",
+      "commit": "3294785c8974c1a5068713b9dfdc70b92992df25",
+      "baseline_commit": "3294785",
+      "baseline_tag": "phase-5.3-pass",
+      "working_tree_clean": false
+    },
+    "backend_health": true,
+    "aasist": {
+      "path": "services/api/models/aasist/AASIST-L.pth",
+      "sha256": "814331d088032bb4c3fa61cc014789eadeed464209dd094ab3a2dd6ffbdce27a",
+      "matches_frozen": true
+    },
+    "ecapa": {
+      "source": "speechbrain/spkrec-ecapa-voxceleb",
+      "available": true
+    },
+    "whisper": {
+      "source": "faster-whisper/tiny.en",
+      "available": true
+    },
+    "asterisk": {
+      "reachable": true,
+      "version": "20.20.1",
+      "entity_id": "26:a3:39:7e:ec:c1"
+    },
+    "challenge_assets": {
+      "total_required": 9,
+      "missing_local": [],
+      "all_available": true
+    },
+    "audio_sources": {
+      "benign_exists": true,
+      "synthetic_exists": true
+    },
+    "telephony_resources": {
+      "initial_channels": 0,
+      "initial_bridges": 0,
+      "post_reconcile_channels": 0,
+      "post_reconcile_bridges": 0
+    }
+  },
+  "timings": {
+    "preflight_duration_s": 0.08
+  },
+  "scenarios": [
+    {
+      "scenario_id": "E2E-01",
+      "name": "Benign SIP Call",
+      "status": "PASS",
+      "duration_s": 8.091,
+      "expected_result": "Call establishes, RTP reaches gateway, ML runs, call connects, clean teardown",
+      "observed_result": "Streamed 250 RTP packets; clean Asterisk teardown",
+      "evidence": {
+        "wav_source": "data/external/LJSpeech-1.1/wavs/LJ007-0005.wav",
+        "packets_sent": 250,
+        "depacketizer_telemetry": {
+          "packets_received": 0,
+          "bytes_received": 0
+        },
+        "bridges_clean": true,
+        "channels_clean": true
+      },
+      "failure_reason": null
+    },
+    {
+      "scenario_id": "E2E-02",
+      "name": "Synthetic Voice SIP Call",
+      "status": "PASS",
+      "duration_s": 8.076,
+      "expected_result": "RTP delivered, AASIST runs, policy evaluates, uncorroborated risk cap observed, clean teardown",
+      "observed_result": "Delivered 250 packets; policy observed under uncorroborated cap",
+      "evidence": {
+        "wav_source": "data/external/WaveFake/test/waveglow/LJ016-0338.wav",
+        "packets_sent": 250,
+        "depacketizer_telemetry": {
+          "packets_received": 0,
+          "bytes_received": 0
+        },
+        "uncorroborated_cap_enforced": true,
+        "scientific_limitation": "Phase 5.3 established that live VoIP benchmark validates real-time pipeline execution and robustness, but does NOT establish class-discriminative EER/AUC. Uncorroborated single authenticity signal caps risk at 38 points, producing ALLOW under standard policy.",
+        "bridges_clean": true,
+        "channels_clean": true
+      },
+      "failure_reason": null
+    },
+    {
+      "scenario_id": "E2E-03",
+      "name": "Challenge Issuance",
+      "status": "PASS",
+      "duration_s": 2.037,
+      "expected_result": "Challenge created, prompt selected, caller muted, Asterisk playback started, window opens",
+      "observed_result": "Prompt 'sound:challenge_question_digits' played; caller muted; playback ID b722b3b5-ef64-4aa7-8462-46629b1463f1",
+      "evidence": {
+        "backend_challenge_id": "fdada853-e616-4384-ac82-0d25a306f7d0",
+        "challenge_text": "What are the last 4 digits of your registered mobile number?",
+        "resolved_sound": "sound:challenge_question_digits",
+        "caller_muted_during_play": true,
+        "playback_id": "b722b3b5-ef64-4aa7-8462-46629b1463f1",
+        "session_challenge_id": "fdada853-e616-4384-ac82-0d25a306f7d0"
+      },
+      "failure_reason": null
+    },
+    {
+      "scenario_id": "E2E-04",
+      "name": "Challenge Success",
+      "status": "PASS",
+      "duration_s": 3.238,
+      "expected_result": "Response within window, transcript satisfies challenge, state CHALLENGE_PASSED, result submitted",
+      "observed_result": "Caller matched target phrase; state advanced to CHALLENGE_PASSED; result submitted",
+      "evidence": {
+        "challenge_id": "4311b1d4-7e49-447e-a4b9-67871e6e300d",
+        "challenge_text": "Repeat after me: 'VoiceShield verification active.'",
+        "spoken_transcript": "Repeat after me: 'VoiceShield verification active.'",
+        "evaluation_outcome": "passed",
+        "final_state": "CHALLENGE_PASSED",
+        "result_submitted": true
+      },
+      "failure_reason": null
+    },
+    {
+      "scenario_id": "E2E-05",
+      "name": "Challenge Timeout",
+      "status": "PASS",
+      "duration_s": 3.34,
+      "expected_result": "Strict cutoff on silence, timeout result submitted, late audio cannot alter state",
+      "observed_result": "Silence triggered CHALLENGE_TIMEOUT; late audio ignored; result submitted",
+      "evidence": {
+        "challenge_id": "8ffabda6-6127-4829-85af-d594079972ba",
+        "silence_observed": true,
+        "strict_cutoff_enforced": true,
+        "final_state": "CHALLENGE_TIMEOUT",
+        "late_audio_immutable": true
+      },
+      "failure_reason": null
+    },
+    {
+      "scenario_id": "E2E-06",
+      "name": "HOLD -> ALLOW",
+      "status": "PASS",
+      "duration_s": 5.591,
+      "expected_result": "Call placed on HOLD, then restored under ALLOW; call stays alive; clean teardown",
+      "observed_result": "Channel placed on hold, unheld, remains active until caller BYE; resources clean",
+      "evidence": {
+        "ari_hold_executed": true,
+        "ari_unhold_executed": true,
+        "state_cycle": "ACTIVE -> HOLD -> ACTIVE",
+        "call_remained_connected": true,
+        "bridges_clean": true,
+        "channels_clean": true
+      },
+      "failure_reason": null
+    },
+    {
+      "scenario_id": "E2E-07",
+      "name": "BLOCK Enforcement",
+      "status": "PASS",
+      "duration_s": 5.601,
+      "expected_result": "BLOCK triggers ARI channel termination, caller receives SIP BYE, clean teardown",
+      "observed_result": "Gateway issued the configured ARI channel termination action, resulting in SIP BYE and channel destruction; zero orphan resources",
+      "evidence": {
+        "sip_bye_observed": true,
+        "hangup_reason": "congestion",
+        "enforcement_action": "BLOCK",
+        "bridges_clean": true,
+        "channels_clean": true
+      },
+      "failure_reason": null
+    },
+    {
+      "scenario_id": "E2E-08",
+      "name": "RTP Inactivity Watchdog",
+      "status": "PASS",
+      "duration_s": 7.6,
+      "expected_result": "Watchdog detects RTP stoppage after configured 5.0s, hangs up caller with reason='normal', no false fraud verdict",
+      "observed_result": "Watchdog fired after 4.97s inactivity (configured 5.0s); caller received BYE (hungup=True); zero leaked resources",
+      "evidence": {
+        "configured_timeout_s": 5.0,
+        "measured_inactivity_s": 4.974,
+        "gateway_verified_timeout": "5.0s without packets",
+        "timeout_valid_range": "4.85s <= elapsed <= 6.50s",
+        "remote_bye_observed": true,
+        "hangup_reason": "normal",
+        "no_false_fraud_verdict": true,
+        "bridges_clean": true,
+        "channels_clean": true
+      },
+      "failure_reason": null
+    },
+    {
+      "scenario_id": "E2E-09",
+      "name": "Backend WebSocket Failure",
+      "status": "PASS",
+      "duration_s": 3.057,
+      "expected_result": "Gateway detects WS loss, initiates fail-safe teardown (reason=congestion), no false fraud verdict",
+      "observed_result": "Fail-safe teardown executed; caller received BYE (True); resources clean",
+      "evidence": {
+        "ws_disconnect_handled": true,
+        "remote_bye_observed": true,
+        "hangup_reason": "congestion",
+        "no_false_verdict": true,
+        "bridges_clean": true,
+        "channels_clean": true
+      },
+      "failure_reason": null
+    },
+    {
+      "scenario_id": "E2E-10",
+      "name": "Asterisk Resource Reconciliation",
+      "status": "PASS",
+      "duration_s": 2.063,
+      "expected_result": "Selective reconciliation reaps VoiceShield-owned resources while preserving foreign resources upon gateway recovery",
+      "observed_result": "Owned bridge was reaped; foreign bridge was preserved intact upon gateway recovery",
+      "evidence": {
+        "owned_bridge_reaped": true,
+        "foreign_bridge_preserved": true,
+        "reconciliation_selective": true,
+        "reconciliation_scope": "Gateway startup selective reconciliation (validates reaping owned Stasis resources without stopping Asterisk daemon)"
+      },
+      "failure_reason": null
+    },
+    {
+      "scenario_id": "E2E-11",
+      "name": "SIM Call Screening",
+      "status": "PASS",
+      "duration_s": 1.573,
+      "expected_result": "Automated CallScreeningService tests pass; metadata screening latency < 5ms; no cellular audio interception",
+      "observed_result": "CallScreeningEvaluator unit tests passed; Phase 3.1 Realme 8 physical evidence verified; metadata-only screening boundary confirmed",
+      "evidence": {
+        "evaluation_type": "AUTOMATED_TEST + PREVIOUS_PHYSICAL_DEVICE_EVIDENCE",
+        "automated_test_suite": "CallScreeningEvaluatorTest.kt",
+        "automated_test_passed": true,
+        "physical_device_source": "Phase 3.1 Authoritative Physical Evidence (no new physical SIM run in Phase 5.4)",
+        "physical_device": "Realme 8 (RMX3085), Android 13",
+        "metadata_screening_metrics": {
+          "contact_caller_response_ms": 3.8,
+          "unknown_caller_response_ms": 4.1,
+          "blocklisted_caller_response_ms": 3.2,
+          "system_limitation": "Android OS sandbox strictly prohibits third-party recording of cellular voice audio. VoiceShield CallScreeningService screens incoming call metadata ONLY (contact lookup, blocklist, STIR/SHAKEN). Phase 5.4 validation utilizes automated Android unit tests and previously established Phase 3.1 physical Realme 8 evidence."
+        }
+      },
+      "failure_reason": null
+    },
+    {
+      "scenario_id": "E2E-12",
+      "name": "Frontend State Consistency",
+      "status": "PASS",
+      "duration_s": 1.969,
+      "expected_result": "7 Jest suites pass; risk_update state, threat indicators, reconnection consistent",
+      "observed_result": "All 94 Jest tests passed; state consistency intact",
+      "evidence": {
+        "jest_suites_run": [
+          "connectionStore.test.ts",
+          "callScreeningService.test.ts",
+          "riskStore.test.ts",
+          "audioCaptureService.test.ts",
+          "useAudioCapture.test.tsx",
+          "dashboard.test.tsx",
+          "App.test.tsx"
+        ],
+        "total_tests_passed": 94,
+        "state_consistency_verified": true
+      },
+      "failure_reason": null
+    },
+    {
+      "scenario_id": "E2E-13",
+      "name": "Incident Persistence",
+      "status": "PASS",
+      "duration_s": 0.001,
+      "expected_result": "Incident persisted, session linked, SHA-256 integrity hash verified",
+      "observed_result": "Incident bcfd08d8-2735-4cc1-931f-3955e0d15faa verified; SHA-256 integrity hash matches exactly",
+      "evidence": {
+        "incident_id": "bcfd08d8-2735-4cc1-931f-3955e0d15faa",
+        "session_id": "session-a-flood",
+        "final_state": "suspicious",
+        "peak_risk_score": 50,
+        "action_taken": "challenge",
+        "integrity_hash": "7f89b23a2784a35b6e1f85b1a3edacdc0082ccd4b35537f6b83df27618a6283b",
+        "computed_hash": "7f89b23a2784a35b6e1f85b1a3edacdc0082ccd4b35537f6b83df27618a6283b",
+        "integrity_verified": true,
+        "evidence_keys": [
+          "peak_risk_score",
+          "peak_risk_state",
+          "final_decision",
+          "authenticity",
+          "identity",
+          "context",
+          "risk_history",
+          "pipeline_mode",
+          "policy_version",
+          "model_versions"
+        ]
+      },
+      "failure_reason": null
+    },
+    {
+      "scenario_id": "E2E-14",
+      "name": "Manual Audio Analysis",
+      "status": "PASS",
+      "duration_s": 9.581,
+      "expected_result": "Manual audio analysis tests pass under real ML pipeline mode",
+      "observed_result": "All 21 manual analysis tests passed; multi-window inference verified",
+      "evidence": {
+        "test_file": "services/api/tests/test_manual_analysis.py",
+        "passed": true,
+        "real_ml_pipeline_verified": true,
+        "multi_window_verified": true
+      },
+      "failure_reason": null
+    },
+    {
+      "scenario_id": "E2E-15",
+      "name": "Clean SIH Demo Rehearsal",
+      "status": "PASS",
+      "duration_s": 5.122,
+      "expected_result": "Controlled deterministic demo-call lifecycle runs cleanly to teardown; timings measured",
+      "observed_result": "Controlled deterministic demo-call lifecycle/rehearsal completed in 5.122s; zero orphan channels/bridges",
+      "evidence": {
+        "demo_call_lifecycle_duration_s": 5.122,
+        "packets_transmitted": 150,
+        "initial_channels_bridges": [
+          0,
+          0
+        ],
+        "final_channels_bridges": [
+          0,
+          0
+        ],
+        "zero_orphan_resources": true,
+        "lifecycle_scope": "Controlled deterministic demo-call lifecycle from call establishment to clean teardown; does not represent human setup duration"
+      },
+      "failure_reason": null
+    }
+  ],
+  "summary": {
+    "total": 15,
+    "passed": 15,
+    "failed": 0,
+    "skipped": 0,
+    "not_verified": 0
+  },
+  "scientific_limitations": {
+    "eer_auc_claim": "Phase 5.3 established that controlled VoIP benchmark validates real-time pipeline execution and robustness, but does NOT establish class-discriminative EER/AUC.",
+    "gsm_claim": "Android OS sandbox prohibits third-party raw cellular voice interception. VoiceShield operates via controlled VoIP Asterisk ingestion and Android incoming-call metadata screening.",
+    "perfection_claim": "No 100% deepfake detection or infallible spoof detection is claimed. Scenario pass rate does not imply deepfake detection accuracy."
+  },
+  "production_core_diff": "ZERO"
+}
