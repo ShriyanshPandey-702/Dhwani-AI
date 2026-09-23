@@ -305,9 +305,12 @@ class ActiveCallSession:
         self.challenge_listening_active: bool = False
         self.challenge_drain_active: bool = False
         self.challenge_buffered_chunks: list[dict] = []
-        self.challenge_speech_detected: bool = False
-        self.challenge_transcripts: list[str] = []
         self.challenge_result_submitted: bool = False
+
+        # Phase 5.2 Failure & Watchdog Hardening fields
+        self.last_rtp_received_at: Optional[float] = None
+        self.rtp_watchdog_task: Optional[asyncio.Task] = None
+        self.consecutive_analysis_errors: int = 0
 
 
 class TelephonyGateway:
@@ -332,6 +335,9 @@ class TelephonyGateway:
         backend_http_client: Optional[httpx.AsyncClient] = None,
         listening_window_duration: float = 5.0,
         playback_watchdog_timeout: float = 10.0,
+        rtp_inactivity_timeout: float = 5.0,
+        max_consecutive_analysis_errors: int = 3,
+        ari_reconnect_backoff: float = 3.0,
     ):
         self.ari_url = ari_url.rstrip("/")
         self.ari_ws_url = ari_ws_url
@@ -353,6 +359,9 @@ class TelephonyGateway:
         self.backend_http_client: Optional[httpx.AsyncClient] = backend_http_client
         self.listening_window_duration = listening_window_duration
         self.playback_watchdog_timeout = playback_watchdog_timeout
+        self.rtp_inactivity_timeout = rtp_inactivity_timeout
+        self.max_consecutive_analysis_errors = max_consecutive_analysis_errors
+        self.ari_reconnect_backoff = ari_reconnect_backoff
         self.udp_transport: Optional[asyncio.DatagramTransport] = None
         self.active_session: Optional[ActiveCallSession] = None
         self.running = False
@@ -392,6 +401,9 @@ class TelephonyGateway:
                 timeout=10.0,
             )
 
+        # Phase 5.2: Reconcile orphaned Asterisk resources before accepting calls
+        await self._reconcile_startup_resources()
+
         loop = asyncio.get_running_loop()
         log.info(f"Binding RTP UDP socket on {self.rtp_bind_host}:{self.rtp_bind_port}...")
         await loop.create_datagram_endpoint(
@@ -414,6 +426,64 @@ class TelephonyGateway:
             await self.backend_http_client.aclose()
         log.info("Telephony Gateway stopped.")
 
+    async def _reconcile_startup_resources(self) -> None:
+        """
+        Audit and clean up orphaned bridges and externalMedia channels left behind in Asterisk
+        from previous crashed or restarted gateway instances.
+        NEVER deletes all bridges/channels blindly; reconciles only resources demonstrably
+        owned by VoiceShield (Stasis app 'voiceshield', creator 'Stasis', externalMedia UnicastRTP).
+        """
+        if self.http_client is None:
+            self.http_client = httpx.AsyncClient(
+                auth=(self.ari_username, self.ari_password),
+                timeout=10.0,
+            )
+        log.info(f"[RECONCILIATION] Auditing existing Asterisk resources for application '{self.ari_app}'...")
+        try:
+            res = await self.http_client.get(f"{self.ari_url}/applications/{self.ari_app}")
+            if res.status_code != 200:
+                log.info(f"[RECONCILIATION] Could not query application '{self.ari_app}' (status={res.status_code})")
+                return
+
+            app_data = res.json()
+            bridge_ids = app_data.get("bridge_ids", [])
+            channel_ids = app_data.get("channel_ids", [])
+
+            # Reconcile owned bridges
+            for b_id in bridge_ids:
+                try:
+                    b_res = await self.http_client.get(f"{self.ari_url}/bridges/{b_id}")
+                    if b_res.status_code == 200:
+                        b_data = b_res.json()
+                        creator = b_data.get("creator", "")
+                        b_class = b_data.get("bridge_class", "")
+                        if creator == "Stasis" and b_class == "stasis":
+                            del_res = await self.http_client.delete(f"{self.ari_url}/bridges/{b_id}")
+                            log.info(f"[RECONCILIATION] Successfully reaped orphaned VoiceShield bridge {b_id} (status={del_res.status_code})")
+                        else:
+                            log.info(f"[RECONCILIATION] Bridge {b_id} ownership not verified (creator={creator}, class={b_class}); left untouched.")
+                except Exception as be:
+                    log.warning(f"[RECONCILIATION] Error checking bridge {b_id}: {be}")
+
+            # Reconcile owned externalMedia channels
+            for c_id in channel_ids:
+                try:
+                    c_res = await self.http_client.get(f"{self.ari_url}/channels/{c_id}")
+                    if c_res.status_code == 200:
+                        c_data = c_res.json()
+                        c_name = c_data.get("name", "")
+                        app_data_val = c_data.get("dialplan", {}).get("app_data", "")
+                        if "UnicastRTP" in c_name or app_data_val == "(Outgoing Line)":
+                            del_res = await self.http_client.delete(f"{self.ari_url}/channels/{c_id}")
+                            log.info(f"[RECONCILIATION] Successfully reaped orphaned externalMedia channel {c_id} ({c_name}) (status={del_res.status_code})")
+                        else:
+                            log.info(f"[RECONCILIATION] Channel {c_id} ({c_name}) ownership not verified; left untouched.")
+                except Exception as ce:
+                    log.warning(f"[RECONCILIATION] Error checking channel {c_id}: {ce}")
+
+        except Exception as e:
+            log.warning(f"[RECONCILIATION] Error during startup resource reconciliation: {e}")
+
     # ── ARI Event Loop ────────────────────────────────────────────────────────
 
     async def _run_ari_event_loop(self) -> None:
@@ -435,8 +505,14 @@ class TelephonyGateway:
             except (websockets.ConnectionClosed, OSError) as e:
                 if not self.running:
                     break
-                log.warning(f"ARI connection lost ({e}). Reconnecting in 3s...")
-                await asyncio.sleep(3.0)
+                log.warning(f"ARI connection lost ({e}). Cleaning active session and reconnecting in {self.ari_reconnect_backoff}s...")
+                if self.active_session:
+                    try:
+                        await self._teardown_session(self.active_session, hangup_caller=False)
+                    except Exception as te:
+                        log.warning(f"Error during ARI disconnect session cleanup: {te}")
+                    self.active_session = None
+                await asyncio.sleep(self.ari_reconnect_backoff)
 
     async def _handle_ari_event(self, event: dict) -> None:
         ev_type = event.get("type")
@@ -585,6 +661,11 @@ class TelephonyGateway:
             log.info(f"Bridged caller channel and externalMedia channel into bridge {session.bridge_id}")
             log.info(f"Media bridge active. Streaming RTP audio to VoiceShield pipeline (CallState={session.state.value}).")
 
+            # Arm Phase 5.2 RTP inactivity watchdog
+            import time
+            session.last_rtp_received_at = time.monotonic()
+            session.rtp_watchdog_task = asyncio.create_task(self._rtp_inactivity_watchdog(session))
+
             if self.test_verdict:
                 asyncio.create_task(
                     self._schedule_test_verdicts(
@@ -597,7 +678,7 @@ class TelephonyGateway:
 
         except Exception as e:
             log.error(f"Failed to set up call media session: {e}", exc_info=True)
-            await self._teardown_session(session)
+            await self._teardown_session(session, hangup_caller=True, hangup_reason="congestion")
             self.active_session = None
 
     async def _schedule_test_verdicts(
@@ -622,6 +703,28 @@ class TelephonyGateway:
                 score = 80
                 state = "critical"
                 reasons = ["high_consequence_hold"]
+            elif v_upper == "HOLD_ALLOW":
+                log.info(f"Emitting Policy Decision Event [1/2] for session {session.session_id}: Decision=HOLD")
+                await self._handle_policy_verdict(
+                    session=session,
+                    decision="HOLD",
+                    action="hold",
+                    risk_state="suspicious",
+                    risk_score=75,
+                    reasons=["high_consequence_intent"],
+                )
+                await asyncio.sleep(1.5)
+                if not session.is_terminated and session.state != CallState.TERMINATED:
+                    log.info(f"Emitting Policy Decision Event [2/2] for session {session.session_id}: Decision=ALLOW")
+                    await self._handle_policy_verdict(
+                        session=session,
+                        decision="ALLOW",
+                        action="allow",
+                        risk_state="low",
+                        risk_score=15,
+                        reasons=[],
+                    )
+                return
             else:
                 score = 10
                 state = "low"
@@ -649,16 +752,55 @@ class TelephonyGateway:
         except Exception as e:
             log.error(f"Error in test verdict scheduler: {e}", exc_info=True)
 
+    async def _rtp_inactivity_watchdog(self, session: ActiveCallSession) -> None:
+        """
+        Monitors inbound RTP datagram arrival.
+        If no RTP packets arrive for rtp_inactivity_timeout seconds,
+        performs controlled teardown and terminates the caller channel.
+        """
+        if self.rtp_inactivity_timeout <= 0:
+            return
+        log.info(f"[WATCHDOG] RTP inactivity watchdog armed ({self.rtp_inactivity_timeout}s timeout)")
+        try:
+            import time
+            while not session.is_terminating and not session.is_terminated:
+                await asyncio.sleep(min(0.5, max(0.05, self.rtp_inactivity_timeout / 2)))
+                if session.is_terminating or session.is_terminated:
+                    break
+                now = time.monotonic()
+                last_pkt = session.last_rtp_received_at
+                if last_pkt is not None and (now - last_pkt) >= self.rtp_inactivity_timeout:
+                    log.warning(
+                        f"[WATCHDOG] RTP inactivity timeout ({self.rtp_inactivity_timeout}s without packets) "
+                        f"on channel {session.caller_channel_id}. Terminating unmonitored call."
+                    )
+                    session.is_terminating = True
+                    session.state = CallState.TERMINATING
+                    await self._teardown_session(session, hangup_caller=True, hangup_reason="normal")
+                    if self.active_session is session:
+                        self.active_session = None
+                    break
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            log.error(f"[WATCHDOG] Error in RTP inactivity watchdog: {e}", exc_info=True)
+
     # ── RTP Datagram Processing ───────────────────────────────────────────────
 
     def on_rtp_datagram(self, datagram: bytes, addr: Tuple[str, int]) -> None:
         session = self.active_session
-        if not session or not session.ws or session.ws.closed:
+        if not session:
             return
 
         # Depacketize RFC 3550 RTP, convert big-endian to little-endian PCM16
         pcm_bytes = session.depacketizer.extract_pcm16_le(datagram)
         if not pcm_bytes:
+            return
+
+        import time
+        session.last_rtp_received_at = time.monotonic()
+
+        if not session.ws or getattr(session.ws, "closed", False):
             return
 
         # Accumulate into canonical 250 ms chunks (8,000 bytes = 4,000 samples)
@@ -701,6 +843,7 @@ class TelephonyGateway:
                             session.challenge_speech_detected = True
 
                     elif ev_type == "risk_update":
+                        session.consecutive_analysis_errors = 0  # Reset consecutive error counter on valid ML window
                         score = event.get("risk_score", 0)
                         state = event.get("risk_state", "")
                         decision = event.get("decision", "")
@@ -724,6 +867,32 @@ class TelephonyGateway:
                             risk_score=score,
                             reasons=event.get("reasons", []),
                         )
+                    elif ev_type == "error":
+                        code = event.get("code", "")
+                        msg = event.get("message", "")
+                        log.warning(f"VoiceShield Backend Error Event [Session {session.session_id[:8]}]: code={code}, msg={msg}")
+                        if code == "analysis_error":
+                            session.consecutive_analysis_errors += 1
+                            log.warning(
+                                f"[ML_OBSERVER] Consecutive ML analysis errors: {session.consecutive_analysis_errors}/"
+                                f"{self.max_consecutive_analysis_errors}"
+                            )
+                            if (
+                                self.max_consecutive_analysis_errors > 0
+                                and session.consecutive_analysis_errors >= self.max_consecutive_analysis_errors
+                                and not session.is_terminating
+                                and not session.is_terminated
+                            ):
+                                log.error(
+                                    f"[ML_FAILURE] ML analysis error threshold exceeded ({session.consecutive_analysis_errors} "
+                                    f"consecutive errors). Initiating controlled fail-safe teardown."
+                                )
+                                session.is_terminating = True
+                                session.state = CallState.TERMINATING
+                                await self._teardown_session(session, hangup_caller=True, hangup_reason="congestion")
+                                if self.active_session is session:
+                                    self.active_session = None
+                                break
                     elif ev_type == "policy_decision":
                         dec = event.get("decision", "")
                         action = event.get("action", "")
@@ -746,10 +915,40 @@ class TelephonyGateway:
                         log.warning(f"VoiceShield Alert [OBSERVATION ONLY]: {event.get('message')}")
                 except Exception as e:
                     log.warning(f"Failed parsing VoiceShield event: {e}")
-        except websockets.ConnectionClosed:
-            log.info(f"VoiceShield WebSocket closed for session {session.session_id}")
+        except websockets.ConnectionClosed as e:
+            log.warning(f"VoiceShield WebSocket closed for session {session.session_id}: {e}")
+            if not session.is_terminating and not session.is_terminated:
+                log.warning(
+                    f"[BACKEND_FAILURE] VoiceShield WebSocket lost during active monitoring "
+                    f"for channel {session.caller_channel_id}. Executing controlled fail-safe teardown."
+                )
+                session.is_terminating = True
+                session.state = CallState.TERMINATING
+                await self._teardown_session(session, hangup_caller=True, hangup_reason="congestion")
+                if self.active_session is session:
+                    self.active_session = None
+        except asyncio.CancelledError:
+            pass
         except Exception as e:
             log.error(f"Error in VoiceShield WebSocket listener: {e}")
+            if not session.is_terminating and not session.is_terminated:
+                session.is_terminating = True
+                session.state = CallState.TERMINATING
+                await self._teardown_session(session, hangup_caller=True, hangup_reason="congestion")
+                if self.active_session is session:
+                    self.active_session = None
+
+        # If the underlying WebSocket was closed during active monitoring, execute controlled teardown
+        if getattr(session.ws, "closed", False) and not session.is_terminating and not session.is_terminated:
+            log.warning(
+                f"[BACKEND_FAILURE] VoiceShield WebSocket closed during active monitoring "
+                f"for channel {session.caller_channel_id}. Executing controlled fail-safe teardown."
+            )
+            session.is_terminating = True
+            session.state = CallState.TERMINATING
+            await self._teardown_session(session, hangup_caller=True, hangup_reason="congestion")
+            if self.active_session is session:
+                self.active_session = None
 
     # ── Enforcement State Machine ─────────────────────────────────────────────
 
@@ -1226,7 +1425,12 @@ class TelephonyGateway:
 
     # ── Teardown ─────────────────────────────────────────────────────────────
 
-    async def _teardown_session(self, session: ActiveCallSession) -> None:
+    async def _teardown_session(
+        self,
+        session: ActiveCallSession,
+        hangup_caller: bool = False,
+        hangup_reason: str = "normal",
+    ) -> None:
         if session.is_terminated:
             return
         session.is_terminated = True
@@ -1234,10 +1438,14 @@ class TelephonyGateway:
 
         log.info(f"Tearing down call session for channel {session.caller_channel_id} (State={session.state.value})...")
 
-        # 1. Cancel challenge watchdog and window tasks
-        if session.challenge_watchdog_task and not session.challenge_watchdog_task.done():
+        current_task = asyncio.current_task()
+
+        # 1. Cancel watchdog and window tasks
+        if session.rtp_watchdog_task and session.rtp_watchdog_task is not current_task and not session.rtp_watchdog_task.done():
+            session.rtp_watchdog_task.cancel()
+        if session.challenge_watchdog_task and session.challenge_watchdog_task is not current_task and not session.challenge_watchdog_task.done():
             session.challenge_watchdog_task.cancel()
-        if session.challenge_window_task and not session.challenge_window_task.done():
+        if session.challenge_window_task and session.challenge_window_task is not current_task and not session.challenge_window_task.done():
             session.challenge_window_task.cancel()
 
         # 2. Stop active playback if running
@@ -1261,11 +1469,11 @@ class TelephonyGateway:
         session.challenge_buffered_chunks.clear()
 
         # 5. Cancel WebSocket listener
-        if session.ws_receive_task and not session.ws_receive_task.done():
+        if session.ws_receive_task and session.ws_receive_task is not current_task and not session.ws_receive_task.done():
             session.ws_receive_task.cancel()
 
         # 6. Close VoiceShield WebSocket (triggers backend _teardown, flushes buffers & saves incident)
-        if session.ws and not session.ws.closed:
+        if session.ws and not getattr(session.ws, "closed", False):
             try:
                 await session.ws.close()
                 log.info(f"Closed VoiceShield WebSocket for session {session.session_id}")
@@ -1288,7 +1496,23 @@ class TelephonyGateway:
                 except Exception as e:
                     log.warning(f"Failed deleting externalMedia channel: {e}")
 
-        # 8. Log telemetry summary
+        # 8. Hang up caller channel if requested (fail-safe for backend/watchdog failures)
+        if hangup_caller and self.http_client and session.caller_channel_id:
+            try:
+                res = await self.http_client.delete(
+                    f"{self.ari_url}/channels/{session.caller_channel_id}",
+                    params={"reason": hangup_reason},
+                )
+                if res.status_code in (200, 204):
+                    log.info(f"[TEARDOWN] Terminated caller channel {session.caller_channel_id} (reason={hangup_reason})")
+                elif res.status_code == 404:
+                    log.info(f"[TEARDOWN] Caller channel {session.caller_channel_id} already gone (404)")
+                else:
+                    log.warning(f"[TEARDOWN] Unexpected ARI hangup status {res.status_code}: {res.text}")
+            except Exception as e:
+                log.warning(f"[TEARDOWN] Error hanging up caller channel {session.caller_channel_id}: {e}")
+
+        # 9. Log telemetry summary
         t = session.depacketizer.telemetry
         log.info(
             f"Session Telemetry Summary [Channel {session.caller_channel_id}]: "
@@ -1325,7 +1549,7 @@ async def main():
     parser.add_argument(
         "--test-verdict",
         default=None,
-        choices=["BLOCK", "CHALLENGE", "VERIFY", "HOLD", "ALLOW", "block", "challenge", "verify", "hold", "allow"],
+        choices=["BLOCK", "CHALLENGE", "VERIFY", "HOLD", "ALLOW", "HOLD_ALLOW", "block", "challenge", "verify", "hold", "allow", "hold_allow"],
         help="Deterministic policy decision trigger for controlled tests",
     )
     parser.add_argument(
@@ -1339,6 +1563,24 @@ async def main():
         type=int,
         default=1,
         help="Number of times to repeat the test policy decision (for idempotency testing)",
+    )
+    parser.add_argument(
+        "--rtp-inactivity-timeout",
+        type=float,
+        default=5.0,
+        help="Timeout in seconds before dead RTP triggers hangup",
+    )
+    parser.add_argument(
+        "--max-analysis-errors",
+        type=int,
+        default=3,
+        help="Maximum consecutive analysis_error events before controlled fail-safe teardown",
+    )
+    parser.add_argument(
+        "--ari-reconnect-backoff",
+        type=float,
+        default=3.0,
+        help="Backoff in seconds before reconnecting to Asterisk ARI WebSocket",
     )
     args = parser.parse_args()
 
@@ -1361,6 +1603,9 @@ async def main():
         test_verdict=args.test_verdict,
         test_verdict_delay=args.test_verdict_delay,
         test_verdict_repeat=args.test_verdict_repeat,
+        rtp_inactivity_timeout=args.rtp_inactivity_timeout,
+        max_consecutive_analysis_errors=args.max_analysis_errors,
+        ari_reconnect_backoff=args.ari_reconnect_backoff,
     )
 
     loop = asyncio.get_running_loop()

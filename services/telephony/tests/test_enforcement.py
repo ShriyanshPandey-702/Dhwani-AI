@@ -38,6 +38,18 @@ Phase 5.1 Interactive Challenge Hardening:
 30. Backend challenge creation failure resilience
 31. Backend result submission failure resilience
 32. Deterministic dynamic phrase/sequence/question evaluation matrix
+
+Phase 5.2 Failure & Watchdog Hardening:
+35. RTP inactivity watchdog hangs up caller channel with reason="normal"
+36. RTP inactivity watchdog refreshed continuously by incoming RTP packets
+37. ARI WebSocket disconnect cleans active session locally
+38. Backend session setup failure hangs up caller with reason="congestion"
+39. Backend WebSocket disconnect triggers controlled fail-safe teardown
+40. ML analysis_error counter and reset on valid risk_update
+41. Consecutive ML analysis_error threshold triggers controlled fail-safe teardown
+42. Startup reconciliation only reaps owned VoiceShield bridges and channels
+43. Normal SIP BYE during/around watchdog handling is idempotent
+44. Real Asterisk HOLD followed by ALLOW/unhold
 """
 
 from __future__ import annotations
@@ -49,6 +61,7 @@ from unittest.mock import AsyncMock, patch
 
 import httpx
 import pytest
+import websockets
 
 from services.telephony.gateway.audio_gateway import (
     ActiveCallSession,
@@ -85,6 +98,8 @@ def make_gateway(
     challenge_payload: dict | None = None,
     listening_window_duration: float = 0.05,
     playback_watchdog_timeout: float = 0.1,
+    rtp_inactivity_timeout: float = 5.0,
+    max_consecutive_analysis_errors: int = 3,
 ) -> TelephonyGateway:
     if challenge_payload is None:
         challenge_payload = {
@@ -132,6 +147,8 @@ def make_gateway(
         backend_http_client=backend_client,
         listening_window_duration=listening_window_duration,
         playback_watchdog_timeout=playback_watchdog_timeout,
+        rtp_inactivity_timeout=rtp_inactivity_timeout,
+        max_consecutive_analysis_errors=max_consecutive_analysis_errors,
     )
 
 
@@ -1140,7 +1157,7 @@ async def test_33_strict_5s_cutoff_post_cutoff_speech_cannot_change_timeout(dumm
         "audio": {"is_silent": False, "quality": "GOOD"},
     })
     # Run a single iteration of message handling
-    async def mock_iter():
+    async def mock_iter(*args):
         yield vad_event
     dummy_session.ws.__aiter__ = mock_iter
     listener_task = asyncio.create_task(gateway._listen_voiceshield_ws(dummy_session))
@@ -1212,3 +1229,371 @@ async def test_34_strict_5s_cutoff_post_cutoff_speech_cannot_change_failed(dummy
     assert len(result_reqs) == 1
     res_body = json.loads(result_reqs[0].content.decode("utf-8"))
     assert res_body["outcome"] == "failed"
+
+
+# ── Phase 5.2 Failure & Watchdog Hardening Tests ─────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_35_rtp_inactivity_watchdog_hangs_up_caller_channel(dummy_session):
+    """
+    Scenario F1: Watchdog tracks absence of RTP packets only (not silence).
+    When no RTP arrives within rtp_inactivity_timeout:
+    - Initiates controlled teardown.
+    - Hangs up caller channel with reason="normal".
+    - Session transitions to TERMINATED.
+    - No false security verdict generated.
+    """
+    import time
+    reqs = []
+    gateway = make_gateway(
+        mode=EnforcementMode.ENFORCE,
+        recorded_list=reqs,
+        rtp_inactivity_timeout=0.05,
+    )
+    gateway.active_session = dummy_session
+    dummy_session.last_rtp_received_at = time.monotonic() - 0.1  # Already expired
+
+    await gateway._rtp_inactivity_watchdog(dummy_session)
+
+    assert dummy_session.is_terminated is True
+    assert dummy_session.state == CallState.TERMINATED
+    assert dummy_session.enforcement_action_taken is None  # NOT a security policy verdict
+    # Verify hangup request sent to ARI
+    hangup_reqs = [r for r in reqs if f"/channels/{dummy_session.caller_channel_id}" in str(r.url) and r.method == "DELETE"]
+    assert len(hangup_reqs) == 1
+    assert "reason=normal" in str(hangup_reqs[0].url)
+
+
+@pytest.mark.asyncio
+async def test_36_rtp_inactivity_watchdog_refreshed_by_rtp_packets(dummy_session):
+    """
+    Scenario F1 negative case: Watchdog is continuously refreshed by incoming RTP packets.
+    As long as RTP packets arrive within the timeout window:
+    - Session remains active.
+    - Caller channel is NOT terminated.
+    """
+    import time
+    reqs = []
+    gateway = make_gateway(
+        mode=EnforcementMode.ENFORCE,
+        recorded_list=reqs,
+        rtp_inactivity_timeout=0.15,
+    )
+    gateway.active_session = dummy_session
+    dummy_session.last_rtp_received_at = time.monotonic()
+
+    # Start watchdog
+    watchdog_task = asyncio.create_task(gateway._rtp_inactivity_watchdog(dummy_session))
+
+    # Send RTP packets every 0.03s for 0.15s (total 5 packets)
+    fake_rtp = b"\x80\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00" + (b"\x10\x00" * 160)
+    for _ in range(5):
+        await asyncio.sleep(0.03)
+        gateway.on_rtp_datagram(fake_rtp, ("127.0.0.1", 20000))
+
+    assert dummy_session.is_terminated is False
+    assert dummy_session.state == CallState.ACTIVE
+    watchdog_task.cancel()
+    try:
+        await watchdog_task
+    except asyncio.CancelledError:
+        pass
+    assert not any(r.method == "DELETE" and f"/channels/{dummy_session.caller_channel_id}" in str(r.url) for r in reqs)
+
+
+@pytest.mark.asyncio
+async def test_37_ari_disconnect_cleans_active_session_locally(dummy_session):
+    """
+    Scenario F2/F3: Asterisk stops or restarts during active call.
+    When ARI connection is lost:
+    - Session is torn down locally without leaking ghost state.
+    - gateway.active_session is cleared to None.
+    """
+    gateway = make_gateway(mode=EnforcementMode.ENFORCE)
+    gateway.active_session = dummy_session
+
+    with patch("websockets.connect", side_effect=websockets.ConnectionClosed(None, None)):
+        gateway.running = True
+        loop_task = asyncio.create_task(gateway._run_ari_event_loop())
+        await asyncio.sleep(0.02)
+        gateway.running = False
+        loop_task.cancel()
+        try:
+            await loop_task
+        except asyncio.CancelledError:
+            pass
+
+    assert dummy_session.is_terminated is True
+    assert gateway.active_session is None
+
+
+@pytest.mark.asyncio
+async def test_38_backend_setup_failure_hangs_up_caller_with_congestion(dummy_session):
+    """
+    Scenario F6 (pre-call): Backend is down or fails during session setup.
+    - Hangs up caller channel with reason="congestion".
+    - Session cleaned up.
+    - gateway.active_session is cleared.
+    """
+    reqs = []
+    gateway = make_gateway(
+        mode=EnforcementMode.ENFORCE,
+        recorded_list=reqs,
+        backend_exception=httpx.ConnectError("Connection refused"),
+    )
+    gateway.active_session = dummy_session
+
+    await gateway._setup_call_and_streaming(dummy_session)
+
+    assert dummy_session.is_terminated is True
+    assert gateway.active_session is None
+    hangup_reqs = [r for r in reqs if f"/channels/{dummy_session.caller_channel_id}" in str(r.url) and r.method == "DELETE"]
+    assert len(hangup_reqs) == 1
+    assert "reason=congestion" in str(hangup_reqs[0].url)
+
+
+@pytest.mark.asyncio
+async def test_39_backend_ws_disconnect_triggers_fail_safe_teardown(dummy_session):
+    """
+    Scenario F6 (mid-call): Backend WebSocket is lost during active call.
+    Mandatory correction:
+    - Do NOT add reconnect yet.
+    - Controlled teardown: close session, clean resources, hang up caller channel with reason="congestion".
+    - Do not leave an unmonitored active call.
+    - Do not emit false security verdict.
+    """
+    reqs = []
+    gateway = make_gateway(
+        mode=EnforcementMode.ENFORCE,
+        recorded_list=reqs,
+    )
+    gateway.active_session = dummy_session
+
+    class FailingWs:
+        def __aiter__(self):
+            return self
+        async def __anext__(self):
+            raise websockets.ConnectionClosed(None, None)
+
+    dummy_session.ws = FailingWs()
+
+    await gateway._listen_voiceshield_ws(dummy_session)
+
+    assert dummy_session.is_terminated is True
+    assert dummy_session.state == CallState.TERMINATED
+    assert dummy_session.enforcement_action_taken is None  # NO fake security verdict
+    hangup_reqs = [r for r in reqs if f"/channels/{dummy_session.caller_channel_id}" in str(r.url) and r.method == "DELETE"]
+    assert len(hangup_reqs) == 1
+    assert "reason=congestion" in str(hangup_reqs[0].url)
+
+
+@pytest.mark.asyncio
+async def test_40_ml_analysis_error_counter_and_reset(dummy_session):
+    """
+    Scenario F7: Observe and count analysis_error events.
+    - Transient errors increment consecutive counter.
+    - Valid risk_update resets counter to 0.
+    - Call remains active, no false alert or verdict.
+    """
+    gateway = make_gateway(mode=EnforcementMode.ENFORCE, max_consecutive_analysis_errors=3)
+    gateway.active_session = dummy_session
+
+    events = [
+        json.dumps({"type": "error", "code": "analysis_error", "message": "Inference timeout window 1"}),
+        json.dumps({"type": "error", "code": "analysis_error", "message": "Inference timeout window 2"}),
+        json.dumps({"type": "risk_update", "risk_score": 12, "risk_state": "low", "decision": "ALLOW"}),
+    ]
+
+    class MockWs:
+        def __init__(self, evs):
+            self.evs = list(evs)
+        def __aiter__(self):
+            return self
+        async def __anext__(self):
+            if self.evs:
+                return self.evs.pop(0)
+            raise asyncio.CancelledError()
+
+    dummy_session.ws = MockWs(events)
+
+    task = asyncio.create_task(gateway._listen_voiceshield_ws(dummy_session))
+    await asyncio.sleep(0.05)
+    task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass
+
+    assert dummy_session.consecutive_analysis_errors == 0  # Successfully reset
+    assert dummy_session.is_terminated is False
+    assert dummy_session.enforcement_action_taken is None
+
+
+@pytest.mark.asyncio
+async def test_41_ml_analysis_error_threshold_triggers_fail_safe_teardown(dummy_session):
+    """
+    Scenario F7: Sustained ML failure exceeding consecutive threshold (3 consecutive errors = 3.0s).
+    Mandatory correction:
+    - Observe and count analysis_error events.
+    - Do NOT convert infrastructure/ML failure into a fake HIGH/CRITICAL security verdict.
+    - Define deterministic failure behavior after threshold:
+      controlled fail-safe teardown -> hang up caller with reason="congestion".
+    """
+    reqs = []
+    gateway = make_gateway(
+        mode=EnforcementMode.ENFORCE,
+        recorded_list=reqs,
+        max_consecutive_analysis_errors=3,
+    )
+    gateway.active_session = dummy_session
+
+    events = [
+        json.dumps({"type": "error", "code": "analysis_error", "message": "CUDA out of memory window 1"}),
+        json.dumps({"type": "error", "code": "analysis_error", "message": "CUDA out of memory window 2"}),
+        json.dumps({"type": "error", "code": "analysis_error", "message": "CUDA out of memory window 3"}),
+    ]
+
+    class MockWs:
+        def __init__(self, evs):
+            self.evs = list(evs)
+        def __aiter__(self):
+            return self
+        async def __anext__(self):
+            if self.evs:
+                return self.evs.pop(0)
+            raise asyncio.CancelledError()
+
+    dummy_session.ws = MockWs(events)
+
+    await gateway._listen_voiceshield_ws(dummy_session)
+
+    assert dummy_session.consecutive_analysis_errors == 3
+    assert dummy_session.is_terminated is True
+    assert dummy_session.state == CallState.TERMINATED
+    assert dummy_session.enforcement_action_taken is None  # NO fake security verdict!
+    hangup_reqs = [r for r in reqs if f"/channels/{dummy_session.caller_channel_id}" in str(r.url) and r.method == "DELETE"]
+    assert len(hangup_reqs) == 1
+    assert "reason=congestion" in str(hangup_reqs[0].url)
+
+
+@pytest.mark.asyncio
+async def test_42_startup_reconciliation_only_reaps_owned_resources():
+    """
+    Scenario F5: Startup reconciliation.
+    Mandatory correction:
+    - NEVER delete all Asterisk bridges/channels blindly.
+    - Reconcile only resources demonstrably owned by VoiceShield.
+    - Identify ownership using existing VoiceShield/Stasis/externalMedia metadata:
+      Bridge: creator == 'Stasis' and bridge_class == 'stasis'
+      Channel: 'UnicastRTP' in name or app_data == '(Outgoing Line)'
+    - If ownership cannot be established, leave the resource untouched and log it.
+    """
+    deleted_urls = []
+    def ari_handler(request: httpx.Request) -> httpx.Response:
+        url_str = str(request.url)
+        if request.method == "DELETE":
+            deleted_urls.append(url_str)
+            return httpx.Response(204)
+        if "/applications/voiceshield" in url_str:
+            return httpx.Response(200, json={
+                "bridge_ids": ["b-owned-stasis", "b-foreign-confbridge"],
+                "channel_ids": ["c-owned-rtp", "c-owned-outgoing", "c-foreign-caller"],
+            })
+        if "/bridges/b-owned-stasis" in url_str:
+            return httpx.Response(200, json={"id": "b-owned-stasis", "creator": "Stasis", "bridge_class": "stasis"})
+        if "/bridges/b-foreign-confbridge" in url_str:
+            return httpx.Response(200, json={"id": "b-foreign-confbridge", "creator": "ConfBridge", "bridge_class": "softmix"})
+        if "/channels/c-owned-rtp" in url_str:
+            return httpx.Response(200, json={"id": "c-owned-rtp", "name": "UnicastRTP/127.0.0.1:20000", "dialplan": {}})
+        if "/channels/c-owned-outgoing" in url_str:
+            return httpx.Response(200, json={"id": "c-owned-outgoing", "name": "Local/100@default", "dialplan": {"app_data": "(Outgoing Line)"}})
+        if "/channels/c-foreign-caller" in url_str:
+            return httpx.Response(200, json={"id": "c-foreign-caller", "name": "PJSIP/alice-0001", "dialplan": {"app_data": "100"}})
+        return httpx.Response(404)
+
+    client = httpx.AsyncClient(transport=httpx.MockTransport(ari_handler), base_url="http://localhost:8088")
+    gateway = TelephonyGateway(http_client=client)
+
+    await gateway._reconcile_startup_resources()
+
+    # Owned resources must be deleted
+    assert any("/bridges/b-owned-stasis" in u for u in deleted_urls)
+    assert any("/channels/c-owned-rtp" in u for u in deleted_urls)
+    assert any("/channels/c-owned-outgoing" in u for u in deleted_urls)
+
+    # Foreign resources must NOT be deleted
+    assert not any("/bridges/b-foreign-confbridge" in u for u in deleted_urls)
+    assert not any("/channels/c-foreign-caller" in u for u in deleted_urls)
+
+
+@pytest.mark.asyncio
+async def test_43_normal_sip_bye_during_watchdog_is_idempotent(dummy_session):
+    """
+    Scenario F8: Normal SIP BYE arrives via ARI StasisEnd around watchdog handling.
+    - Teardown executes cleanly.
+    - Watchdog task is cancelled.
+    - Repeated teardown call is idempotent (no-op).
+    """
+    reqs = []
+    gateway = make_gateway(mode=EnforcementMode.ENFORCE, recorded_list=reqs)
+    gateway.active_session = dummy_session
+
+    async def mock_watchdog():
+        await asyncio.sleep(10.0)
+    dummy_session.rtp_watchdog_task = asyncio.create_task(mock_watchdog())
+
+    # Simulate ARI StasisEnd event
+    await gateway._handle_ari_event({
+        "type": "StasisEnd",
+        "channel": {"id": dummy_session.caller_channel_id},
+    })
+
+    assert dummy_session.is_terminated is True
+    await asyncio.sleep(0.01)
+    assert dummy_session.rtp_watchdog_task.cancelled()
+    assert gateway.active_session is None
+
+    # Secondary teardown attempt is a complete no-op
+    req_count_before = len(reqs)
+    await gateway._teardown_session(dummy_session)
+    assert len(reqs) == req_count_before
+
+
+@pytest.mark.asyncio
+async def test_44_enforce_hold_followed_by_allow_unhold(dummy_session):
+    """
+    Scenario F9: Real Asterisk HOLD followed by ALLOW / unhold.
+    - Decision HOLD executes POST /channels/{id}/hold and transitions to HOLD state.
+    - Subsequent Decision ALLOW executes DELETE /channels/{id}/hold and transitions to ACTIVE state.
+    """
+    reqs = []
+    gateway = make_gateway(mode=EnforcementMode.ENFORCE, recorded_list=reqs)
+    gateway.active_session = dummy_session
+
+    # 1. Trigger HOLD
+    await gateway._handle_policy_verdict(
+        session=dummy_session,
+        decision="HOLD",
+        action="hold",
+        risk_state="suspicious",
+        risk_score=60,
+        reasons=["suspicious_pattern"],
+    )
+    assert dummy_session.state == CallState.HOLD
+    assert dummy_session.enforcement_action_taken == "HOLD"
+    hold_reqs = [r for r in reqs if r.method == "POST" and f"/channels/{dummy_session.caller_channel_id}/hold" in str(r.url)]
+    assert len(hold_reqs) == 1
+
+    # 2. Trigger ALLOW
+    await gateway._handle_policy_verdict(
+        session=dummy_session,
+        decision="ALLOW",
+        action="allow",
+        risk_state="low",
+        risk_score=15,
+        reasons=[],
+    )
+    assert dummy_session.state == CallState.ACTIVE
+    unhold_reqs = [r for r in reqs if r.method == "DELETE" and f"/channels/{dummy_session.caller_channel_id}/hold" in str(r.url)]
+    assert len(unhold_reqs) == 1
