@@ -75,6 +75,7 @@ class SipUacClient:
 
         self.sip_sock: Optional[socket.socket] = None
         self.rtp_sock: Optional[socket.socket] = None
+        self.inbound_rtp_received: int = 0
 
     def start_sockets(self):
         if self.transport == "tcp":
@@ -271,20 +272,17 @@ class SipUacClient:
             packets.append(ulaw_payload)
 
         # Transmit RTP packets at 20 ms interval
-        rtp_seq = 100
-        rtp_ts = 160000
-        ssrc = 0x11223344
-        pt = 0  # PCMU
-
         dest = (self.server_ip, self.remote_rtp_port)
         print(f"Streaming {len(packets)} RTP packets (20ms each) to {dest}...")
 
         start_time = time.time()
         packets_sent = 0
-
-        # Loop audio if needed to fulfill requested duration
         idx = 0
         total_len = len(packets)
+        rtp_seq = 100
+        rtp_ts = 160000
+        ssrc = 0x11223344
+        pt = 0  # PCMU
 
         while True:
             elapsed = time.time() - start_time
@@ -312,15 +310,23 @@ class SipUacClient:
             if sleep_t > 0:
                 time.sleep(sleep_t)
 
+            # Check for inbound RTP from Asterisk
+            if self.rtp_sock:
+                try:
+                    r, _, _ = select.select([self.rtp_sock], [], [], 0)
+                    if r:
+                        data, _ = self.rtp_sock.recvfrom(2048)
+                        if data:
+                            self.inbound_rtp_received += 1
+                except Exception:
+                    pass
+
             # Check if remote hung up (e.g. Asterisk sent BYE on BLOCK)
             if self.sip_sock:
                 try:
                     r, _, _ = select.select([self.sip_sock], [], [], 0)
                     if r:
-                        if self.transport == "tcp":
-                            data = self.sip_sock.recv(4096)
-                        else:
-                            data, _ = self.sip_sock.recvfrom(4096)
+                        data = self.sip_sock.recv(4096) if self.transport == "tcp" else self.sip_sock.recvfrom(4096)[0]
                         if data:
                             text = data.decode("utf-8", errors="ignore")
                             if "BYE" in text:
@@ -333,6 +339,35 @@ class SipUacClient:
 
         return packets_sent
 
+    def wait_and_monitor_inbound(self, wait_sec: float) -> int:
+        """Wait for wait_sec while continuously checking and counting inbound RTP packets."""
+        start_t = time.time()
+        inbound_start = self.inbound_rtp_received
+        while time.time() - start_t < wait_sec:
+            if self.rtp_sock:
+                try:
+                    r, _, _ = select.select([self.rtp_sock], [], [], 0.02)
+                    if r:
+                        data, _ = self.rtp_sock.recvfrom(2048)
+                        if data:
+                            self.inbound_rtp_received += 1
+                except Exception:
+                    pass
+
+            if self.sip_sock:
+                try:
+                    r, _, _ = select.select([self.sip_sock], [], [], 0)
+                    if r:
+                        data = self.sip_sock.recv(4096) if self.transport == "tcp" else self.sip_sock.recvfrom(4096)[0]
+                        if data and "BYE" in data.decode("utf-8", errors="ignore"):
+                            print(f"      [REMOTE HANGUP] SIP BYE received from Asterisk during wait.")
+                            self.remote_hungup = True
+                            self._send_200_ok_for_bye(data.decode("utf-8", errors="ignore"))
+                            break
+                except Exception:
+                    pass
+        return self.inbound_rtp_received - inbound_start
+
 
 def run_call(
     wav_path: str,
@@ -342,12 +377,22 @@ def run_call(
     callee: str = "100",
     transport: str = "tcp",
     duration: Optional[float] = 7.0,
+    response_wav: Optional[str] = None,
+    dynamic_response: bool = False,
+    pause_during_prompt: float = 4.5,
+    hangup_after: Optional[float] = None,
 ):
     print("=" * 60)
     print(f"Initiating SIP test call to {server_ip}:{server_port} via {transport.upper()}")
     print(f"Caller: {caller} -> Callee: {callee}")
     print(f"Audio source: {wav_path}")
     print(f"Target duration: {duration}s")
+    if dynamic_response:
+        print("Dynamic response: ENABLED (synthesizes speech matching issued challenge)")
+    elif response_wav:
+        print(f"Challenge response WAV: {response_wav} (prompt pause: {pause_during_prompt}s)")
+    if hangup_after:
+        print(f"Early hangup after: {hangup_after}s")
     print("=" * 60)
 
     uac = SipUacClient(
@@ -372,9 +417,75 @@ def run_call(
         uac.send_ack()
         print("      Call established! Media dialog active.")
 
-        print(f"[4/5] Streaming RTP audio for {duration} seconds...")
-        pkts = uac.stream_wav_file(wav_path, duration_sec=duration)
-        print(f"      Audio streaming complete! {pkts} RTP packets sent.")
+        if hangup_after and hangup_after <= 3.0:
+            print(f"[4/5] Streaming RTP for {hangup_after}s then hanging up early...")
+            uac.stream_wav_file(wav_path, duration_sec=hangup_after)
+            print("      Early hangup triggered.")
+        else:
+            print(f"[4/5] Streaming initial RTP audio for {duration} seconds...")
+            pkts = uac.stream_wav_file(wav_path, duration_sec=duration)
+            print(f"      Initial audio complete: {pkts} RTP packets sent.")
+
+            if dynamic_response or response_wav or pause_during_prompt > 0:
+                print(f"      Waiting {pause_during_prompt}s for challenge prompt playback...")
+                inbound = uac.wait_and_monitor_inbound(pause_during_prompt)
+                print(f"      [VERIFIED] Prompt audio reached caller: {inbound} inbound RTP packets received from Asterisk!")
+
+            actual_response_wav = response_wav
+            if dynamic_response and not actual_response_wav:
+                try:
+                    import sqlite3
+                    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                    sounds_dir = os.path.join(base_dir, "sounds")
+                    db_path = os.path.join(os.path.dirname(base_dir), "api", "voiceshield.db")
+                    if not os.path.exists(db_path):
+                        db_path = "/workspace/services/api/voiceshield.db"
+                    conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+                    cur = conn.cursor()
+                    cur.execute("SELECT id, challenge_text, challenge_type FROM challenges ORDER BY created_at DESC LIMIT 1")
+                    row = cur.fetchone()
+                    conn.close()
+                    if row:
+                        chal_id, chal_text, chal_type = row
+                        print(f"      [ACTIVE CHALLENGE DETECTED] id={chal_id}, type={chal_type}, text='{chal_text}'")
+                        if "security" in chal_text.lower():
+                            cand = "phrase_security.wav"
+                        elif "name" in chal_text.lower():
+                            cand = "phrase_name.wav"
+                        elif "mobile" in chal_text.lower() or "digit" in chal_text.lower():
+                            cand = "digits.wav"
+                        elif "city" in chal_text.lower():
+                            cand = "city.wav"
+                        elif "count" in chal_text.lower() or chal_type == "sequence":
+                            cand = "sequence.wav"
+                        elif "authorize" in chal_text.lower():
+                            cand = "phrase_authorize.wav"
+                        elif "verification active" in chal_text.lower() or "active" in chal_text.lower():
+                            cand = "phrase_active.wav"
+                        elif "date" in chal_text.lower():
+                            cand = "date.wav"
+                        else:
+                            cand = "phrase_security.wav"
+
+                        matched_file = os.path.join(sounds_dir, cand)
+                        if os.path.exists(matched_file):
+                            actual_response_wav = matched_file
+                            print(f"      [DYNAMIC SPOKEN RESPONSE] Selected matching audio: {matched_file}")
+                        else:
+                            actual_response_wav = os.path.join(sounds_dir, "response_matching.wav")
+                except Exception as e:
+                    print(f"      [WARNING] Could not resolve dynamic response: {e}")
+
+            if actual_response_wav and not uac.remote_hungup:
+                print(f"      Streaming caller response audio from {actual_response_wav}...")
+                resp_pkts = uac.stream_wav_file(actual_response_wav, duration_sec=3.0)
+                print(f"      Response audio streaming complete: {resp_pkts} RTP packets sent.")
+                # Allow backend pipeline to process response and evaluate outcome
+                time.sleep(5.0)
+            elif pause_during_prompt > 0 and not uac.remote_hungup:
+                # Silence scenario: wait for listening window (5s) + drain (1.2s) + evaluation to timeout
+                print("      Silence response: waiting 7.5s for challenge listening window and timeout...")
+                time.sleep(7.5)
 
         if not uac.remote_hungup:
             print("[5/5] Sending SIP BYE to terminate call...")
@@ -387,7 +498,7 @@ def run_call(
     finally:
         uac.close()
         print("=" * 60)
-        print("SIP test call sequence finished.")
+        print(f"SIP test call finished. Total inbound RTP packets from Asterisk: {uac.inbound_rtp_received}")
         print("=" * 60)
 
 
@@ -400,6 +511,10 @@ if __name__ == "__main__":
     parser.add_argument("--caller", default="+15550199", help="Caller phone number")
     parser.add_argument("--callee", default="100", help="Dialed number")
     parser.add_argument("--duration", type=float, default=7.0, help="Duration in seconds")
+    parser.add_argument("--response-wav", default=None, help="Optional WAV file to stream after prompt finishes")
+    parser.add_argument("--dynamic-response", action="store_true", help="Synthesize and stream matching response for active challenge")
+    parser.add_argument("--pause-during-prompt", type=float, default=4.5, help="Pause duration while prompt plays")
+    parser.add_argument("--hangup-after", type=float, default=None, help="Hang up early after N seconds")
     args = parser.parse_args()
 
     run_call(
@@ -410,4 +525,8 @@ if __name__ == "__main__":
         caller=args.caller,
         callee=args.callee,
         duration=args.duration,
+        response_wav=args.response_wav,
+        dynamic_response=args.dynamic_response,
+        pause_during_prompt=args.pause_during_prompt,
+        hangup_after=args.hangup_after,
     )

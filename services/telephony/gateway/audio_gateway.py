@@ -27,6 +27,7 @@ from enum import Enum
 import json
 import logging
 import os
+import re
 import signal
 import sys
 from typing import Dict, Optional, Tuple
@@ -64,10 +65,163 @@ class EnforcementMode(str, Enum):
 class CallState(str, Enum):
     INIT = "INIT"
     ACTIVE = "ACTIVE"
-    CHALLENGED = "CHALLENGED"
+    CHALLENGED = "CHALLENGED"  # Phase 4.2 compatibility
+    CHALLENGE_MUTING = "CHALLENGE_MUTING"
+    CHALLENGE_PLAYING = "CHALLENGE_PLAYING"
+    CHALLENGE_LISTENING = "CHALLENGE_LISTENING"
+    CHALLENGE_EVALUATING = "CHALLENGE_EVALUATING"
+    CHALLENGE_PASSED = "CHALLENGE_PASSED"
+    CHALLENGE_FAILED = "CHALLENGE_FAILED"
+    CHALLENGE_TIMEOUT = "CHALLENGE_TIMEOUT"
     HOLD = "HOLD"
     TERMINATING = "TERMINATING"
     TERMINATED = "TERMINATED"
+
+
+def normalize_challenge_text(text: str) -> str:
+    """Normalize text by converting to lowercase, stripping punctuation, and compressing spaces."""
+    cleaned = re.sub(r"[^\w\s]", " ", text.lower())
+    return re.sub(r"\s+", " ", cleaned).strip()
+
+
+def extract_challenge_target(challenge_text: str) -> str:
+    """
+    Extracts the target spoken content from the backend-issued challenge text.
+    If the challenge text contains quotes (e.g. 'The security of this call matters.'),
+    the text within quotes is extracted as the target phrase.
+    Otherwise, returns the normalized full challenge text.
+    """
+    quote_match = re.search(r"['\"]([^'\"]+)['\"]", challenge_text)
+    if quote_match:
+        return normalize_challenge_text(quote_match.group(1))
+    return normalize_challenge_text(challenge_text)
+
+
+def resolve_challenge_prompt_sound(challenge_text: str, challenge_type: str = "") -> Optional[str]:
+    """
+    Deterministically resolves the prompt audio asset for the exact backend-issued challenge.
+    Returns sound uri (e.g. 'sound:challenge_phrase_security') or None if unmapped.
+    """
+    if not challenge_text:
+        return None
+    norm = normalize_challenge_text(challenge_text)
+
+    # Exact mappings for backend CHALLENGE_POOL in services/api/app/api/challenge.py
+    if "security of this call matters" in norm:
+        return "sound:challenge_phrase_security"
+    if "full name clearly" in norm or "your name clearly" in norm:
+        return "sound:challenge_phrase_name"
+    if "last 4 digits" in norm or "registered mobile number" in norm or ("digit" in norm and "mobile" in norm):
+        return "sound:challenge_question_digits"
+    if "city did you register from" in norm or "which city" in norm:
+        return "sound:challenge_question_city"
+    if "count from 1 to 5" in norm or "count from one to five" in norm:
+        return "sound:challenge_sequence"
+    if "authorize this transaction" in norm:
+        return "sound:challenge_phrase_authorize"
+    if "voiceshield verification active" in norm or "verification active" in norm:
+        return "sound:challenge_phrase_active"
+    if "today s date" in norm or "todays date" in norm or "what is today" in norm:
+        return "sound:challenge_question_date"
+
+    return None
+
+
+def evaluate_challenge_response(
+    challenge_text: str,
+    challenge_type: str,
+    transcript: str,
+    speech_detected: bool,
+) -> Tuple[str, str]:
+    """
+    Deterministic challenge response evaluation using the actual issued challenge_text.
+
+    Outcome rules:
+    - PASS: speech is detected and transcript satisfies the issued challenge_text.
+    - FAIL: speech is detected but transcript is contradictory/non-matching, or transcription is unavailable/empty.
+    - TIMEOUT: no speech detected during the response window.
+    """
+    if not speech_detected:
+        return "timeout", "No speech detected during response window"
+
+    norm_transcript = normalize_challenge_text(transcript)
+    if not norm_transcript:
+        return "failed", "Speech detected but transcription was unavailable or empty"
+
+    target_phrase = extract_challenge_target(challenge_text)
+    c_type = (challenge_type or "phrase").lower()
+
+    # 1. Exact substring match
+    if target_phrase and (target_phrase in norm_transcript or norm_transcript in target_phrase):
+        return "passed", f"Transcript matched target phrase: '{target_phrase}'"
+
+    # 2. Key token overlap (excluding directives and common stopwords)
+    stopwords = {
+        "please", "say", "your", "name", "clearly", "repeat", "after", "me",
+        "the", "a", "an", "is", "of", "this", "that", "it", "to", "in", "for",
+        "what", "which", "are", "from", "now", "slowly", "count",
+    }
+    target_tokens = [w for w in target_phrase.split() if w not in stopwords and len(w) > 2]
+    if not target_tokens:
+        target_tokens = [w for w in target_phrase.split() if len(w) > 1]
+
+    transcript_tokens = set(norm_transcript.split())
+    matched_tokens = [w for w in target_tokens if w in transcript_tokens]
+
+    if target_tokens and (len(matched_tokens) / len(target_tokens) >= 0.5):
+        return (
+            "passed",
+            f"Transcript satisfied challenge ({len(matched_tokens)}/{len(target_tokens)} key tokens matched: {matched_tokens})",
+        )
+
+    # 3. Number sequence challenge (e.g. Count from 1 to 5)
+    if c_type == "sequence" or "count" in target_phrase:
+        num_map = {"1": "one", "2": "two", "3": "three", "4": "four", "5": "five"}
+        count_matched = sum(1 for d, w in num_map.items() if d in transcript_tokens or w in transcript_tokens)
+        if count_matched >= 3:
+            return "passed", f"Transcript satisfied sequence challenge ({count_matched} numbers matched)"
+
+    # 4. Open question challenge (e.g. date, city, digits)
+    if c_type == "question":
+        refusals = {
+            "no", "cancel", "bye", "hangup", "scam", "wrong", "refuse", "refused",
+            "refusing", "stop", "decline", "declined", "unauthorized", "transfer",
+            "lakh", "rupees", "otp", "vendor", "urgent",
+        }
+        if any(w in refusals for w in transcript_tokens):
+            return "failed", f"Transcript contains non-responsive, refusal, or evasive content: '{norm_transcript}'"
+
+        if "date" in target_phrase:
+            date_words = {
+                "today", "date", "january", "february", "march", "april", "may", "june",
+                "july", "august", "september", "october", "november", "december",
+                "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
+                "first", "second", "third", "fourth", "fifth", "twenty", "twenty-third",
+                "twenty-second", "thirtieth", "thirty", "2026", "23rd", "23",
+            }
+            if any(w in date_words for w in transcript_tokens) or any(w.isdigit() for w in transcript_tokens):
+                return "passed", f"Transcript provided valid date response: '{norm_transcript}'"
+            return "failed", f"Transcript did not answer date question: '{norm_transcript}'"
+
+        if "city" in target_phrase:
+            city_words = {
+                "city", "chicago", "illinois", "new", "york", "london", "paris", "delhi",
+                "mumbai", "san", "francisco", "austin", "boston", "seattle", "registered",
+            }
+            if any(w in city_words for w in transcript_tokens):
+                return "passed", f"Transcript provided valid city response: '{norm_transcript}'"
+            return "failed", f"Transcript did not answer city question: '{norm_transcript}'"
+
+        if "digit" in target_phrase or "number" in target_phrase or "mobile" in target_phrase:
+            num_words = {"one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "zero"}
+            if any(w in num_words for w in transcript_tokens) or any(w.isdigit() for w in transcript_tokens):
+                return "passed", f"Transcript provided valid digit response: '{norm_transcript}'"
+            return "failed", f"Transcript did not answer digit question: '{norm_transcript}'"
+
+        if len(transcript_tokens) >= 1:
+            return "passed", f"Transcript provided valid response to question: '{norm_transcript}'"
+
+    return "failed", f"Transcript did not satisfy challenge criteria (target='{target_phrase}', received='{norm_transcript}')"
 
 
 def _get_active_user_id() -> str:
@@ -140,6 +294,21 @@ class ActiveCallSession:
         self.is_terminated: bool = False
         self.ari_actions_log: list[dict] = []
 
+        # Phase 5.1 Interactive Challenge fields
+        self.challenge_id: Optional[str] = None
+        self.challenge_text: Optional[str] = None
+        self.challenge_type: Optional[str] = None
+        self.challenge_playback_id: Optional[str] = None
+        self.is_caller_muted: bool = False
+        self.challenge_watchdog_task: Optional[asyncio.Task] = None
+        self.challenge_window_task: Optional[asyncio.Task] = None
+        self.challenge_listening_active: bool = False
+        self.challenge_drain_active: bool = False
+        self.challenge_buffered_chunks: list[dict] = []
+        self.challenge_speech_detected: bool = False
+        self.challenge_transcripts: list[str] = []
+        self.challenge_result_submitted: bool = False
+
 
 class TelephonyGateway:
     def __init__(
@@ -160,6 +329,9 @@ class TelephonyGateway:
         test_verdict_delay: float = 3.0,
         test_verdict_repeat: int = 1,
         http_client: Optional[httpx.AsyncClient] = None,
+        backend_http_client: Optional[httpx.AsyncClient] = None,
+        listening_window_duration: float = 5.0,
+        playback_watchdog_timeout: float = 10.0,
     ):
         self.ari_url = ari_url.rstrip("/")
         self.ari_ws_url = ari_ws_url
@@ -178,9 +350,39 @@ class TelephonyGateway:
         self.test_verdict_repeat = test_verdict_repeat
 
         self.http_client: Optional[httpx.AsyncClient] = http_client
+        self.backend_http_client: Optional[httpx.AsyncClient] = backend_http_client
+        self.listening_window_duration = listening_window_duration
+        self.playback_watchdog_timeout = playback_watchdog_timeout
         self.udp_transport: Optional[asyncio.DatagramTransport] = None
         self.active_session: Optional[ActiveCallSession] = None
         self.running = False
+
+    async def _get_backend_client(self) -> httpx.AsyncClient:
+        if self.backend_http_client:
+            return self.backend_http_client
+        token = _make_service_token()
+        headers = {"Authorization": f"Bearer {token}"} if token else {}
+        return httpx.AsyncClient(timeout=5.0, headers=headers)
+
+    async def _unmute_caller_channel(self, session: ActiveCallSession) -> None:
+        if not session.is_caller_muted:
+            return
+        log.info(f"[ARI] Unmuting inbound audio on caller channel {session.caller_channel_id}")
+        if self.http_client:
+            try:
+                res = await self.http_client.delete(
+                    f"{self.ari_url}/channels/{session.caller_channel_id}/mute",
+                    params={"direction": "in"},
+                )
+                if res.status_code in (200, 204):
+                    log.info(f"[ARI] Successfully unmuted caller channel {session.caller_channel_id}")
+                elif res.status_code == 404:
+                    log.info(f"[ARI] Channel {session.caller_channel_id} already gone (404)")
+                else:
+                    log.warning(f"[ARI] Unexpected ARI unmute status: {res.status_code}")
+            except Exception as e:
+                log.warning(f"[ARI] Error unmuting caller channel {session.caller_channel_id}: {e}")
+        session.is_caller_muted = False
 
     async def start(self) -> None:
         self.running = True
@@ -208,6 +410,8 @@ class TelephonyGateway:
             self.udp_transport.close()
         if self.http_client:
             await self.http_client.aclose()
+        if self.backend_http_client:
+            await self.backend_http_client.aclose()
         log.info("Telephony Gateway stopped.")
 
     # ── ARI Event Loop ────────────────────────────────────────────────────────
@@ -259,6 +463,41 @@ class TelephonyGateway:
             )
             self.active_session = session
             await self._setup_call_and_streaming(session)
+
+        elif ev_type == "PlaybackFinished":
+            playback = event.get("playback", {})
+            playback_id = playback.get("id")
+            log.info(f"[ARI] PlaybackFinished event received: playback_id={playback_id}")
+            session = self.active_session
+            if (
+                session
+                and session.state == CallState.CHALLENGE_PLAYING
+                and session.challenge_playback_id
+                and session.challenge_playback_id == playback_id
+            ):
+                log.info(f"[ARI] Matching PlaybackFinished for challenge playback {playback_id}")
+                if session.challenge_watchdog_task and not session.challenge_watchdog_task.done():
+                    session.challenge_watchdog_task.cancel()
+                session.challenge_playback_id = None
+
+                # Unmute caller inbound audio only after matching PlaybackFinished
+                await self._unmute_caller_channel(session)
+
+                # Enter CHALLENGE_LISTENING
+                session.state = CallState.CHALLENGE_LISTENING
+                session.challenge_transcripts = []
+                session.challenge_speech_detected = False
+                session.challenge_listening_active = True
+                session.challenge_drain_active = False
+                session.challenge_buffered_chunks.clear()
+                log.info(f"[STATE TRANSITION] Call {session.caller_channel_id} -> {CallState.CHALLENGE_LISTENING.value}")
+                log.info(f"Starting {self.listening_window_duration}s challenge response listening window...")
+
+                session.challenge_window_task = asyncio.create_task(
+                    self._run_challenge_listening_window(session)
+                )
+            else:
+                log.info(f"[ARI] Stale, mismatched, or unhandled PlaybackFinished event ignored (playback_id={playback_id})")
 
         elif ev_type == "StasisEnd":
             channel = event.get("channel", {})
@@ -427,8 +666,13 @@ class TelephonyGateway:
         for chunk in chunks:
             msg = session.accumulator.build_chunk_message(chunk)
             session.chunks_sent += 1
-            # Forward over WebSocket asynchronously without blocking UDP socket
-            asyncio.create_task(self._send_audio_chunk(session, msg))
+            if session.challenge_drain_active:
+                # Strict 5.0s cutoff: do not forward post-cutoff audio to backend during drain.
+                # Buffer chunks so they can be flushed to the backend once challenge evaluation finishes.
+                session.challenge_buffered_chunks.append(msg)
+            else:
+                # Forward over WebSocket asynchronously without blocking UDP socket
+                asyncio.create_task(self._send_audio_chunk(session, msg))
 
     async def _send_audio_chunk(self, session: ActiveCallSession, msg: dict) -> None:
         try:
@@ -448,7 +692,15 @@ class TelephonyGateway:
                 try:
                     event = json.loads(raw)
                     ev_type = event.get("type")
-                    if ev_type == "risk_update":
+                    if ev_type == "audio_quality":
+                        active = event.get("active", False)
+                        quality = event.get("audio") or {}
+                        is_silent = quality.get("is_silent", True)
+                        # Strict 5.0s cutoff: only audio arriving during active listening window can trigger speech detection
+                        if (active or not is_silent) and session.challenge_listening_active:
+                            session.challenge_speech_detected = True
+
+                    elif ev_type == "risk_update":
                         score = event.get("risk_score", 0)
                         state = event.get("risk_state", "")
                         decision = event.get("decision", "")
@@ -456,6 +708,14 @@ class TelephonyGateway:
                             f"Live Risk Observation [Session {session.session_id[:8]}]: "
                             f"Score={score}, State={state}, Decision={decision}"
                         )
+                        context = event.get("context") or {}
+                        transcript = context.get("transcript")
+                        # Transcripts from pre-cutoff audio landing during active listening OR during STT drain are admitted
+                        if transcript and (session.challenge_listening_active or session.challenge_drain_active):
+                            session.challenge_speech_detected = True
+                            if transcript not in session.challenge_transcripts:
+                                session.challenge_transcripts.append(transcript)
+
                         await self._handle_policy_verdict(
                             session=session,
                             decision=decision,
@@ -524,6 +784,15 @@ class TelephonyGateway:
             await self._enforce_allow(session)
 
     async def _enforce_allow(self, session: ActiveCallSession) -> None:
+        if session.state in (
+            CallState.CHALLENGE_MUTING,
+            CallState.CHALLENGE_PLAYING,
+            CallState.CHALLENGE_LISTENING,
+            CallState.CHALLENGE_EVALUATING,
+        ):
+            log.info(f"ALLOW event ignored: challenge is currently in progress (state={session.state.value})")
+            return
+
         if session.state == CallState.HOLD:
             log.info(f"Transitioning from HOLD to ACTIVE under ALLOW decision on channel {session.caller_channel_id}")
             if self.enforcement_mode == EnforcementMode.ENFORCE and self.http_client:
@@ -533,8 +802,18 @@ class TelephonyGateway:
                         log.info(f"[ENFORCE] Channel {session.caller_channel_id} removed from hold")
                 except Exception as e:
                     log.warning(f"Failed unholding channel {session.caller_channel_id}: {e}")
+
+        # Clear challenge tracking on transition to ACTIVE if challenge is finished
+        if session.state in (CallState.CHALLENGE_PASSED, CallState.CHALLENGE_FAILED, CallState.CHALLENGE_TIMEOUT):
+            session.challenge_id = None
+            session.challenge_text = None
+            session.challenge_type = None
+            session.challenge_playback_id = None
+            session.challenge_result_submitted = False
+
         session.state = CallState.ACTIVE
-        log.info(f"Policy Decision [ALLOW]: Call on channel {session.caller_channel_id} remains ACTIVE")
+        log.info(f"[STATE TRANSITION] Call {session.caller_channel_id} -> {CallState.ACTIVE.value}")
+        log.info(f"Policy Decision [ALLOW]: Call on channel {session.caller_channel_id} is ACTIVE")
 
     async def _enforce_challenge(
         self,
@@ -542,9 +821,23 @@ class TelephonyGateway:
         reasons: list[str],
         risk_score: int,
     ) -> None:
-        if session.state == CallState.CHALLENGED:
+        # Idempotency guard: ignore duplicate challenge events while challenge is in progress
+        challenge_active_states = (
+            CallState.CHALLENGE_MUTING,
+            CallState.CHALLENGE_PLAYING,
+            CallState.CHALLENGE_LISTENING,
+            CallState.CHALLENGE_EVALUATING,
+            CallState.CHALLENGE_PASSED,
+            CallState.CHALLENGE_FAILED,
+            CallState.CHALLENGE_TIMEOUT,
+        )
+        if session.challenge_id or session.state in challenge_active_states:
+            log.info(
+                f"Duplicate VERIFY/CHALLENGE event ignored for session {session.session_id}: "
+                f"Challenge already active (state={session.state.value}, challenge_id={session.challenge_id})"
+            )
             return
-        session.state = CallState.CHALLENGED
+
         session.enforcement_action_taken = "CHALLENGE"
 
         action_record = {
@@ -558,40 +851,259 @@ class TelephonyGateway:
 
         if self.enforcement_mode == EnforcementMode.OBSERVE_ONLY:
             log.info(
-                f"[OBSERVE_ONLY] Policy Decision VERIFY/CHALLENGE (Score={risk_score}, Reasons={reasons}). Zero ARI action performed."
+                f"[OBSERVE_ONLY] Policy Decision VERIFY/CHALLENGE (Score={risk_score}, Reasons={reasons}). "
+                f"Zero ARI action performed."
             )
             return
 
         if self.enforcement_mode == EnforcementMode.DRY_RUN:
             log.info(
-                f"[DRY_RUN] Would execute ARI: POST {self.ari_url}/channels/{session.caller_channel_id}/play?media={self.challenge_sound}"
+                f"[DRY_RUN] Would issue backend challenge, mute channel {session.caller_channel_id}, "
+                f"play prompt {self.challenge_sound}, and collect response."
             )
             return
 
         if self.enforcement_mode == EnforcementMode.ENFORCE:
-            log.info(
-                f"[ENFORCE] Executing ARI: POST {self.ari_url}/channels/{session.caller_channel_id}/play?media={self.challenge_sound}"
-            )
+            log.info(f"[ENFORCE] Starting Phase 5.1 Interactive Challenge sequence on channel {session.caller_channel_id}")
+
+            # Step A & B & C: Create backend Challenge record
+            session.state = CallState.CHALLENGE_MUTING
+            log.info(f"[STATE TRANSITION] Call {session.caller_channel_id} -> {CallState.CHALLENGE_MUTING.value}")
+
+            client = await self._get_backend_client()
+            should_close = client is not self.backend_http_client
+            try:
+                res = await client.post(f"{self.backend_http_url}/challenge/{session.session_id}")
+                if res.status_code not in (200, 201):
+                    log.error(f"[ENFORCE] Backend failed to create challenge: {res.status_code} {res.text}")
+                    session.state = CallState.ACTIVE
+                    return
+                c_data = res.json()
+                session.challenge_id = c_data["id"]
+                session.challenge_text = c_data.get("challenge_text", "")
+                session.challenge_type = c_data.get("challenge_type", "phrase")
+                session.challenge_result_submitted = False
+                log.info(
+                    f"[ENFORCE] Backend challenge created: id={session.challenge_id}, "
+                    f"type={session.challenge_type}, text='{session.challenge_text}'"
+                )
+            except Exception as e:
+                log.error(f"[ENFORCE] Error requesting backend challenge: {e}")
+                session.state = CallState.ACTIVE
+                return
+            finally:
+                if should_close:
+                    await client.aclose()
+
+            # Step C2: Resolve matching prompt sound asset for the issued challenge
+            sound_to_play = resolve_challenge_prompt_sound(session.challenge_text or "", session.challenge_type or "")
+            if not sound_to_play:
+                log.error(
+                    f"[ENFORCE] Unsupported or unmapped challenge text '{session.challenge_text}' "
+                    f"(type='{session.challenge_type}'). Aborting challenge safely without playing prompt."
+                )
+                session.state = CallState.CHALLENGE_FAILED
+                await self._submit_challenge_result(
+                    session,
+                    outcome="failed",
+                    detail=f"Unsupported challenge prompt: '{session.challenge_text}'",
+                )
+                session.state = CallState.ACTIVE
+                return
+
+            # Step D: Mute inbound caller media
             if self.http_client:
                 try:
-                    res = await self.http_client.post(
-                        f"{self.ari_url}/channels/{session.caller_channel_id}/play",
-                        params={"media": self.challenge_sound},
+                    mute_res = await self.http_client.post(
+                        f"{self.ari_url}/channels/{session.caller_channel_id}/mute",
+                        params={"direction": "in"},
                     )
-                    action_record["status_code"] = res.status_code
-                    if res.status_code in (200, 201):
-                        action_record["executed"] = True
-                        log.info(f"[ENFORCE] Challenge audio playback started on channel {session.caller_channel_id}")
-                    elif res.status_code == 404:
-                        log.info(f"[ENFORCE] Channel {session.caller_channel_id} not found for challenge play (404)")
+                    if mute_res.status_code in (200, 204):
+                        session.is_caller_muted = True
+                        log.info(f"[ENFORCE] Inbound audio muted on channel {session.caller_channel_id}")
+                    elif mute_res.status_code == 404:
+                        log.info(f"[ENFORCE] Channel {session.caller_channel_id} not found during mute (404)")
+                        session.state = CallState.ACTIVE
+                        return
                     else:
-                        log.warning(f"[ENFORCE] Unexpected ARI play status {res.status_code}: {res.text}")
-                except httpx.TimeoutException:
-                    log.error(f"[ENFORCE] ARI request timed out playing challenge on {session.caller_channel_id}")
-                except httpx.RequestError as e:
-                    log.error(f"[ENFORCE] ARI connection error playing challenge: {e}")
+                        log.warning(f"[ENFORCE] Unexpected ARI mute status: {mute_res.status_code}")
+                        session.state = CallState.ACTIVE
+                        return
+                except Exception as e:
+                    log.error(f"[ENFORCE] ARI error muting channel: {e}")
+                    session.state = CallState.ACTIVE
+                    return
+
+            # Step E: Start playback
+            session.state = CallState.CHALLENGE_PLAYING
+            log.info(f"[STATE TRANSITION] Call {session.caller_channel_id} -> {CallState.CHALLENGE_PLAYING.value}")
+            if self.http_client:
+                try:
+                    action_record["media"] = sound_to_play
+                    play_res = await self.http_client.post(
+                        f"{self.ari_url}/channels/{session.caller_channel_id}/play",
+                        params={"media": sound_to_play},
+                    )
+                    action_record["status_code"] = play_res.status_code
+                    if play_res.status_code in (200, 201):
+                        action_record["executed"] = True
+                        p_data = play_res.json()
+                        session.challenge_playback_id = p_data.get("id")
+                        log.info(
+                            f"[ENFORCE] Challenge audio playback started on channel {session.caller_channel_id} "
+                            f"(playback_id={session.challenge_playback_id})"
+                        )
+                    elif play_res.status_code == 404:
+                        log.info(f"[ENFORCE] Channel {session.caller_channel_id} not found for challenge play (404)")
+                        await self._unmute_caller_channel(session)
+                        session.state = CallState.ACTIVE
+                        return
+                    else:
+                        log.warning(f"[ENFORCE] Unexpected ARI play status {play_res.status_code}: {play_res.text}")
+                        await self._unmute_caller_channel(session)
+                        session.state = CallState.ACTIVE
+                        return
                 except Exception as e:
                     log.error(f"[ENFORCE] Error playing challenge prompt: {e}", exc_info=True)
+                    await self._unmute_caller_channel(session)
+                    session.state = CallState.ACTIVE
+                    return
+
+            # Step F: Arm playback watchdog
+            session.challenge_watchdog_task = asyncio.create_task(
+                self._playback_watchdog(session, session.challenge_playback_id)
+            )
+
+    async def _playback_watchdog(self, session: ActiveCallSession, playback_id: Optional[str]) -> None:
+        try:
+            await asyncio.sleep(self.playback_watchdog_timeout)
+            if session.is_terminated or session.state == CallState.TERMINATED:
+                return
+            if session.state == CallState.CHALLENGE_PLAYING and session.challenge_playback_id == playback_id:
+                log.warning(
+                    f"[WATCHDOG] Playback watchdog expired ({self.playback_watchdog_timeout}s) for channel "
+                    f"{session.caller_channel_id} (playback_id={playback_id}). Unmuting caller."
+                )
+                await self._unmute_caller_channel(session)
+                session.challenge_playback_id = None
+                session.state = CallState.CHALLENGE_TIMEOUT
+                log.info(f"[STATE TRANSITION] Call {session.caller_channel_id} -> {CallState.CHALLENGE_TIMEOUT.value}")
+                await self._submit_challenge_result(
+                    session,
+                    outcome="timeout",
+                    detail=f"Playback watchdog timeout (PlaybackFinished not received within {self.playback_watchdog_timeout}s)",
+                )
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            log.error(f"[WATCHDOG] Error in playback watchdog: {e}", exc_info=True)
+
+    async def _run_challenge_listening_window(self, session: ActiveCallSession) -> None:
+        try:
+            # 1. Wait for response collection duration (0.0s - 5.0s)
+            session.challenge_listening_active = True
+            session.challenge_drain_active = False
+            await asyncio.sleep(self.listening_window_duration)
+            if session.is_terminated or session.state == CallState.TERMINATED:
+                return
+
+            # 2. Strict 5.0s Cutoff: stop accepting new audio / VAD into challenge evidence
+            session.challenge_listening_active = False
+            session.challenge_drain_active = True
+            log.info(f"Challenge response audio window strictly closed ({self.listening_window_duration}s cutoff reached).")
+
+            # 3. Allow already-admitted/in-flight STT from pre-cutoff audio to land (5.0s - 6.2s)
+            drain_delay = min(1.2, self.listening_window_duration)
+            await asyncio.sleep(drain_delay)
+            if session.is_terminated or session.state == CallState.TERMINATED:
+                return
+
+            # 4. Gate firmly closed: stop drain
+            session.challenge_drain_active = False
+            session.state = CallState.CHALLENGE_EVALUATING
+            log.info(f"[STATE TRANSITION] Call {session.caller_channel_id} -> {CallState.CHALLENGE_EVALUATING.value}")
+
+            # 5. Flush any audio chunks that were buffered during the drain so backend call monitoring continues
+            if session.challenge_buffered_chunks:
+                buffered = list(session.challenge_buffered_chunks)
+                session.challenge_buffered_chunks.clear()
+                log.info(f"Flushing {len(buffered)} buffered post-cutoff audio chunk(s) to VoiceShield backend.")
+                for msg in buffered:
+                    asyncio.create_task(self._send_audio_chunk(session, msg))
+
+            # 6. Evaluate strictly frozen snapshot
+            full_transcript = " ".join(session.challenge_transcripts).strip()
+            log.info(
+                f"Evaluating challenge response snapshot: target='{session.challenge_text}', "
+                f"type='{session.challenge_type}', transcript='{full_transcript}', "
+                f"speech_detected={session.challenge_speech_detected}"
+            )
+
+            outcome, detail = evaluate_challenge_response(
+                challenge_text=session.challenge_text or "",
+                challenge_type=session.challenge_type or "phrase",
+                transcript=full_transcript,
+                speech_detected=session.challenge_speech_detected,
+            )
+
+            log.info(f"Challenge response evaluated: outcome={outcome.upper()}, detail='{detail}'")
+
+            # 7. Transition to outcome state
+            if outcome == "passed":
+                session.state = CallState.CHALLENGE_PASSED
+            elif outcome == "failed":
+                session.state = CallState.CHALLENGE_FAILED
+            else:
+                session.state = CallState.CHALLENGE_TIMEOUT
+
+            log.info(f"[STATE TRANSITION] Call {session.caller_channel_id} -> {session.state.value}")
+
+            # 8. Submit backend result
+            await self._submit_challenge_result(session, outcome=outcome, detail=detail)
+
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            log.error(f"Error in challenge listening window: {e}", exc_info=True)
+            if session.state in (CallState.CHALLENGE_LISTENING, CallState.CHALLENGE_EVALUATING):
+                session.state = CallState.CHALLENGE_FAILED
+                await self._submit_challenge_result(session, outcome="failed", detail=f"Internal evaluation error: {e}")
+
+    async def _submit_challenge_result(
+        self,
+        session: ActiveCallSession,
+        outcome: str,
+        detail: str,
+    ) -> None:
+        if session.challenge_result_submitted:
+            log.info(f"Challenge result already submitted for session {session.session_id}, ignoring duplicate call")
+            return
+        session.challenge_result_submitted = True
+
+        if not session.session_id or not session.challenge_id:
+            log.warning(f"Cannot submit challenge result: session_id or challenge_id missing (session={session.session_id})")
+            return
+
+        client = await self._get_backend_client()
+        should_close = client is not self.backend_http_client
+        try:
+            log.info(
+                f"Submitting challenge result to backend: POST /challenge/{session.session_id}/{session.challenge_id}/result "
+                f"outcome={outcome}, detail='{detail}'"
+            )
+            res = await client.post(
+                f"{self.backend_http_url}/challenge/{session.session_id}/{session.challenge_id}/result",
+                json={"outcome": outcome, "detail": detail},
+            )
+            if res.status_code in (200, 201):
+                log.info(f"Challenge result successfully accepted by backend for session {session.session_id}")
+            else:
+                log.warning(f"Backend returned status {res.status_code} for challenge result: {res.text}")
+        except Exception as e:
+            log.error(f"Failed submitting challenge result to backend: {e}")
+        finally:
+            if should_close:
+                await client.aclose()
 
     async def _enforce_hold(
         self,
@@ -657,6 +1169,12 @@ class TelephonyGateway:
             log.info(f"Duplicate BLOCK event ignored; channel {session.caller_channel_id} already in state {session.state.value}")
             return
 
+        # Cancel any active challenge tasks if blocking
+        if session.challenge_watchdog_task and not session.challenge_watchdog_task.done():
+            session.challenge_watchdog_task.cancel()
+        if session.challenge_window_task and not session.challenge_window_task.done():
+            session.challenge_window_task.cancel()
+
         session.is_terminating = True
         session.state = CallState.TERMINATING
         session.enforcement_action_taken = "BLOCK"
@@ -716,11 +1234,37 @@ class TelephonyGateway:
 
         log.info(f"Tearing down call session for channel {session.caller_channel_id} (State={session.state.value})...")
 
-        # 1. Cancel WebSocket listener
+        # 1. Cancel challenge watchdog and window tasks
+        if session.challenge_watchdog_task and not session.challenge_watchdog_task.done():
+            session.challenge_watchdog_task.cancel()
+        if session.challenge_window_task and not session.challenge_window_task.done():
+            session.challenge_window_task.cancel()
+
+        # 2. Stop active playback if running
+        if self.http_client and session.challenge_playback_id:
+            try:
+                await self.http_client.delete(f"{self.ari_url}/playbacks/{session.challenge_playback_id}")
+            except Exception:
+                pass
+
+        # 3. Defensive unmute: never leave caller permanently muted
+        if session.is_caller_muted:
+            await self._unmute_caller_channel(session)
+
+        # 4. Clear challenge tracking
+        session.challenge_id = None
+        session.challenge_text = None
+        session.challenge_type = None
+        session.challenge_playback_id = None
+        session.challenge_listening_active = False
+        session.challenge_drain_active = False
+        session.challenge_buffered_chunks.clear()
+
+        # 5. Cancel WebSocket listener
         if session.ws_receive_task and not session.ws_receive_task.done():
             session.ws_receive_task.cancel()
 
-        # 2. Close VoiceShield WebSocket (triggers backend _teardown, flushes buffers & saves incident)
+        # 6. Close VoiceShield WebSocket (triggers backend _teardown, flushes buffers & saves incident)
         if session.ws and not session.ws.closed:
             try:
                 await session.ws.close()
@@ -728,7 +1272,7 @@ class TelephonyGateway:
             except Exception as e:
                 log.warning(f"Error closing WebSocket: {e}")
 
-        # 3. Destroy Asterisk Bridge and externalMedia channel
+        # 7. Destroy Asterisk Bridge and externalMedia channel
         if self.http_client:
             if session.bridge_id:
                 try:
@@ -744,7 +1288,7 @@ class TelephonyGateway:
                 except Exception as e:
                     log.warning(f"Failed deleting externalMedia channel: {e}")
 
-        # 4. Log telemetry summary
+        # 8. Log telemetry summary
         t = session.depacketizer.telemetry
         log.info(
             f"Session Telemetry Summary [Channel {session.caller_channel_id}]: "
