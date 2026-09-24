@@ -93,6 +93,66 @@ _EVENT_LABELS = {
 }
 
 
+def _speech_credible(
+    audio_or_quality,
+    quality=None,
+    is_real_ml: Optional[bool] = None,
+) -> bool:
+    """
+    Return True only when the audio window contains credible speech evidence.
+
+    Gating rules (Phase 5.7 correctness hardening):
+    - Silent windows are never credible (``quality.is_silent`` == True).
+    - POOR quality (SNR < 8 dB, clipping > 2 %, or silent) is never credible.
+    - In real_ml mode, actual voice activity is verified using the bundled
+      Silero VAD (faster_whisper.vad) requiring at least 250 ms of speech.
+      If VAD execution fails or is unavailable in real_ml mode, it fails closed
+      (returns False) to prevent non-speech contamination of speaker identity.
+    - In mock / heuristic-demo test modes, lightweight quality-only gating
+      is preserved so deterministic unit tests do not require neural VAD.
+
+    AASIST and Whisper are NOT blocked by this predicate. This predicate
+    touches identity only (ECAPA auto-enrollment and mismatch streak updates).
+    """
+    if quality is None:
+        if hasattr(audio_or_quality, "is_silent") and hasattr(audio_or_quality, "quality"):
+            q = audio_or_quality
+            audio = None
+        else:
+            audio = audio_or_quality
+            q = None
+    else:
+        audio = audio_or_quality
+        q = quality
+
+    if q is not None:
+        if q.is_silent or q.quality == "POOR":
+            return False
+
+    real_ml = is_real_ml if is_real_ml is not None else speaker_identity.is_real_ml
+    if real_ml:
+        if audio is None or len(audio) == 0:
+            return False
+        try:
+            from faster_whisper.vad import get_speech_timestamps, VadOptions
+            opts = VadOptions(min_speech_duration_ms=250)
+            audio_f32 = np.ascontiguousarray(audio, dtype=np.float32)
+            if audio_f32.ndim > 1:
+                audio_f32 = audio_f32.mean(axis=1)
+            timestamps = get_speech_timestamps(audio_f32, opts)
+            if not timestamps:
+                return False
+            total_speech_samples = sum(ts["end"] - ts["start"] for ts in timestamps)
+            min_samples = int(SAMPLE_RATE * 0.250)  # 250 ms at 16000 Hz = 4000 samples
+            return total_speech_samples >= min_samples
+        except Exception as e:
+            log.warning("speech_credible.vad_error", error=str(e))
+            # Fail closed: never allow unverified audio to enroll
+            return False
+
+    return True
+
+
 def analyze_window(state: SessionState, pcm_bytes: bytes,
                    pipeline_mode: str = "mock",
                    stt_submit: Optional[Callable[[int, "np.ndarray"], None]] = None,
@@ -144,9 +204,15 @@ def analyze_window(state: SessionState, pcm_bytes: bytes,
     # ── Evidence stream 2: identity (independent) ────────────────────────────
     # Demo enrolment happens once, from the first analysable window, and is
     # labelled as such. A production flow enrols out-of-band, before the call.
+    #
+    # Phase 5.7 correctness: enrolment is gated on credible speech.
+    # Silent, POOR-quality, or non-speech windows MUST NOT become the speaker
+    # reference — ambient noise/hiss produces a flat-spectrum embedding that
+    # every subsequent real-speech window would score as MISMATCH, falsely
+    # driving the identity corroboration flag that lifts the uncorroborated cap.
     identity_audio = window if speaker_identity.is_real_ml else audio
     _t = time.perf_counter()
-    if not speaker_identity.is_enrolled(session_id):
+    if not speaker_identity.is_enrolled(session_id) and _speech_credible(identity_audio, quality):
         speaker_identity.enroll(session_id, identity_audio)
         state.consecutive_identity_mismatches = 0
     ident = speaker_identity.analyze(session_id, identity_audio)
@@ -156,8 +222,13 @@ def analyze_window(state: SessionState, pcm_bytes: bytes,
     # Deterministic persistence update (P=2 consecutive ML analysis windows)
     # ML inference occurs when a window is scored: in real_ml, when `window is not None`;
     # in mock mode, on each frame.
+    #
+    # Phase 5.7 correctness: the streak is only updated on credible-speech
+    # windows.  Non-credible audio (silent or POOR quality) is treated as "no
+    # identity evidence": it neither increments nor resets the mismatch streak.
+    # This ensures only real speaker evidence can establish P=2 corroboration.
     window_scored = (window is not None) if speaker_identity.is_real_ml else True
-    if window_scored:
+    if window_scored and _speech_credible(identity_audio, quality):
         if ident is None or ident.enrollment_status == "NOT_ENROLLED":
             state.consecutive_identity_mismatches = 0
         else:

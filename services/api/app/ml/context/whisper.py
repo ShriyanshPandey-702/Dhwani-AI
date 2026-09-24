@@ -39,6 +39,18 @@ MIN_SAMPLES = int(SAMPLE_RATE * 1.0)
 # Below this mean power a window carries no speech worth transcribing.
 MIN_SPEECH_ENERGY = 1e-5
 
+# Provisional no-speech probability ceiling (Phase 5.7).
+# faster-whisper exposes ``segment.no_speech_prob`` — the model's own estimate
+# that a decoded segment is noise rather than speech.  Segments above this
+# ceiling are discarded before the text reaches the context classifier.
+#
+# 0.6 was chosen conservatively: it suppresses clearly non-speech segments
+# while leaving room for legitimate low-confidence transcriptions.  Calibrate
+# from in-domain (Indian-English phone-mic) held-out data before tightening.
+# The check is attribute-safe; older faster-whisper versions that do not
+# expose the field are unaffected.
+_NO_SPEECH_PROB_CEIL = 0.6
+
 
 class TranscriberUnavailable(RuntimeError):
     """Raised when the Whisper runtime or weights cannot be loaded."""
@@ -154,6 +166,16 @@ class WhisperTranscriber:
             # a model failure, so report no transcript rather than falling back.
             return None
         elapsed = (time.perf_counter() - started) * 1000.0
+
+        # Phase 5.7: discard segments the model itself classifies as non-speech.
+        # no_speech_prob is the probability the segment is noise; segments above
+        # the ceiling are hallucinations on near-threshold audio and must not
+        # reach the context classifier (where keyword matches are sticky).
+        # The attribute check is safe against older faster-whisper releases.
+        collected = [
+            s for s in collected
+            if not (hasattr(s, "no_speech_prob") and s.no_speech_prob > _NO_SPEECH_PROB_CEIL)
+        ]
 
         text = " ".join(s.text.strip() for s in collected).strip()
         if not text:

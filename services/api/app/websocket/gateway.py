@@ -120,6 +120,11 @@ async def websocket_endpoint(
             return
 
     # ── Authorise: verify session exists and is active ───────────────────────
+    # Resolve the effective user identity before entering the WS loop so that
+    # teardown (which runs outside the DB context) always has a valid UUID even
+    # when no JWT token was presented.  ``session.user_id`` is NOT NULL in the
+    # schema, so this is always resolvable when a live session exists.
+    effective_user_id: Optional[str] = None   # populated after DB lookup
     async with AsyncSessionLocal() as db:
         if user_id:
             query = select(Session).where(Session.id == session_id, Session.user_id == user_id)
@@ -265,7 +270,12 @@ async def websocket_endpoint(
         # Tear the session down only when the last dashboard disconnects, so a
         # brief network drop and reconnect does not lose the risk picture.
         if manager.connection_count(session_id) == 0:
-            await _teardown(session_id, user_id)
+            # Phase 5.7 fix: pass effective_user_id (always a valid UUID,
+            # resolved from session.user_id) rather than the closure-captured
+            # user_id which is None for unauthenticated connections.  Passing
+            # None would violate the NOT NULL FK on incidents.user_id and the
+            # incident record would be silently dropped.
+            await _teardown(session_id, effective_user_id)
 
 
 # ── Asynchronous speech-to-text ───────────────────────────────────────────────
