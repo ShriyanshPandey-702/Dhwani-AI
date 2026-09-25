@@ -145,11 +145,21 @@ def test_context_ignores_empty_transcripts():
     ("This is urgent, do it immediately", "urgency"),
     ("Do not discuss this with anyone", "sensitive_information_request"),
     ("This is the director speaking", "authority_claim"),
+    ("You have won a cash prize in the lottery", "financial_request"),
+    ("Please complete your bank KYC immediately", "financial_request"),
 ])
 def test_context_detects_each_signal(text, flag):
     classifier = ContextClassifier()
     result = classifier.classify("sess-ctx", text)
     assert getattr(result, flag) is True
+
+
+def test_lottery_scam_context_classification():
+    classifier = ContextClassifier()
+    result = classifier.classify("sess-scam", "Congratulations! You have won a 25 lakh lottery from your bank. Complete KYC now.")
+    assert result.financial_request is True
+    assert result.consequence == "high"
+    assert any(w in result.detected_phrases for w in ["lottery", "prize", "won ", "bank", "kyc"])
 
 
 def test_context_signals_are_sticky_across_a_call():

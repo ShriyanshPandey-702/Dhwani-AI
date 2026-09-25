@@ -187,6 +187,11 @@ export const useRiskStore = create<RiskStoreState>((set, get) => ({
       }
     }
 
+    // Freeze display once session has ended: drop late risk/quality updates
+    if (state.sessionStatus === 'ended' && event.type !== 'session_started') {
+      return;
+    }
+
     const patch: Partial<RiskStoreState> = {};
     if (eventId) {
       patch.seenEventIds = [...state.seenEventIds, eventId].slice(-MAX_SEEN_IDS);

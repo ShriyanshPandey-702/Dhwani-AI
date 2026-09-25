@@ -255,7 +255,7 @@ def analyze_window(state: SessionState, pcm_bytes: bytes,
         # would make the modulo almost never coincide with a real window.
         if stt_audio is not None:
             state.window_seq += 1
-            if state.window_seq % STT_EVERY_N_WINDOWS == 0:
+            if state.window_seq == 1 or state.window_seq % STT_EVERY_N_WINDOWS == 0:
                 stt_submit(state.window_seq, stt_audio)
         stage_ms["stt"] = 0.0          # off the critical path by construction
     else:

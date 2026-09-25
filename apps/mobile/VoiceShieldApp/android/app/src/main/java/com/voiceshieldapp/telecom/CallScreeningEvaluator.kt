@@ -64,7 +64,8 @@ data class EvaluationResult(
     val reasonCodes: List<String>,
     val explanation: String,
     val timestamp: Long,
-    val screeningLatencyMs: Long = 0L
+    val screeningLatencyMs: Long = 0L,
+    val callDirection: String = "INCOMING"  // INCOMING | OUTGOING
 )
 
 /**
@@ -208,6 +209,7 @@ object CallScreeningEvaluator {
             else -> if (canonical.isNotBlank()) "NOT_IN_CONTACTS" else "UNKNOWN"
         }
 
+        val directionStr = if (callDirection == DIRECTION_OUTGOING) "OUTGOING" else "INCOMING"
         val reasons = mutableListOf<String>()
 
         // 1. Check local explicit blocklist (highest priority)
@@ -225,7 +227,8 @@ object CallScreeningEvaluator {
                 contactStatus = contactStatus,
                 reasonCodes = reasons,
                 explanation = "Caller matches local security blocklist. Incoming call rejected.",
-                timestamp = timestamp
+                timestamp = timestamp,
+                callDirection = directionStr
             )
         }
 
@@ -245,7 +248,8 @@ object CallScreeningEvaluator {
                 contactStatus = contactStatus,
                 reasonCodes = reasons,
                 explanation = "Known contact. Number is saved in device contacts. Low risk — no adverse caller-screening indicators were detected.",
-                timestamp = timestamp
+                timestamp = timestamp,
+                callDirection = directionStr
             )
         }
 
@@ -266,7 +270,8 @@ object CallScreeningEvaluator {
                     contactStatus = contactStatus,
                     reasonCodes = reasons,
                     explanation = "Carrier verification failed (possible number spoofing). Review caller before sharing sensitive information.",
-                    timestamp = timestamp
+                    timestamp = timestamp,
+                    callDirection = directionStr
                 )
             }
             VERIFICATION_STATUS_PASSED -> {
@@ -284,7 +289,8 @@ object CallScreeningEvaluator {
                     contactStatus = contactStatus,
                     reasonCodes = reasons,
                     explanation = "Carrier verified caller identity (STIR/SHAKEN passed). Low risk — no adverse caller-screening indicators were detected.",
-                    timestamp = timestamp
+                    timestamp = timestamp,
+                    callDirection = directionStr
                 )
             }
             VERIFICATION_STATUS_NOT_VERIFIED, VERIFICATION_STATUS_UNKNOWN -> {
@@ -305,7 +311,8 @@ object CallScreeningEvaluator {
                         contactStatus = contactStatus,
                         reasonCodes = reasons,
                         explanation = "Incoming call from a private or restricted number. Caller intentionally hid their number.",
-                        timestamp = timestamp
+                        timestamp = timestamp,
+                        callDirection = directionStr
                     )
                 }
                 // Plain unverified caller: carrier doesn't sign calls in this market.
@@ -323,7 +330,8 @@ object CallScreeningEvaluator {
                     contactStatus = contactStatus,
                     reasonCodes = reasons,
                     explanation = "Caller identity could not be verified by carrier. Low risk — no adverse caller-screening indicators were detected. This is normal in markets where STIR/SHAKEN is not deployed.",
-                    timestamp = timestamp
+                    timestamp = timestamp,
+                    callDirection = directionStr
                 )
             }
             else -> {
@@ -341,7 +349,8 @@ object CallScreeningEvaluator {
                     contactStatus = contactStatus,
                     reasonCodes = reasons,
                     explanation = "No adverse caller-screening indicators were detected. Low risk.",
-                    timestamp = timestamp
+                    timestamp = timestamp,
+                    callDirection = directionStr
                 )
             }
         }

@@ -32,7 +32,8 @@ data class ScreenedCallRecord(
     val reasonCodes: List<String>,
     val screeningLatencyMs: Long = 0L,
     val source: String = "SIM_CALL",
-    val audioAnalysisStatus: String = "NOT_PERFORMED"
+    val audioAnalysisStatus: String = "NOT_PERFORMED",
+    val callDirection: String = "INCOMING"            // INCOMING | OUTGOING
 ) {
     fun toJsonObject(): JSONObject {
         return JSONObject().apply {
@@ -56,6 +57,7 @@ data class ScreenedCallRecord(
             put("screeningLatencyMs", screeningLatencyMs)
             put("source", source)
             put("audioAnalysisStatus", audioAnalysisStatus)
+            put("callDirection", callDirection)
         }
     }
 
@@ -92,7 +94,8 @@ data class ScreenedCallRecord(
                 reasonCodes = reasonsList,
                 screeningLatencyMs = json.optLong("screeningLatencyMs", 0L),
                 source = json.optString("source", "SIM_CALL"),
-                audioAnalysisStatus = json.optString("audioAnalysisStatus", "NOT_PERFORMED")
+                audioAnalysisStatus = json.optString("audioAnalysisStatus", "NOT_PERFORMED"),
+                callDirection = json.optString("callDirection", "INCOMING")
             )
         }
     }
@@ -145,7 +148,8 @@ class CallScreeningStorage(context: Context) {
             reasonCodes = evaluation.reasonCodes,
             screeningLatencyMs = screeningLatencyMs,
             source = "SIM_CALL",
-            audioAnalysisStatus = "NOT_PERFORMED"
+            audioAnalysisStatus = "NOT_PERFORMED",
+            callDirection = evaluation.callDirection
         )
 
         val existing = getRecentEvents().toMutableList()

@@ -168,4 +168,43 @@ describe('Call Screening Service & Store', () => {
     expect(sampleEvent.callerMasked).toBe('+91 ***** *3210');
     expect(sampleEvent.callerHash).toHaveLength(64); // SHA-256
   });
+
+  // 10. Call direction support (Incoming vs Outgoing)
+  test('screened call event preserves callDirection for incoming and outgoing calls', () => {
+    const incomingCall: ScreenedCallEvent = {
+      ...sampleEvent,
+      eventId: 'evt-inc-1',
+      callDirection: 'INCOMING',
+    };
+    const outgoingCall: ScreenedCallEvent = {
+      ...sampleEvent,
+      eventId: 'evt-out-1',
+      callDirection: 'OUTGOING',
+    };
+
+    useCallScreeningStore.getState().addScreenedCall(incomingCall);
+    useCallScreeningStore.getState().addScreenedCall(outgoingCall);
+
+    const calls = useCallScreeningStore.getState().recentCalls;
+    expect(calls[0].callDirection).toBe('OUTGOING');
+    expect(calls[1].callDirection).toBe('INCOMING');
+  });
+
+  // 11. Normal / Safe screened call handling
+  test('safe screened call is saved to recentCalls without triggering high-risk alert banner', () => {
+    const safeCall: ScreenedCallEvent = {
+      ...sampleEvent,
+      eventId: 'evt-safe-1',
+      riskScore: 10,
+      riskState: 'safe',
+      riskLevel: 'LOW',
+      warningType: 'NONE',
+      explanation: 'Verified caller in device contacts.',
+    };
+
+    useCallScreeningStore.getState().addScreenedCall(safeCall);
+    expect(useCallScreeningStore.getState().recentCalls).toHaveLength(1);
+    expect(useCallScreeningStore.getState().recentCalls[0].riskState).toBe('safe');
+    expect(useCallScreeningStore.getState().activeAlert).toBeNull();
+  });
 });

@@ -437,4 +437,49 @@ class CallScreeningEvaluatorTest {
         // Serialization must take < 2.0 ms per record, comfortably within Android Telecom 5.0 second budget
         assertTrue("Serialization avg latency ($avgMillis ms) must be < 2.0 ms", avgMillis < 2.0)
     }
+
+    @Test
+    fun testCallDirectionEvaluationAndSerialization() {
+        val incomingEval = CallScreeningEvaluator.evaluate(
+            rawHandle = "tel:$samplePhone",
+            verificationStatus = CallScreeningEvaluator.VERIFICATION_STATUS_PASSED,
+            callDirection = CallScreeningEvaluator.DIRECTION_INCOMING
+        )
+        assertEquals("INCOMING", incomingEval.callDirection)
+
+        val outgoingEval = CallScreeningEvaluator.evaluate(
+            rawHandle = "tel:$samplePhone",
+            verificationStatus = CallScreeningEvaluator.VERIFICATION_STATUS_PASSED,
+            callDirection = CallScreeningEvaluator.DIRECTION_OUTGOING
+        )
+        assertEquals("OUTGOING", outgoingEval.callDirection)
+
+        val record = ScreenedCallRecord(
+            eventId = "test-out-1",
+            timestamp = outgoingEval.timestamp,
+            callerMasked = outgoingEval.maskedCaller,
+            callerName = null,
+            callerHash = outgoingEval.callerHash,
+            contactStatus = outgoingEval.contactStatus,
+            verificationStatus = "PASSED",
+            riskScore = outgoingEval.riskScore,
+            riskState = outgoingEval.riskState,
+            decision = outgoingEval.decision.name,
+            riskLevel = outgoingEval.riskLevel.name,
+            warningType = outgoingEval.warningType.name,
+            category = "SIM Call",
+            explanation = outgoingEval.explanation,
+            reasonCodes = outgoingEval.reasonCodes,
+            screeningLatencyMs = 2L,
+            source = "SIM_CALL",
+            audioAnalysisStatus = "NOT_PERFORMED",
+            callDirection = outgoingEval.callDirection
+        )
+
+        val json = record.toJsonObject()
+        assertEquals("OUTGOING", json.getString("callDirection"))
+
+        val restored = ScreenedCallRecord.fromJsonObject(json)
+        assertEquals("OUTGOING", restored.callDirection)
+    }
 }

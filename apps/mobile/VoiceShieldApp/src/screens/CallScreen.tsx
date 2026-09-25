@@ -30,10 +30,17 @@ type Route = RouteProp<RootStackParamList, 'Call'>;
 const STATUS_TEXT: Record<SessionStatus, string> = {
   idle: 'IDLE',
   connecting: 'CONNECTING',
-  monitoring: 'CALL MONITORED',
+  monitoring: 'ANALYSIS ACTIVE',
   reconnecting: 'RECONNECTING',
   ended: 'SESSION ENDED',
   error: 'CONNECTION FAILED',
+};
+
+const getStatusText = (status: SessionStatus, mode: 'live' | 'mock'): string => {
+  if (status === 'monitoring') {
+    return mode === 'live' ? 'MIC ANALYSIS ACTIVE' : 'SIMULATION ACTIVE';
+  }
+  return STATUS_TEXT[status];
 };
 
 const STATUS_COLOR: Record<SessionStatus, string> = {
@@ -61,7 +68,7 @@ const SEVERITY_TO_CARD = {
 export const CallScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
-  const { sessionId, mode = 'mock' } = route.params;
+  const { sessionId, mode = 'live' } = route.params;
 
   const stopSession = useSessionStore(s => s.stopSession);
 
@@ -102,6 +109,13 @@ export const CallScreen: React.FC = () => {
   // Subscribe the store to the socket before the socket opens.
   useRiskStream(sessionId);
 
+  // Automatically halt microphone streaming once the session has ended
+  useEffect(() => {
+    if (sessionStatus === 'ended' && mode === 'live') {
+      stopMicCapture();
+    }
+  }, [sessionStatus, mode, stopMicCapture]);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -130,9 +144,10 @@ export const CallScreen: React.FC = () => {
         stopMicCapture();
       }
       wsService.disconnect();
+      stopSession(sessionId).catch(() => {});
       reset();
     };
-  }, [sessionId, mode, reset, startMicCapture, stopMicCapture]);
+  }, [sessionId, mode, reset, startMicCapture, stopMicCapture, stopSession]);
 
   const handleEndSession = useCallback(() => {
     Alert.alert('End Session', 'Stop monitoring this call?', [
@@ -172,7 +187,7 @@ export const CallScreen: React.FC = () => {
           <View>
             <Text style={styles.brand}>VOICESHIELD</Text>
             <Text style={[styles.statusText, { color: statusColor }]}>
-              {STATUS_TEXT[sessionStatus]}
+              {getStatusText(sessionStatus, mode)}
             </Text>
           </View>
         </View>

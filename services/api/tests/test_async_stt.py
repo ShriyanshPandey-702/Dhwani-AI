@@ -375,8 +375,8 @@ def test_stt_cadence_is_paced_by_analysis_windows_not_chunks(clean_manager):
             scored += 1
     stream_windower.reset("cadence")
     assert scored > 0
-    assert all(ws % STT_EVERY_N_WINDOWS == 0 for ws in submitted), submitted
-    assert len(submitted) <= scored // STT_EVERY_N_WINDOWS + 1
+    assert all(ws == 1 or ws % STT_EVERY_N_WINDOWS == 0 for ws in submitted), submitted
+    assert len(submitted) <= scored // STT_EVERY_N_WINDOWS + 2
 
 
 @pytest.mark.skipif(not FUNCTIONAL.is_file(), reason="functional set absent")

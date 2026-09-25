@@ -50,6 +50,8 @@ export interface ScreenedCallEvent {
   source: string;
   /** Whether ML audio analysis was performed (always NOT_PERFORMED for SIM calls in Phase 3) */
   audioAnalysisStatus: AudioAnalysisStatus;
+  /** Direction of the call: INCOMING or OUTGOING */
+  callDirection?: 'INCOMING' | 'OUTGOING' | 'UNKNOWN';
 }
 
 export interface CallScreeningRoleResult {

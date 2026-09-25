@@ -58,30 +58,47 @@ object CallNotificationHelper {
                 }
             }
 
-            // Safe/low calls do not require an intrusive heads-up notification.
-            // Records are persisted and reflected on the dashboard/history without alerting the user.
-            if (evaluation.riskState == "safe" || evaluation.riskState == "low") {
-                return
-            }
-
             val callerDisplay = evaluation.callerName ?: evaluation.maskedCaller
-            val (title, message) = when (evaluation.riskState) {
-                "critical" -> Pair(
-                    "VoiceShield: Critical call risk",
-                    "Strong impersonation/fraud indicators detected for call from $callerDisplay. Follow the recommended verification steps before trusting this caller."
-                )
-                "high" -> Pair(
-                    "VoiceShield: High-risk call",
-                    "Incoming call from $callerDisplay shows high-risk indicators. ${evaluation.explanation}"
-                )
-                "suspicious" -> Pair(
-                    "VoiceShield: Caller needs caution",
-                    "Incoming call from $callerDisplay. ${evaluation.explanation} Call allowed — avoid sharing OTPs, passwords, or payment details."
-                )
-                else -> Pair(
-                    "VoiceShield Call Security",
-                    "Elevated risk detected for call from $callerDisplay."
-                )
+            val isElevated = evaluation.riskState == "suspicious" ||
+                             evaluation.riskState == "high" ||
+                             evaluation.riskState == "critical"
+
+            val title: String
+            val message: String
+            val priority: Int
+
+            if (isElevated) {
+                priority = NotificationCompat.PRIORITY_HIGH
+                val pair = when (evaluation.riskState) {
+                    "critical" -> Pair(
+                        "VoiceShield Security Alert: Critical call risk",
+                        "Strong impersonation/fraud indicators detected for call from $callerDisplay. Follow recommended verification steps before trusting this caller."
+                    )
+                    "high" -> Pair(
+                        "VoiceShield Security Alert: High-risk call",
+                        "Incoming call from $callerDisplay shows high-risk indicators. ${evaluation.explanation}"
+                    )
+                    else -> Pair(
+                        "VoiceShield Security Alert: Potential suspicious call",
+                        "Incoming call from $callerDisplay. ${evaluation.explanation} Call allowed — avoid sharing OTPs, passwords, or payment details."
+                    )
+                }
+                title = pair.first
+                message = pair.second
+            } else {
+                priority = NotificationCompat.PRIORITY_DEFAULT
+                title = "VoiceShield: Screening incoming call"
+                val verifiedText = when (evaluation.warningType) {
+                    WarningType.NONE -> if (evaluation.contactStatus == "IN_CONTACTS") "Known Contact" else "Carrier Verified"
+                    WarningType.UNVERIFIED_CALLER -> "Unverified Carrier"
+                    else -> "Screened"
+                }
+                val decisionText = when (evaluation.decision) {
+                    ScreeningDecision.ALLOW -> "Allowed"
+                    ScreeningDecision.SILENCE -> "Silenced"
+                    ScreeningDecision.REJECT -> "Rejected"
+                }
+                message = "Caller: $callerDisplay · Status: $verifiedText · Decision: $decisionText · Risk: Low (Safe)"
             }
 
             val launchIntent = Intent(context, MainActivity::class.java).apply {
@@ -103,7 +120,7 @@ object CallNotificationHelper {
                 .setContentTitle(title)
                 .setContentText(message)
                 .setStyle(NotificationCompat.BigTextStyle().bigText(message))
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setPriority(priority)
                 .setCategory(NotificationCompat.CATEGORY_CALL)
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent)

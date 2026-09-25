@@ -134,7 +134,7 @@ export const HomeScreen: React.FC = () => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
     return d.getTime();
-  }, []);
+  }, [recentCalls, overview]);
 
   const screenedToday = React.useMemo(() => {
     return recentCalls.filter(c => c.timestamp >= startOfTodayMs);
@@ -323,7 +323,16 @@ export const HomeScreen: React.FC = () => {
           ) : null}
         </TouchableOpacity>
 
-        {/* ── Start Live Audio Analysis ───────────────────────────────────── */}
+        {/* ── Audio Analysis Disclaimer / Mode Info ─────────────────────────── */}
+        <View style={styles.audioNoticeCard}>
+          <Text style={styles.audioNoticeTitle}>ℹ️ Live Audio Analysis Notice</Text>
+          <Text style={styles.audioNoticeDesc}>
+            Android restricts third-party apps from recording raw cellular call audio.
+            This live analysis mode listens via the <Text style={styles.audioNoticeBold}>Device Microphone</Text> (e.g. ambient voice or phone on speakerphone) to detect synthetic/deepfake speech in real time.
+          </Text>
+        </View>
+
+        {/* ── Start Live Audio Analysis (Device Mic) ─────────────────────── */}
         <TouchableOpacity
           style={[styles.startBtn, starting && styles.startBtnDisabled]}
           onPress={() => handleStartMonitoring('live')}
@@ -333,7 +342,10 @@ export const HomeScreen: React.FC = () => {
           {starting ? (
             <ActivityIndicator color={colors.white} />
           ) : (
-            <Text style={styles.startBtnText}>▶  Start Live Audio Analysis</Text>
+            <View style={styles.btnContentCol}>
+              <Text style={styles.startBtnText}>🎙️  Start Microphone Analysis</Text>
+              <Text style={styles.startBtnSubtext}>Device Mic · Real-Time Deepfake Detection</Text>
+            </View>
           )}
         </TouchableOpacity>
 
@@ -365,6 +377,8 @@ export const HomeScreen: React.FC = () => {
         ) : (
           feedItems.map(item => {
             if (item.kind === 'screened') {
+              const isOutgoing = item.record.callDirection === 'OUTGOING';
+              const isInContacts = item.record.contactStatus === 'IN_CONTACTS';
               return (
                 <TouchableOpacity
                   key={`screened_${item.id}`}
@@ -377,10 +391,11 @@ export const HomeScreen: React.FC = () => {
                   <Text style={styles.callTime}>{formatTime(item.timeIso)}</Text>
                   <View style={styles.callBody}>
                     <Text style={styles.callSession}>
-                      📞 {item.callerName ? item.callerName : 'SIM Call'}: {item.callerMasked}
+                      {isOutgoing ? '↗️ Outgoing' : '📞 Incoming'}{' '}
+                      {item.callerName ? item.callerName : 'SIM Call'}: {item.callerMasked}
                     </Text>
                     <Text style={styles.callMeta}>
-                      {item.decision} · {item.riskState !== 'safe' && item.riskState !== 'low' ? item.warningType : 'Low risk'}
+                      {item.decision} · {isInContacts ? 'Saved Contact' : 'Not in contacts'} · {item.riskState !== 'safe' && item.riskState !== 'low' ? item.warningType : 'Low risk'}
                     </Text>
                   </View>
                   <RiskStateBadge state={item.state} size="sm" />
@@ -527,10 +542,44 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSecondary,
   },
+  audioNoticeCard: {
+    backgroundColor: `${colors.brand}12`,
+    borderColor: `${colors.brand}33`,
+    borderWidth: 1,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginTop: spacing.xs,
+  },
+  audioNoticeTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.brand,
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  audioNoticeDesc: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    lineHeight: 18,
+  },
+  audioNoticeBold: {
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  btnContentCol: {
+    alignItems: 'center',
+    gap: 3,
+  },
+  startBtnSubtext: {
+    color: `${colors.white}CC`,
+    fontSize: 12,
+    fontWeight: '500',
+  },
   startBtn: {
     backgroundColor: colors.brand,
     borderRadius: radius.md,
-    paddingVertical: 16,
+    paddingVertical: 14,
     alignItems: 'center',
     shadowColor: colors.brand,
     shadowOffset: { width: 0, height: 4 },

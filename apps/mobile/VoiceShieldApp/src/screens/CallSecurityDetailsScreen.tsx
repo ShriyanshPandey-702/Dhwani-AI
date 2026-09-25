@@ -147,9 +147,16 @@ export const CallSecurityDetailsScreen: React.FC = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Call Information</Text>
           <InfoRow label="Caller" value={displayCaller} />
+          <InfoRow
+            label="Direction"
+            value={callRecord.callDirection === 'OUTGOING' ? '↗️ Outgoing Call' : '📞 Incoming Call'}
+          />
           <InfoRow label="Time" value={formatDateTime(callRecord.timestamp)} />
           <InfoRow label="Category" value={callRecord.category ?? 'SIM Call'} />
-          <InfoRow label="Source" value="Incoming SIM Call (Android Telecom)" />
+          <InfoRow
+            label="Source"
+            value={`${callRecord.callDirection === 'OUTGOING' ? 'Outgoing' : 'Incoming'} SIM Call (Android Telecom - Metadata Only)`}
+          />
         </View>
 
         {/* ── Security Signals ─────────────────────────────────────────── */}

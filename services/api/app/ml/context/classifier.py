@@ -37,6 +37,8 @@ FINANCIAL = [
     "transfer", "payment", "pay ", "wire", "remit", "lakh", "crore",
     "rupees", "amount", "invoice", "account number", "beneficiary",
     "send money", "fund", "deposit", "settle",
+    "lottery", "prize", "reward", "cashback", "refund", "won ", "winner",
+    "bank", "credit card", "debit card", "kyc",
 ]
 
 OTP = [

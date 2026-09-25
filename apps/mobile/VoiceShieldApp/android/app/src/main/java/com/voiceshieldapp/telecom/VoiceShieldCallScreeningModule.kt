@@ -439,6 +439,7 @@ class VoiceShieldCallScreeningModule(private val reactContext: ReactApplicationC
             putDouble("screeningLatencyMs", record.screeningLatencyMs.toDouble())
             putString("source", record.source)
             putString("audioAnalysisStatus", record.audioAnalysisStatus)
+            putString("callDirection", record.callDirection)
             val reasons: WritableArray = Arguments.createArray()
             record.reasonCodes.forEach { reasons.pushString(it) }
             putArray("reasonCodes", reasons)
