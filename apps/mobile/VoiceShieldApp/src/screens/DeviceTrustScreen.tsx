@@ -1,139 +1,375 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator,
-} from 'react-native';
-import { colors, spacing, radius, typography } from '../utils/theme';
-import { DeviceData } from '../types';
-import client from '../services/api/client';
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTheme } from "../utils/theme";
+import { DeviceData } from "../types";
+import { useCallScreeningStore } from "../store/callScreeningStore";
+import client from "../services/api/client";
+import { BottomNavigation } from "../components/BottomNavigation";
 
 export const DeviceTrustScreen: React.FC = () => {
+  const insets = useSafeAreaInsets();
+  const { colors, radius, isDark } = useTheme();
+
+  const isRoleHeld = useCallScreeningStore((s) => s.isRoleHeld);
+
   const [devices, setDevices] = useState<DeviceData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
 
   const load = async () => {
-    const { data } = await client.get<DeviceData[]>('/devices');
-    setDevices(data);
+    try {
+      const { data } = await client.get<DeviceData[]>("/devices");
+      setDevices(data);
+    } catch {
+      // Backend may be offline
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
-    load().catch(console.error).finally(() => setIsLoading(false));
+    load();
   }, []);
 
   const registerDevice = async () => {
     setRegistering(true);
     try {
-      const { data } = await client.post('/devices/register', {
-        device_name: 'My Android Device',
-        platform: 'android',
+      const { data } = await client.post("/devices/register", {
+        device_name: "Secondary Device",
+        platform: "android",
       });
       Alert.alert(
-        'Device Registered ✓',
-        `Store this token securely in Android Keystore:\n\n${data.device_token}`,
-        [{ text: 'OK', onPress: load }]
+        "Device Registered ✓",
+        `New secondary device enrolled for out-of-band verification token: ${data.device_token?.slice(0, 16)}…`,
+        [{ text: "OK", onPress: load }]
       );
-    } catch (e) {
-      Alert.alert('Error', 'Failed to register device');
+    } catch {
+      Alert.alert("Notice", "Backend offline or could not register secondary device.");
     } finally {
       setRegistering(false);
     }
   };
 
   const revokeDevice = (deviceId: string) => {
-    Alert.alert('Revoke Device', 'This device will no longer be able to approve verifications.', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert("Revoke Device", "This device will no longer be able to approve verifications.", [
+      { text: "Cancel", style: "cancel" },
       {
-        text: 'Revoke', style: 'destructive',
+        text: "Revoke",
+        style: "destructive",
         onPress: async () => {
-          await client.delete(`/devices/${deviceId}`);
-          load();
+          try {
+            await client.delete(`/devices/${deviceId}`);
+            load();
+          } catch {}
         },
       },
     ]);
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.title}>Trusted Devices</Text>
-        <Text style={styles.subtitle}>
-          Your trusted devices can approve OOB verification requests. A device must be separate
-          from the suspected call channel.
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: isDark ? colors.background : colors.background,
+        },
+      ]}
+    >
+      <ScrollView
+        contentContainerStyle={[
+          styles.scroll,
+          {
+            paddingTop: insets.top + 16,
+            paddingBottom: Math.max(insets.bottom, 20) + 16,
+          },
+        ]}
+      >
+        <Text style={[styles.title, { color: colors.textPrimary }]}>
+          Device Security & Trust
+        </Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+          Hardware trust binding, Telecom call screening status, and out-of-band verification devices.
         </Text>
 
+        {/* Section 32: Current Device Card */}
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: isDark ? colors.surface : colors.surface,
+              borderColor: colors.border,
+              borderRadius: radius.md,
+            },
+          ]}
+        >
+          <Text style={[styles.cardHeader, { color: colors.textMuted }]}>
+            THIS DEVICE
+          </Text>
+
+          <View style={styles.deviceHeroRow}>
+            <View style={[styles.deviceIconCircle, { backgroundColor: `${colors.accent}18` }]}>
+              <Text style={{ fontSize: 26 }}>📱</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.deviceName, { color: colors.textPrimary }]}>
+                Realme 8
+              </Text>
+              <Text style={[styles.devicePlatform, { color: colors.textSecondary }]}>
+                Android 13 · Physical Device
+              </Text>
+            </View>
+          </View>
+
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+          <View style={styles.row}>
+            <Text style={[styles.rowKey, { color: colors.textSecondary }]}>
+              Device protection
+            </Text>
+            <Text style={[styles.rowVal, { color: colors.success }]}>
+              Active
+            </Text>
+          </View>
+
+          <View style={styles.row}>
+            <Text style={[styles.rowKey, { color: colors.textSecondary }]}>
+              Call screening status
+            </Text>
+            <Text
+              style={[
+                styles.rowVal,
+                { color: isRoleHeld ? colors.success : colors.warning },
+              ]}
+            >
+              {isRoleHeld ? "Active" : "Permission Required"}
+            </Text>
+          </View>
+
+
+        </View>
+
+        {/* Secondary Out-of-Band Devices */}
+        <View style={styles.sectionHeaderRow}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+            Secondary Verification Devices
+          </Text>
+        </View>
+
         <TouchableOpacity
-          style={[styles.registerBtn, registering && styles.disabled]}
+          style={[
+            styles.addBtn,
+            {
+              backgroundColor: colors.accent,
+              borderRadius: radius.md,
+              opacity: registering ? 0.7 : 1,
+            },
+          ]}
           onPress={registerDevice}
           disabled={registering}
-          accessibilityLabel="Register this device as trusted"
-          accessibilityRole="button">
-          {registering ? <ActivityIndicator color={colors.white} /> :
-            <Text style={styles.registerBtnText}>+ Register This Device</Text>}
+          accessibilityRole="button"
+          accessibilityLabel="Register Secondary Device"
+        >
+          {registering ? (
+            <ActivityIndicator color="#FFFFFF" size="small" />
+          ) : (
+            <Text style={styles.addBtnText}>+ Register Secondary Verification Device</Text>
+          )}
         </TouchableOpacity>
 
         {isLoading ? (
-          <ActivityIndicator color={colors.brand} style={{ marginTop: 32 }} />
+          <ActivityIndicator color={colors.accent} style={{ marginTop: 24 }} />
         ) : devices.length === 0 ? (
-          <View style={styles.empty}>
-            <Text style={styles.emptyText}>No trusted devices registered yet.</Text>
+          <View
+            style={[
+              styles.emptyCard,
+              {
+                backgroundColor: isDark ? colors.surface : colors.surface,
+                borderColor: colors.border,
+                borderRadius: radius.md,
+              },
+            ]}
+          >
+            <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+              No secondary verification devices registered yet.
+            </Text>
           </View>
         ) : (
-          devices.map(d => (
-            <View key={d.id} style={styles.deviceCard}>
-              <View style={styles.deviceLeft}>
-                <Text style={styles.deviceIcon}>📱</Text>
+          devices.map((d) => (
+            <View
+              key={d.id}
+              style={[
+                styles.secondaryCard,
+                {
+                  backgroundColor: isDark ? colors.surface : colors.surface,
+                  borderColor: colors.border,
+                  borderRadius: radius.md,
+                },
+              ]}
+            >
+              <View style={styles.secLeft}>
+                <Text style={{ fontSize: 22, marginRight: 10 }}>📱</Text>
                 <View>
-                  <Text style={styles.deviceName}>{d.device_name}</Text>
-                  <Text style={styles.deviceMeta}>{d.platform} · {d.is_active ? 'Active' : 'Revoked'}</Text>
+                  <Text style={[styles.secName, { color: colors.textPrimary }]}>
+                    {d.device_name}
+                  </Text>
+                  <Text style={[styles.secMeta, { color: colors.textMuted }]}>
+                    {d.platform} • {d.is_active ? "Active" : "Revoked"}
+                  </Text>
                 </View>
               </View>
               <TouchableOpacity
-                style={styles.revokeBtn}
                 onPress={() => revokeDevice(d.id)}
-                accessibilityLabel={`Revoke device ${d.device_name}`}
-                accessibilityRole="button">
-                <Text style={styles.revokeBtnText}>Revoke</Text>
+                style={[
+                  styles.revokeBtn,
+                  {
+                    backgroundColor: `${colors.danger}18`,
+                    borderColor: `${colors.danger}44`,
+                  },
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="Revoke device"
+              >
+                <Text style={[styles.revokeBtnText, { color: colors.danger }]}>
+                  Revoke
+                </Text>
               </TouchableOpacity>
             </View>
           ))
         )}
       </ScrollView>
+
+      {/* Persistent Bottom Navigation (Section 28) */}
+      <BottomNavigation activeTab="device" />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
-  scroll: { padding: spacing.lg, gap: spacing.md },
-  title: { ...typography.h2 },
-  subtitle: { color: colors.textSecondary, fontSize: 14, lineHeight: 20 },
-  registerBtn: {
-    backgroundColor: colors.brand,
-    borderRadius: radius.md,
-    paddingVertical: 14, alignItems: 'center',
+  container: {
+    flex: 1,
   },
-  disabled: { opacity: 0.6 },
-  registerBtnText: { color: colors.white, fontWeight: '700', fontSize: 15 },
-  empty: { alignItems: 'center', padding: spacing.xl },
-  emptyText: { color: colors.textMuted, fontSize: 14 },
-  deviceCard: {
-    backgroundColor: colors.bgCard,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderWidth: 1, borderColor: colors.border,
+  scroll: {
+    paddingHorizontal: 20,
+    gap: 12,
   },
-  deviceLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  deviceIcon: { fontSize: 28 },
-  deviceName: { fontWeight: '700', color: colors.textPrimary, fontSize: 15 },
-  deviceMeta: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
+  title: {
+    fontSize: 24,
+    fontWeight: "800",
+    letterSpacing: -0.4,
+  },
+  subtitle: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  card: {
+    borderWidth: 1,
+    padding: 16,
+    gap: 10,
+    marginTop: 6,
+  },
+  cardHeader: {
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.8,
+  },
+  deviceHeroRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  deviceIconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  deviceName: {
+    fontSize: 17,
+    fontWeight: "800",
+  },
+  devicePlatform: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  divider: {
+    height: 1,
+    marginVertical: 4,
+  },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 2,
+  },
+  rowKey: {
+    fontSize: 13,
+  },
+  rowVal: {
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  sectionHeaderRow: {
+    marginTop: 8,
+  },
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  addBtn: {
+    paddingVertical: 13,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  addBtnText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  emptyCard: {
+    borderWidth: 1,
+    padding: 24,
+    alignItems: "center",
+  },
+  emptyText: {
+    fontSize: 13,
+  },
+  secondaryCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderWidth: 1,
+    padding: 14,
+  },
+  secLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  secName: {
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  secMeta: {
+    fontSize: 11,
+    marginTop: 2,
+  },
   revokeBtn: {
-    paddingHorizontal: 12, paddingVertical: 6,
-    borderRadius: radius.full,
-    backgroundColor: `${colors.error}18`,
-    borderWidth: 1, borderColor: `${colors.error}44`,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 999,
   },
-  revokeBtnText: { color: colors.error, fontWeight: '700', fontSize: 12 },
+  revokeBtnText: {
+    fontSize: 11,
+    fontWeight: "700",
+  },
 });

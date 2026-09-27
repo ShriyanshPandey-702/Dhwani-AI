@@ -83,7 +83,7 @@ describe('RiskGauge', () => {
       render(<RiskGauge score={74} state="high" trend="rising" />),
     );
     expect(text).toContain('74');
-    expect(text).toContain('HIGH RISK');
+    expect(text).toContain('HIGH');
     expect(text).toContain('Risk increasing');
   });
 
@@ -91,7 +91,7 @@ describe('RiskGauge', () => {
     const text = textOf(
       render(<RiskGauge score={0} state="insufficient_evidence" trend="stable" />),
     );
-    expect(text).toContain('MONITORING');
+    expect(text).toContain('INSUFFICIENT EVIDENCE');
     expect(text).not.toContain('SAFE');
   });
 });

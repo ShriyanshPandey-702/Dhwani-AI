@@ -147,6 +147,17 @@ class CallScreeningService {
   }
 
   /**
+   * Posts an actionable Dhwani AI security alert notification.
+   */
+  async postSecurityNotification(title: string, message: string, isHighPriority: boolean = false): Promise<boolean> {
+    const mod = getNativeModule();
+    if (Platform.OS !== 'android' || !mod?.postSecurityNotification) {
+      return false;
+    }
+    return mod.postSecurityNotification(title, message, isHighPriority);
+  }
+
+  /**
    * Checks whether READ_CONTACTS permission is currently granted.
    * READ_CONTACTS is needed for Android Telecom to pass contact calls to CallScreeningService.
    */

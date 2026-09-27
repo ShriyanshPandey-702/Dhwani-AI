@@ -1,98 +1,306 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from "react";
 import {
-  View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator,
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { colors, spacing, radius, typography } from '../utils/theme';
-import { IncidentSummary } from '../types';
-import client from '../services/api/client';
-import { RootStackParamList } from '../navigation/AppNavigator';
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+  ScrollView,
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTheme } from "../utils/theme";
+import { IncidentSummary, RiskState } from "../types";
+import { ScreenedCallEvent } from "../types/telecom";
+import { useCallScreeningStore } from "../store/callScreeningStore";
+import client from "../services/api/client";
+import { RootStackParamList } from "../navigation/AppNavigator";
+import { CallRow } from "../components/CallRow";
+import { BottomNavigation } from "../components/BottomNavigation";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
+type FilterType = "all" | "low" | "suspicious" | "high";
 
-const STATE_COLORS: Record<string, string> = {
-  low: colors.safe, suspicious: colors.suspicious,
-  high: colors.high, critical: colors.critical, insufficient_evidence: colors.watch,
+type UnifiedCallRecord = {
+  id: string;
+  source: "screened" | "incident";
+  callerName?: string | null;
+  callerMasked: string;
+  timestamp: number;
+  riskState: RiskState;
+  decision?: string;
+  category: string;
+  screenedRecord?: ScreenedCallEvent;
+  incidentId?: string;
+};
+
+const normalizeRiskState = (raw: string | undefined | null): RiskState => {
+  const s = raw?.toLowerCase();
+  if (s === "low") return "low";
+  if (s === "suspicious") return "suspicious";
+  if (s === "high") return "high";
+  if (s === "critical") return "critical";
+  return "insufficient_evidence";
 };
 
 export const IncidentHistoryScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
+  const insets = useSafeAreaInsets();
+  const { colors, radius, isDark } = useTheme();
+
+  const recentScreenedCalls = useCallScreeningStore((s) => s.recentCalls);
+  const loadRecentCalls = useCallScreeningStore((s) => s.loadRecentCalls);
+
   const [incidents, setIncidents] = useState<IncidentSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState<FilterType>("all");
 
   useEffect(() => {
-    client.get<IncidentSummary[]>('/incidents')
-      .then(r => setIncidents(r.data))
-      .catch(console.error)
+    loadRecentCalls();
+    client
+      .get<IncidentSummary[]>("/incidents")
+      .then((r) => setIncidents(r.data))
+      .catch(() => {})
       .finally(() => setIsLoading(false));
-  }, []);
+  }, [loadRecentCalls]);
 
-  const renderItem = ({ item }: { item: IncidentSummary }) => {
-    const color = STATE_COLORS[item.peak_risk_state || 'low'] || colors.watch;
-    return (
-      <TouchableOpacity
-        style={styles.card}
-        onPress={() => navigation.navigate('IncidentDetail', { incidentId: item.id })}
-        accessibilityLabel={`Incident ${item.id.slice(0, 8)}, state ${item.final_state}`}
-        accessibilityRole="button">
-        <View style={styles.cardLeft}>
-          <View style={[styles.riskDot, { backgroundColor: color }]} />
-          <View>
-            <Text style={styles.incidentId}>#{item.id.slice(0, 8)}</Text>
-            <Text style={styles.incidentDate}>{new Date(item.created_at).toLocaleString()}</Text>
-          </View>
-        </View>
-        <View style={styles.cardRight}>
-          <Text style={[styles.stateText, { color }]}>{(item.peak_risk_state || 'low').toUpperCase()}</Text>
-          <Text style={styles.scoreText}>{item.peak_risk_score ?? 0}</Text>
-        </View>
-      </TouchableOpacity>
-    );
-  };
+  // Combine and sort real calls
+  const unifiedRecords: UnifiedCallRecord[] = useMemo(() => {
+    const list: UnifiedCallRecord[] = [];
+
+    recentScreenedCalls.forEach((sc) => {
+      list.push({
+        id: `sc-${sc.eventId}`,
+        source: "screened",
+        callerName: sc.callerName,
+        callerMasked: sc.callerMasked,
+        timestamp: sc.timestamp,
+        riskState: normalizeRiskState(sc.riskState),
+        decision: sc.decision,
+        category: "Incoming SIM Call — Metadata Only",
+        screenedRecord: sc,
+      });
+    });
+
+    incidents.forEach((inc) => {
+      const ms = new Date(inc.created_at).getTime();
+      list.push({
+        id: `inc-${inc.id}`,
+        source: "incident",
+        callerMasked: `Session ${inc.session_id?.slice(0, 8) || inc.id.slice(0, 8)}`,
+        timestamp: isNaN(ms) ? Date.now() : ms,
+        riskState: normalizeRiskState(inc.peak_risk_state || inc.final_state),
+        decision: inc.action_taken || undefined,
+        category: "Device Microphone — Live Audio",
+        incidentId: inc.id,
+      });
+    });
+
+    list.sort((a, b) => b.timestamp - a.timestamp);
+    return list;
+  }, [recentScreenedCalls, incidents]);
+
+  // Filter based on selected chip
+  const filteredRecords = useMemo(() => {
+    if (activeFilter === "all") return unifiedRecords;
+    if (activeFilter === "low") {
+      return unifiedRecords.filter((r) => r.riskState === "low");
+    }
+    if (activeFilter === "suspicious") {
+      return unifiedRecords.filter((r) => r.riskState === "suspicious");
+    }
+    if (activeFilter === "high") {
+      return unifiedRecords.filter(
+        (r) => r.riskState === "high" || r.riskState === "critical"
+      );
+    }
+    return unifiedRecords;
+  }, [unifiedRecords, activeFilter]);
+
+  const filterChips: { key: FilterType; label: string }[] = [
+    { key: "all", label: "All" },
+    { key: "low", label: "Low" },
+    { key: "suspicious", label: "Suspicious" },
+    { key: "high", label: "High Risk" },
+  ];
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Incident History</Text>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: isDark ? colors.background : colors.background,
+        },
+      ]}
+    >
+      {/* Top Header (design.md Section 26) */}
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>
+          Call History
+        </Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+          Screened cellular calls & live voice telemetry
+        </Text>
+      </View>
+
+      {/* Horizontal Filter Chips (Section 26) */}
+      <View style={styles.chipsWrapper}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipsScroll}
+        >
+          {filterChips.map((chip) => {
+            const isSelected = activeFilter === chip.key;
+            return (
+              <TouchableOpacity
+                key={chip.key}
+                activeOpacity={0.7}
+                onPress={() => setActiveFilter(chip.key)}
+                style={[
+                  styles.chip,
+                  {
+                    backgroundColor: isSelected ? colors.accent : isDark ? colors.surface : colors.surface,
+                    borderColor: isSelected ? colors.accent : colors.border,
+                    borderRadius: radius.full,
+                  },
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={`Filter: ${chip.label}`}
+              >
+                <Text
+                  style={[
+                    styles.chipText,
+                    {
+                      color: isSelected ? "#FFFFFF" : colors.textSecondary,
+                      fontWeight: isSelected ? "700" : "500",
+                    },
+                  ]}
+                >
+                  {chip.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
+
+      {/* Call List */}
       {isLoading ? (
-        <ActivityIndicator color={colors.brand} size="large" style={{ marginTop: 48 }} />
+        <View style={styles.loaderWrap}>
+          <ActivityIndicator color={colors.accent} size="large" />
+        </View>
       ) : (
         <FlatList
-          data={incidents}
-          keyExtractor={i => i.id}
-          renderItem={renderItem}
-          contentContainerStyle={styles.list}
+          data={filteredRecords}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <CallRow
+              callerName={item.callerName}
+              callerMasked={item.callerMasked}
+              timestamp={item.timestamp}
+              riskState={item.riskState}
+              decision={item.decision}
+              category={item.category}
+              onPress={() => {
+                if (item.source === "screened" && item.screenedRecord) {
+                  navigation.navigate("CallSecurityDetails", {
+                    callRecord: item.screenedRecord,
+                  });
+                } else if (item.incidentId) {
+                  navigation.navigate("IncidentDetail", {
+                    incidentId: item.incidentId,
+                  });
+                }
+              }}
+            />
+          )}
+          contentContainerStyle={[
+            styles.list,
+            { paddingBottom: Math.max(insets.bottom, 20) + 16 },
+          ]}
           ListEmptyComponent={
-            <View style={styles.empty}>
-              <Text style={styles.emptyText}>No incidents recorded yet.</Text>
+            <View style={styles.emptyState}>
+              <Text style={{ fontSize: 36, marginBottom: 8 }}>📋</Text>
+              <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
+                No calls yet
+              </Text>
+              <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
+                {activeFilter === "all"
+                  ? "Incoming screened calls and recorded sessions will appear here."
+                  : `No calls matching "${activeFilter}" risk filter.`}
+              </Text>
             </View>
           }
         />
       )}
+
+      {/* Bottom Navigation */}
+      <BottomNavigation activeTab="calls" />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
-  title: { ...typography.h2, padding: spacing.lg, paddingBottom: spacing.md },
-  list: { padding: spacing.lg, gap: spacing.sm },
-  card: {
-    backgroundColor: colors.bgCard,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderWidth: 1, borderColor: colors.border,
+  container: {
+    flex: 1,
   },
-  cardLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  riskDot: { width: 10, height: 10, borderRadius: 5 },
-  incidentId: { fontWeight: '700', color: colors.textPrimary, fontSize: 15 },
-  incidentDate: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
-  cardRight: { alignItems: 'flex-end' },
-  stateText: { fontSize: 11, fontWeight: '700', letterSpacing: 1 },
-  scoreText: { fontSize: 22, fontWeight: '800', color: colors.textPrimary },
-  empty: { alignItems: 'center', padding: spacing.xl },
-  emptyText: { color: colors.textMuted, fontSize: 14 },
+  header: {
+    paddingHorizontal: 20,
+    paddingBottom: 8,
+    gap: 3,
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: "800",
+    letterSpacing: -0.4,
+  },
+  subtitle: {
+    fontSize: 13,
+  },
+  chipsWrapper: {
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(128,128,128,0.15)",
+  },
+  chipsScroll: {
+    paddingHorizontal: 20,
+    gap: 8,
+  },
+  chip: {
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderWidth: 1,
+  },
+  chipText: {
+    fontSize: 12,
+  },
+  list: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    gap: 4,
+  },
+  loaderWrap: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 60,
+    paddingHorizontal: 30,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  emptySubtitle: {
+    fontSize: 13,
+    textAlign: "center",
+    marginTop: 4,
+    lineHeight: 18,
+  },
 });

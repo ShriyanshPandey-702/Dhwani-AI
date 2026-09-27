@@ -59,7 +59,7 @@ export function formatApiError(err: any): string {
       return 'Validation error: The audio submission format or parameters are invalid.';
     }
     if (status === 500) {
-      return 'VoiceShield backend server error during analysis. Check server logs.';
+      return 'Dhwani AI backend server error during analysis. Check server logs.';
     }
     if (detailMsg) {
       return detailMsg;
@@ -77,7 +77,7 @@ export function formatApiError(err: any): string {
     err.code === 'ECONNREFUSED' ||
     err.message?.includes('Network request failed')
   ) {
-    return 'VoiceShield backend is not running.\nStart FastAPI on port 8000 and try again.';
+    return 'Dhwani AI backend is not running.\nStart FastAPI on port 8000 and try again.';
   }
 
   return err.message || 'An unexpected error occurred during analysis.';

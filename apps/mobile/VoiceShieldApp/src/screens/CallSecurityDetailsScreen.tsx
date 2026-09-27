@@ -1,469 +1,421 @@
-import React from 'react';
+import React from "react";
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-} from 'react-native';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from "react-native";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { colors, spacing, radius, typography } from '../utils/theme';
-import { RiskStateBadge } from '../components/RiskStateBadge';
-import { RootStackParamList } from '../navigation/AppNavigator';
-import { ScreenedCallEvent } from '../types/telecom';
+import { useTheme } from "../utils/theme";
+import { RiskBadge } from "../components/RiskBadge";
+import { RootStackParamList } from "../navigation/AppNavigator";
+import { ScreenedCallEvent } from "../types/telecom";
+import { RiskState } from "../types";
 
-type Route = RouteProp<RootStackParamList, 'CallSecurityDetails'>;
+type Route = RouteProp<RootStackParamList, "CallSecurityDetails">;
 
-/**
- * Call Security Details Screen
- *
- * Displays a full breakdown of a screened SIM call:
- * - Risk Summary (badge, score, decision)
- * - Call Info (caller, time, source)
- * - Verification signals (carrier STIR/SHAKEN, contact status)
- * - Screening latency
- * - Human-readable explanation of the risk evaluation
- * - Reason codes
- * - Audio analysis status (always NOT_PERFORMED for Phase 3 SIM calls)
- *
- * Phase 3 constraint: Audio analysis is not performed on cellular SIM calls.
- * Android third-party CallScreeningService provides caller metadata, not raw audio.
- */
 export const CallSecurityDetailsScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<Route>();
   const insets = useSafeAreaInsets();
+  const { colors, riskColors, radius, isDark } = useTheme();
+
   const { callRecord } = route.params;
 
   const formatDateTime = (timestamp: number): string => {
     const d = new Date(timestamp);
-    const pad = (n: number) => `${n}`.padStart(2, '0');
+    const pad = (n: number) => `${n}`.padStart(2, "0");
     const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
     const time = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
     return `${date} ${time}`;
   };
 
-  const displayRiskState = (rs: string): string => {
-    switch (rs) {
-      case 'safe':      return 'Safe';
-      case 'low':       return 'Low Risk';
-      case 'suspicious': return 'Suspicious';
-      case 'high':      return 'High Risk';
-      case 'critical':  return 'Critical';
-      default:          return rs;
-    }
+  const normalizeState = (raw: string | undefined | null): RiskState => {
+    const s = raw?.toLowerCase();
+    if (s === "low") return "low";
+    if (s === "suspicious") return "suspicious";
+    if (s === "high") return "high";
+    if (s === "critical") return "critical";
+    return "insufficient_evidence";
   };
 
-  const badgeState = (): 'low' | 'suspicious' | 'high' | 'critical' | 'insufficient_evidence' => {
-    switch (callRecord.riskState) {
-      case 'safe':      return 'low';
-      case 'low':       return 'low';
-      case 'suspicious': return 'suspicious';
-      case 'high':      return 'high';
-      case 'critical':  return 'critical';
-      default:          return 'insufficient_evidence';
-    }
-  };
-
-  const riskScoreColor = (): string => {
-    const score = callRecord.riskScore ?? 0;
-    if (score >= 75) return colors.error;
-    if (score >= 45) return colors.warning;
-    return colors.success;
-  };
-
-  const verificationStatusLabel = (vs: string): string => {
-    switch (vs) {
-      case 'PASSED':       return '✅ Verified (STIR/SHAKEN Passed)';
-      case 'FAILED':       return '🚫 Verification Failed (Possible Spoofing)';
-      case 'NOT_VERIFIED': return '⚠️ Not Verified (carrier does not sign calls)';
-      default:             return '❓ Unknown';
-    }
-  };
-
-  const contactStatusLabel = (cs: string): string => {
-    switch (cs) {
-      case 'IN_CONTACTS':     return '📱 Saved in Device Contacts';
-      case 'NOT_IN_CONTACTS': return '👤 Not in Device Contacts';
-      default:                return '❓ Contact Status Unknown';
-    }
-  };
-
-  const decisionLabel = (d: string): string => {
-    switch (d) {
-      case 'ALLOW':   return '✅ Allowed';
-      case 'SILENCE': return '🔇 Silenced';
-      case 'REJECT':  return '🚫 Rejected';
-      default:        return d;
-    }
-  };
+  const state = normalizeState(callRecord.riskState);
+  const riskColor = riskColors[state];
+  const score = callRecord.riskScore ?? 0;
 
   const displayCaller = callRecord.callerName
     ? `${callRecord.callerName} (${callRecord.callerMasked})`
     : callRecord.callerMasked;
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: isDark ? colors.background : colors.background,
+          paddingTop: insets.top,
+        },
+      ]}
+    >
       {/* Header */}
-      <View style={styles.header}>
+      <View
+        style={[
+          styles.header,
+          {
+            borderBottomColor: colors.border,
+            backgroundColor: isDark ? colors.surface : colors.surface,
+          },
+        ]}
+      >
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backBtn}
           accessibilityLabel="Go back"
-          accessibilityRole="button">
-          <Text style={styles.backBtnText}>‹ Back</Text>
+          accessibilityRole="button"
+        >
+          <Text style={[styles.backBtnText, { color: colors.textSecondary }]}>‹ Back</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Call Security Details</Text>
-        <View style={styles.backBtnPlaceholder} />
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
+          Call Security Details
+        </Text>
+        <View style={styles.backPlaceholder} />
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + spacing.xxl }]}
-        showsVerticalScrollIndicator={false}>
-
-        {/* ── Risk Summary Card ────────────────────────────────────────── */}
-        <View style={styles.summaryCard}>
-          <View style={styles.summaryRow}>
-            <View style={styles.summaryLeft}>
-              <Text style={styles.summaryLabel}>RISK ASSESSMENT</Text>
-              <Text style={styles.riskStateText}>{displayRiskState(callRecord.riskState ?? 'low')}</Text>
-              <View style={styles.badgeRow}>
-                <RiskStateBadge state={badgeState()} size="sm" />
-              </View>
-            </View>
-            <View style={styles.scoreCircle}>
-              <Text style={[styles.scoreValue, { color: riskScoreColor() }]}>
-                {callRecord.riskScore ?? 0}
-              </Text>
-              <Text style={styles.scoreLabel}>/ 100</Text>
+        contentContainerStyle={[
+          styles.scroll,
+          { paddingBottom: insets.bottom + 32 },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Top Risk Headline (Section 27) */}
+        <View
+          style={[
+            styles.riskHeadlineCard,
+            {
+              backgroundColor: isDark ? colors.surface : colors.surface,
+              borderColor: colors.border,
+              borderRadius: radius.md,
+            },
+          ]}
+        >
+          <View style={styles.headlineLeft}>
+            <Text style={{ fontSize: 11, fontWeight: "700", color: colors.accent, marginBottom: 4, letterSpacing: 0.5 }}>
+              Incoming SIM Call — Metadata Only
+            </Text>
+            <Text style={[styles.headlineCaller, { color: colors.textPrimary }]}>
+              {displayCaller}
+            </Text>
+            <Text style={[styles.headlineTime, { color: colors.textSecondary }]}>
+              {formatDateTime(callRecord.timestamp)}
+            </Text>
+            <View style={styles.badgeWrap}>
+              <RiskBadge state={state} size="md" />
             </View>
           </View>
-          <View style={styles.divider} />
-          <View style={styles.decisionRow}>
-            <Text style={styles.metaLabel}>DECISION</Text>
-            <Text style={styles.decisionText}>{decisionLabel(callRecord.decision)}</Text>
+
+          <View
+            style={[
+              styles.scoreCircle,
+              {
+                borderColor: `${riskColor}55`,
+                backgroundColor: `${riskColor}12`,
+              },
+            ]}
+          >
+            <Text style={[styles.scoreValue, { color: riskColor }]}>{score}</Text>
+            <Text style={[styles.scoreLabel, { color: colors.textMuted }]}>/ 100</Text>
           </View>
         </View>
 
-        {/* ── Call Info ────────────────────────────────────────────────── */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Call Information</Text>
-          <InfoRow label="Caller" value={displayCaller} />
-          <InfoRow
-            label="Direction"
-            value={callRecord.callDirection === 'OUTGOING' ? '↗️ Outgoing Call' : '📞 Incoming Call'}
-          />
-          <InfoRow label="Time" value={formatDateTime(callRecord.timestamp)} />
-          <InfoRow label="Category" value={callRecord.category ?? 'SIM Call'} />
-          <InfoRow
-            label="Source"
-            value={`${callRecord.callDirection === 'OUTGOING' ? 'Outgoing' : 'Incoming'} SIM Call (Android Telecom - Metadata Only)`}
-          />
+        {/* Persistent Evidence Streams (Section 27) */}
+        <View style={styles.sectionTitleRow}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+            PERSISTENT EVIDENCE SUMMARY
+          </Text>
         </View>
 
-        {/* ── Security Signals ─────────────────────────────────────────── */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Security Signals</Text>
-          <InfoRow
-            label="Carrier Verification"
-            value={verificationStatusLabel(callRecord.verificationStatus)}
-          />
-          <InfoRow
-            label="Contact Status"
-            value={contactStatusLabel(callRecord.contactStatus ?? 'UNKNOWN')}
-          />
-          <InfoRow
-            label="Warning"
-            value={callRecord.warningType === 'NONE' ? 'None detected' : callRecord.warningType}
-          />
-        </View>
-
-        {/* ── Screening Metadata ───────────────────────────────────────── */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Screening Metadata</Text>
-          <InfoRow
-            label="Latency"
-            value={`${callRecord.screeningLatencyMs ?? 0} ms (well within 5000 ms limit)`}
-          />
-          <InfoRow label="Event ID" value={callRecord.eventId} mono />
-        </View>
-
-        {/* ── Why This Risk Level ──────────────────────────────────────── */}
-        {!!callRecord.explanation && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Why This Risk Level?</Text>
-            <View style={styles.explanationBox}>
-              <Text style={styles.explanationText}>{callRecord.explanation}</Text>
-            </View>
+        {/* 1. Authenticity */}
+        <View
+          style={[
+            styles.evidenceBox,
+            {
+              backgroundColor: isDark ? colors.surface : colors.surface,
+              borderColor: colors.border,
+              borderRadius: radius.md,
+            },
+          ]}
+        >
+          <View style={styles.evidenceHeader}>
+            <Text style={[styles.evidenceTitle, { color: colors.textPrimary }]}>
+              1. VOICE AUTHENTICITY
+            </Text>
+            <Text style={[styles.evidenceStatus, { color: colors.textMuted }]}>
+              SIM METADATA
+            </Text>
           </View>
-        )}
-
-        {/* ── Reason Codes ─────────────────────────────────────────────── */}
-        {callRecord.reasonCodes && callRecord.reasonCodes.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Detection Signals</Text>
-            {callRecord.reasonCodes.map((code, i) => (
-              <View key={i} style={styles.codeChip}>
-                <Text style={styles.codeText}>{code}</Text>
-              </View>
-            ))}
-          </View>
-        )}
-
-        {/* ── Audio Analysis ───────────────────────────────────────────── */}
-        <View style={[styles.section, styles.audioSection]}>
-          <Text style={styles.sectionTitle}>Audio Analysis</Text>
-          <View style={styles.audioCard}>
-            <View style={styles.audioStatusRow}>
-              <Text style={styles.audioStatusIcon}>🔇</Text>
-              <View style={styles.audioStatusBody}>
-                <Text style={styles.audioStatusTitle}>Not Performed</Text>
-                <Text style={styles.audioStatusDesc}>
-                  Android third-party call screening provides caller metadata only, not raw cellular call audio.
-                  ML voice analysis (AASIST-L / ECAPA-TDNN / Whisper) is not performed on SIM calls in Phase 3.
-                </Text>
-              </View>
-            </View>
-            <View style={styles.divider} />
-            <Text style={styles.audioNote}>
-              To perform AI audio analysis, use{' '}
-              <Text style={styles.audioNoteEmphasis}>Live Audio Analysis</Text> or{' '}
-              <Text style={styles.audioNoteEmphasis}>Analyze Audio File</Text> from the home screen.
+          <Text style={[styles.evidenceDesc, { color: colors.textSecondary }]}>
+            Cellular SIM carrier screening was evaluated. Raw cellular call media is restricted by Android OS from third-party recording.
+          </Text>
+          <View style={styles.evidenceDetailRow}>
+            <Text style={[styles.evidenceKey, { color: colors.textMuted }]}>Carrier Verification: </Text>
+            <Text style={[styles.evidenceVal, { color: colors.textPrimary }]}>
+              {callRecord.verificationStatus === "PASSED"
+                ? "STIR/SHAKEN Passed"
+                : callRecord.verificationStatus === "FAILED"
+                ? "Verification Failed"
+                : "Not Signed by Carrier"}
             </Text>
           </View>
         </View>
 
+        {/* 2. Identity */}
+        <View
+          style={[
+            styles.evidenceBox,
+            {
+              backgroundColor: isDark ? colors.surface : colors.surface,
+              borderColor: colors.border,
+              borderRadius: radius.md,
+            },
+          ]}
+        >
+          <View style={styles.evidenceHeader}>
+            <Text style={[styles.evidenceTitle, { color: colors.textPrimary }]}>
+              2. SPEAKER IDENTITY
+            </Text>
+            <Text style={[styles.evidenceStatus, { color: colors.textMuted }]}>
+              CONTACT SIGNALS
+            </Text>
+          </View>
+          <View style={styles.evidenceDetailRow}>
+            <Text style={[styles.evidenceKey, { color: colors.textMuted }]}>Contact Status: </Text>
+            <Text style={[styles.evidenceVal, { color: colors.textPrimary }]}>
+              {callRecord.contactStatus === "IN_CONTACTS"
+                ? "Saved in Device Contacts"
+                : "Not in Device Contacts"}
+            </Text>
+          </View>
+          <View style={styles.evidenceDetailRow}>
+            <Text style={[styles.evidenceKey, { color: colors.textMuted }]}>Caller Warning: </Text>
+            <Text style={[styles.evidenceVal, { color: colors.textPrimary }]}>
+              {callRecord.warningType === "NONE" ? "None" : callRecord.warningType}
+            </Text>
+          </View>
+        </View>
+
+        {/* 3. Active Liveness */}
+        <View
+          style={[
+            styles.evidenceBox,
+            {
+              backgroundColor: isDark ? colors.surface : colors.surface,
+              borderColor: colors.border,
+              borderRadius: radius.md,
+            },
+          ]}
+        >
+          <View style={styles.evidenceHeader}>
+            <Text style={[styles.evidenceTitle, { color: colors.textPrimary }]}>
+              3. ACTIVE LIVENESS
+            </Text>
+            <Text style={[styles.evidenceStatus, { color: colors.textMuted }]}>
+              PASSIVE SCREENING
+            </Text>
+          </View>
+          <Text style={[styles.evidenceDesc, { color: colors.textSecondary }]}>
+            Active cryptographic or verbal liveness challenge is available on-demand during live sessions.
+          </Text>
+        </View>
+
+        {/* 4. Consequences / Intent */}
+        <View
+          style={[
+            styles.evidenceBox,
+            {
+              backgroundColor: isDark ? colors.surface : colors.surface,
+              borderColor: colors.border,
+              borderRadius: radius.md,
+            },
+          ]}
+        >
+          <View style={styles.evidenceHeader}>
+            <Text style={[styles.evidenceTitle, { color: colors.textPrimary }]}>
+              4. CONSEQUENCES & INTENT
+            </Text>
+            <Text
+              style={[
+                styles.evidenceStatus,
+                { color: callRecord.decision === "ALLOW" ? colors.success : colors.warning },
+              ]}
+            >
+              {callRecord.decision?.toUpperCase() || "ALLOW"}
+            </Text>
+          </View>
+          <Text style={[styles.evidenceDesc, { color: colors.textSecondary }]}>
+            {callRecord.explanation || "No adverse screening indicators detected on incoming SIM call."}
+          </Text>
+        </View>
+
+        {/* Screening Diagnostics */}
+        <View
+          style={[
+            styles.diagnosticsBox,
+            {
+              backgroundColor: isDark ? colors.surfaceElevated : colors.surfaceElevated,
+              borderColor: colors.border,
+              borderRadius: radius.sm,
+            },
+          ]}
+        >
+          <Text style={[styles.diagTitle, { color: colors.textMuted }]}>
+            TELECOM SCREENING DIAGNOSTICS
+          </Text>
+          <Text style={[styles.diagRow, { color: colors.textSecondary }]}>
+            Latency: {callRecord.screeningLatencyMs ?? 0} ms · Event ID: {callRecord.eventId}
+          </Text>
+          <Text style={[styles.diagNote, { color: colors.textMuted }]}>
+            Screened via Android Telecom CallScreeningService.
+          </Text>
+        </View>
       </ScrollView>
     </View>
   );
 };
 
-/** Reusable info row component */
-const InfoRow: React.FC<{ label: string; value: string; mono?: boolean }> = ({ label, value, mono }) => (
-  <View style={styles.infoRow}>
-    <Text style={styles.infoLabel}>{label}</Text>
-    <Text style={[styles.infoValue, mono && styles.infoValueMono]} numberOfLines={2} ellipsizeMode="middle">
-      {value}
-    </Text>
-  </View>
-);
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.bg,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    backgroundColor: colors.bgCard,
   },
   backBtn: {
     paddingVertical: 4,
-    paddingRight: spacing.sm,
+    paddingRight: 10,
   },
   backBtnText: {
-    color: colors.brand,
     fontSize: 16,
-    fontWeight: '600',
-  },
-  backBtnPlaceholder: {
-    width: 48,
+    fontWeight: "600",
   },
   headerTitle: {
-    ...typography.h3,
     fontSize: 16,
-    color: colors.textPrimary,
-    fontWeight: '700',
+    fontWeight: "700",
+  },
+  backPlaceholder: {
+    width: 40,
   },
   scroll: {
-    padding: spacing.lg,
-    gap: spacing.md,
+    paddingHorizontal: 18,
+    paddingTop: 16,
+    gap: 12,
   },
-  summaryCard: {
-    backgroundColor: colors.bgCard,
-    borderRadius: radius.md,
-    padding: spacing.md,
+  riskHeadlineCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     borderWidth: 1,
-    borderColor: colors.border,
+    padding: 16,
   },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  summaryLeft: {
+  headlineLeft: {
     flex: 1,
+    marginRight: 12,
   },
-  summaryLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
-    marginBottom: 4,
+  headlineCaller: {
+    fontSize: 18,
+    fontWeight: "800",
   },
-  riskStateText: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: colors.textPrimary,
-    marginBottom: spacing.xs,
+  headlineTime: {
+    fontSize: 12,
+    marginTop: 2,
   },
-  badgeRow: {
-    flexDirection: 'row',
+  badgeWrap: {
+    marginTop: 8,
   },
   scoreCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: colors.bgElevated,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 76,
+    height: 76,
+    borderRadius: 38,
     borderWidth: 2,
-    borderColor: colors.border,
+    alignItems: "center",
+    justifyContent: "center",
   },
   scoreValue: {
     fontSize: 26,
-    fontWeight: '900',
-    lineHeight: 30,
+    fontWeight: "800",
   },
   scoreLabel: {
-    fontSize: 10,
-    color: colors.textMuted,
-    fontWeight: '600',
+    fontSize: 9,
+    fontWeight: "600",
   },
-  divider: {
-    height: 1,
-    backgroundColor: colors.border,
-    marginVertical: spacing.sm,
-  },
-  decisionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  metaLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  decisionText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  section: {
-    backgroundColor: colors.bgCard,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: spacing.xs,
+  sectionTitleRow: {
+    marginTop: 6,
+    marginBottom: 2,
   },
   sectionTitle: {
     fontSize: 11,
-    fontWeight: '700',
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
-    marginBottom: spacing.xs,
+    fontWeight: "700",
+    letterSpacing: 1,
   },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    paddingVertical: 3,
-    borderBottomWidth: 1,
-    borderBottomColor: `${colors.border}66`,
-  },
-  infoLabel: {
-    fontSize: 12,
-    color: colors.textMuted,
-    fontWeight: '600',
-    flex: 0.4,
-  },
-  infoValue: {
-    fontSize: 12,
-    color: colors.textPrimary,
-    fontWeight: '500',
-    flex: 0.6,
-    textAlign: 'right',
-  },
-  infoValueMono: {
-    fontFamily: 'monospace',
-    fontSize: 10,
-  },
-  explanationBox: {
-    backgroundColor: colors.bgElevated,
-    borderRadius: radius.sm,
-    padding: spacing.sm,
-    borderLeftWidth: 3,
-    borderLeftColor: colors.brand,
-  },
-  explanationText: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    lineHeight: 19,
-  },
-  codeChip: {
-    backgroundColor: colors.bgElevated,
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-    alignSelf: 'flex-start',
+  evidenceBox: {
     borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 4,
+    padding: 14,
+    gap: 6,
   },
-  codeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: colors.textSecondary,
-    fontFamily: 'monospace',
+  evidenceHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
-  audioSection: {
-    borderColor: `${colors.textMuted}55`,
+  evidenceTitle: {
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.5,
   },
-  audioCard: {
-    gap: spacing.xs,
+  evidenceStatus: {
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.8,
   },
-  audioStatusRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    alignItems: 'flex-start',
+  evidenceDesc: {
+    fontSize: 12,
+    lineHeight: 16,
   },
-  audioStatusIcon: {
-    fontSize: 24,
+  evidenceDetailRow: {
+    flexDirection: "row",
     marginTop: 2,
   },
-  audioStatusBody: {
-    flex: 1,
-  },
-  audioStatusTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: 4,
-  },
-  audioStatusDesc: {
+  evidenceKey: {
     fontSize: 12,
-    color: colors.textSecondary,
-    lineHeight: 17,
   },
-  audioNote: {
+  evidenceVal: {
     fontSize: 12,
-    color: colors.textMuted,
-    lineHeight: 17,
-    fontStyle: 'italic',
+    fontWeight: "600",
   },
-  audioNoteEmphasis: {
-    color: colors.brand,
-    fontStyle: 'normal',
-    fontWeight: '600',
+  diagnosticsBox: {
+    borderWidth: 1,
+    padding: 12,
+    gap: 4,
+    marginTop: 4,
+  },
+  diagTitle: {
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.8,
+  },
+  diagRow: {
+    fontSize: 11,
+    fontFamily: "monospace",
+  },
+  diagNote: {
+    fontSize: 10,
   },
 });

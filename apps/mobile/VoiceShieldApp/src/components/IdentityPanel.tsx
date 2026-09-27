@@ -37,7 +37,7 @@ export const IdentityPanel: React.FC<Props> = ({ identity }) => {
         <MetricRow label="Enrollment" value="NOT ENROLLED" tone="muted" />
         <Text style={styles.note}>
           No enrolled speaker reference for this session, so identity contributes
-          no evidence. VoiceShield reports the gap rather than assuming a match.
+          no evidence. Dhwani AI reports the gap rather than assuming a match.
         </Text>
       </PanelCard>
     );

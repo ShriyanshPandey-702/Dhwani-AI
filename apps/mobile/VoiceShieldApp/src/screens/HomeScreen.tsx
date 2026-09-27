@@ -1,59 +1,74 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useMemo } from "react";
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  ActivityIndicator, RefreshControl,
-} from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  RefreshControl,
+  Switch,
+  Platform,
+} from "react-native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { colors, spacing, radius, typography } from '../utils/theme';
-import { useSessionStore } from '../store/sessionStore';
-import { StatCard } from '../components/StatCard';
-import { RiskStateBadge } from '../components/RiskStateBadge';
-import { RootStackParamList } from '../navigation/AppNavigator';
-import { RiskState } from '../types';
-import { useCallScreeningStore } from '../store/callScreeningStore';
-import { ScreenedCallEvent } from '../types/telecom';
+import { useTheme } from "../utils/theme";
+import { useSessionStore } from "../store/sessionStore";
+import { useCallScreeningStore } from "../store/callScreeningStore";
+import { useRiskStore } from "../store/riskStore";
+import { useAuthStore } from "../store/authStore";
+import { RootStackParamList } from "../navigation/AppNavigator";
+import { RiskState } from "../types";
+import { ScreenedCallEvent } from "../types/telecom";
+
+import { DhwaniLogo } from "../components/DhwaniLogo";
+import { RiskOrb } from "../components/RiskOrb";
+import { RiskBadge } from "../components/RiskBadge";
+import { CallRow } from "../components/CallRow";
+import { BottomNavigation } from "../components/BottomNavigation";
+import { AuthenticityPanel } from "../components/AuthenticityPanel";
+import { IdentityPanel } from "../components/IdentityPanel";
+import { ActiveLivenessPanel } from "../components/ActiveLivenessPanel";
+import { ConsequencesPanel } from "../components/ConsequencesPanel";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
-const formatTime = (iso: string) => {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) {
-    return '--:--';
-  }
-  const pad = (n: number) => `${n}`.padStart(2, '0');
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-};
-
-/**
- * Maps a native riskState string to the RiskState union used by RiskStateBadge.
- * Falls back to 'insufficient_evidence' for unknown values.
- */
 const asCallRiskState = (riskState: string | undefined | null): RiskState => {
-  switch (riskState) {
-    case 'safe':   return 'low';
-    case 'low':    return 'low';
-    case 'suspicious': return 'suspicious';
-    case 'high':   return 'high';
-    case 'critical': return 'critical';
-    default:       return 'insufficient_evidence';
+  switch (riskState?.toLowerCase()) {
+    case "insufficient_evidence":
+      return "insufficient_evidence";
+    case "safe":
+      return "insufficient_evidence";
+    case "low":
+      return "low";
+    case "suspicious":
+      return "suspicious";
+    case "high":
+      return "high";
+    case "critical":
+      return "critical";
+    default:
+      return "insufficient_evidence";
   }
 };
 
 const asRiskState = (value: string | null): RiskState => {
   const allowed: RiskState[] = [
-    'insufficient_evidence', 'low', 'suspicious', 'high', 'critical',
+    "insufficient_evidence",
+    "low",
+    "suspicious",
+    "high",
+    "critical",
   ];
   return allowed.includes(value as RiskState)
     ? (value as RiskState)
-    : 'insufficient_evidence';
+    : "insufficient_evidence";
 };
 
 type FeedItem =
   | {
-      kind: 'incident';
+      kind: "incident";
       id: string;
       timeMs: number;
       timeIso: string;
@@ -63,7 +78,7 @@ type FeedItem =
       state: RiskState;
     }
   | {
-      kind: 'screened';
+      kind: "screened";
       id: string;
       timeMs: number;
       timeIso: string;
@@ -78,93 +93,117 @@ type FeedItem =
       record: ScreenedCallEvent;
     };
 
-/**
- * Home — Security Overview dashboard.
- *
- * Provides a unified, idempotent security overview:
- * 1. Automatic SIM Call Screening (independent Android Telecom path).
- * 2. On-Demand Live Audio Analysis (microphone path).
- */
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
-  const overview = useSessionStore(s => s.overview);
-  const isRefreshing = useSessionStore(s => s.isRefreshing);
-  const refreshHome = useSessionStore(s => s.refreshHome);
-  const createSession = useSessionStore(s => s.createSession);
-  const startSession = useSessionStore(s => s.startSession);
-  const [starting, setStarting] = useState(false);
   const insets = useSafeAreaInsets();
+  const { colors, riskColors, radius, isDark } = useTheme();
 
-  const isRoleHeld = useCallScreeningStore(s => s.isRoleHeld);
-  const checkRoleStatus = useCallScreeningStore(s => s.checkRoleStatus);
-  const loadRecentCalls = useCallScreeningStore(s => s.loadRecentCalls);
-  const recentCalls = useCallScreeningStore(s => s.recentCalls);
-  const activeAlert = useCallScreeningStore(s => s.activeAlert);
-  const requestRole = useCallScreeningStore(s => s.requestRole);
+  // Stores
+  const user = useAuthStore((s) => s.user);
+  const overview = useSessionStore((s) => s.overview);
+  const isRefreshing = useSessionStore((s) => s.isRefreshing);
+  const refreshHome = useSessionStore((s) => s.refreshHome);
+  const createSession = useSessionStore((s) => s.createSession);
+  const startSession = useSessionStore((s) => s.startSession);
+
+  const isRoleHeld = useCallScreeningStore((s) => s.isRoleHeld);
+  const checkRoleStatus = useCallScreeningStore((s) => s.checkRoleStatus);
+  const loadRecentCalls = useCallScreeningStore((s) => s.loadRecentCalls);
+  const recentCalls = useCallScreeningStore((s) => s.recentCalls);
+  const requestRole = useCallScreeningStore((s) => s.requestRole);
+
+  const sessionStatus = useRiskStore((s) => s.sessionStatus);
+  const currentRiskScore = useRiskStore((s) => s.riskScore);
+  const currentRiskState = useRiskStore((s) => s.riskState);
+  const currentRiskTrend = useRiskStore((s) => s.riskTrend);
+  const currentAuthenticity = useRiskStore((s) => s.authenticity);
+  const currentIdentity = useRiskStore((s) => s.identity);
+  const currentContext = useRiskStore((s) => s.context);
+  const currentChallengeState = useRiskStore((s) => s.challengeState);
+  const currentChallengeText = useRiskStore((s) => s.challengeText);
+  const currentVerificationState = useRiskStore((s) => s.verificationState);
+  const currentAudioActive = useRiskStore((s) => s.audioActive);
+  const currentSessionId = useRiskStore((s) => s.sessionId);
+
+  const [starting, setStarting] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       refreshHome();
       checkRoleStatus();
       loadRecentCalls();
-    }, [refreshHome, checkRoleStatus, loadRecentCalls]),
+    }, [refreshHome, checkRoleStatus, loadRecentCalls])
   );
 
   const handleStartMonitoring = useCallback(
-    async (mode: 'live' | 'mock' = 'live') => {
+    async (mode: "live" | "mock" = "live") => {
       setStarting(true);
       try {
         const session = await createSession();
         if (session) {
           await startSession(session.id);
-          navigation.navigate('Call', { sessionId: session.id, mode });
+          navigation.navigate("Call", { sessionId: session.id, mode });
         }
       } catch {
-        // createSession surfaces the error through the store.
+        // createSession handles error surfacing
       } finally {
         setStarting(false);
       }
     },
-    [createSession, startSession, navigation],
+    [createSession, startSession, navigation]
   );
 
-  // Idempotent reconciliation:
-  // 1 SIM call = 1 screened record in native storage; 1 live session = 1 backend session
-  const startOfTodayMs = React.useMemo(() => {
+  // Time-based greeting
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good Morning";
+    if (hour < 17) return "Good Afternoon";
+    return "Good Evening";
+  }, []);
+
+  const userName = user?.full_name || "Shriyansh";
+
+  // Reconciled metrics
+  const startOfTodayMs = useMemo(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
     return d.getTime();
-  }, [recentCalls, overview]);
+  }, []);
 
-  const screenedToday = React.useMemo(() => {
-    return recentCalls.filter(c => c.timestamp >= startOfTodayMs);
+  const screenedToday = useMemo(() => {
+    return recentCalls.filter((c) => c.timestamp >= startOfTodayMs);
   }, [recentCalls, startOfTodayMs]);
 
-  const screenedSafeCount = React.useMemo(() => {
-    return screenedToday.filter(c => c.riskState === 'safe' || c.riskState === 'low').length;
+  const screenedAlertsCount = useMemo(() => {
+    return screenedToday.filter(
+      (c) =>
+        c.riskState === "suspicious" ||
+        c.riskState === "high" ||
+        c.riskState === "critical"
+    ).length;
   }, [screenedToday]);
 
-  const screenedAlertsCount = React.useMemo(() => {
-    return screenedToday.filter(c => c.riskState === 'suspicious' || c.riskState === 'high' || c.riskState === 'critical').length;
+  const screenedHoldCount = useMemo(() => {
+    return screenedToday.filter(
+      (c) =>
+        c.decision?.toUpperCase() === "HOLD" ||
+        c.decision?.toUpperCase() === "REJECT" ||
+        c.decision?.toUpperCase() === "SILENCE"
+    ).length;
   }, [screenedToday]);
 
-  const screenedHighCount = React.useMemo(() => {
-    return screenedToday.filter(c => c.riskState === 'high' || c.riskState === 'critical').length;
-  }, [screenedToday]);
-
-  const totalCalls = (overview?.total_calls_today ?? 0) + screenedToday.length;
+  const totalCallsToday = (overview?.total_calls_today ?? 0) + screenedToday.length;
   const totalAlerts = (overview?.active_alerts ?? 0) + screenedAlertsCount;
-  const totalHighCritical = (overview?.high_critical_calls ?? 0) + screenedHighCount;
-  const totalSafe = (overview?.safe_calls ?? 0) + screenedSafeCount;
+  const totalHolds = (overview?.high_critical_calls ?? 0) + screenedHoldCount;
 
-  // Unified recent activity feed combining screened SIM calls and live audio sessions
-  const feedItems: FeedItem[] = React.useMemo(() => {
+  // Unified recent calls feed
+  const feedItems: FeedItem[] = useMemo(() => {
     const items: FeedItem[] = [];
 
-    (overview?.recent ?? []).forEach(inc => {
+    (overview?.recent ?? []).forEach((inc) => {
       const ms = new Date(inc.created_at).getTime();
       items.push({
-        kind: 'incident',
+        kind: "incident",
         id: inc.id,
         timeMs: isNaN(ms) ? 0 : ms,
         timeIso: inc.created_at,
@@ -175,9 +214,9 @@ export const HomeScreen: React.FC = () => {
       });
     });
 
-    recentCalls.forEach(sc => {
+    recentCalls.forEach((sc) => {
       items.push({
-        kind: 'screened',
+        kind: "screened",
         id: sc.eventId,
         timeMs: sc.timestamp,
         timeIso: new Date(sc.timestamp).toISOString(),
@@ -194,553 +233,652 @@ export const HomeScreen: React.FC = () => {
     });
 
     items.sort((a, b) => b.timeMs - a.timeMs);
-    return items.slice(0, 25);
+    return items.slice(0, 10);
   }, [overview?.recent, recentCalls]);
 
+  const isSessionActive = sessionStatus === "monitoring";
+
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.screen,
+        { backgroundColor: isDark ? colors.background : colors.background },
+      ]}
+    >
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingTop: insets.top + spacing.md }]}
+        contentContainerStyle={[
+          styles.scroll,
+          {
+            paddingTop: insets.top + 16,
+            paddingBottom: 24,
+          },
+        ]}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={refreshHome}
-            tintColor={colors.brand}
+            tintColor={colors.accent}
           />
-        }>
-        {/* ── Header ───────────────────────────────────────────────────────── */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.brand}>VOICESHIELD</Text>
-            <Text style={styles.subGreeting}>
-              Security Overview · Real-Time Active Protection
-            </Text>
+        }
+      >
+        {/* ── Top Bar Header (design.md Section 17) ────────────────────────── */}
+        <View style={styles.topBar}>
+          <DhwaniLogo size="md" showText tagline={false} />
+          <View style={styles.topActions}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Incidents")}
+              style={[
+                styles.iconBtn,
+                {
+                  backgroundColor: isDark ? colors.surfaceElevated : colors.surfaceElevated,
+                  borderColor: colors.border,
+                },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Notifications"
+            >
+              <Text style={{ fontSize: 16 }}>🔔</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Settings")}
+              style={[
+                styles.iconBtn,
+                {
+                  backgroundColor: isDark ? colors.surfaceElevated : colors.surfaceElevated,
+                  borderColor: colors.border,
+                },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Profile and Settings"
+            >
+              <Text style={{ fontSize: 16 }}>👤</Text>
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Settings')}
-            style={styles.settingsBtn}
-            accessibilityLabel="Open settings"
-            accessibilityRole="button">
-            <Text style={styles.settingsBtnText}>⚙️ Settings</Text>
-          </TouchableOpacity>
         </View>
 
-        {/* ── Backend offline banner ────────────────────────────────────────── */}
-        {overview === null && (
-          <View style={styles.offlineBanner}>
-            <Text style={styles.offlineBannerText}>
-              ⚡ Backend offline (FastAPI port 8000) · Local call screening active
+        {/* ── Greeting ─────────────────────────────────────────────────────── */}
+        <View style={styles.greetingSection}>
+          <Text style={[styles.greetingTitle, { color: colors.textPrimary }]}>
+            {greeting + ", " + userName + " 👋"}
+          </Text>
+          <Text style={[styles.greetingSubtitle, { color: colors.textSecondary }]}>
+            Your calls are being protected in real time.
+          </Text>
+        </View>
+
+        {/* ── Protection Status Card (Section 17.1) ─────────────────────────── */}
+        <View
+          style={[
+            styles.protectionCard,
+            {
+              backgroundColor: isDark ? colors.surface : colors.surface,
+              borderColor: colors.border,
+              borderRadius: radius.lg,
+              shadowColor: colors.cardShadow,
+            },
+          ]}
+        >
+          <View style={styles.protectionLeft}>
+            <View
+              style={[
+                styles.shieldBadge,
+                {
+                  backgroundColor: isRoleHeld ? `${colors.accent}18` : `${colors.warning}18`,
+                  borderColor: isRoleHeld ? `${colors.accent}44` : `${colors.warning}44`,
+                  borderRadius: radius.md,
+                },
+              ]}
+            >
+              <Text style={{ fontSize: 22 }}>{isRoleHeld ? "🛡" : "⚠️"}</Text>
+            </View>
+            <View style={styles.protectionTextCol}>
+              <Text style={[styles.protectionTitle, { color: colors.textPrimary }]}>
+                {isRoleHeld ? "Protection Active" : "Protection Disabled"}
+              </Text>
+              <Text style={[styles.protectionSubtitle, { color: colors.textSecondary }]}>
+                {isRoleHeld
+                  ? "Monitoring incoming calls"
+                  : "Designate as Call Screening app"}
+              </Text>
+            </View>
+          </View>
+          <Switch
+            value={isRoleHeld}
+            onValueChange={() => {
+              if (!isRoleHeld) {
+                requestRole();
+              }
+            }}
+            trackColor={{ false: colors.border, true: colors.accent }}
+            thumbColor={Platform.OS === "android" ? "#FFFFFF" : undefined}
+          />
+        </View>
+
+        {/* ── Summary Metrics (Section 17.2) ────────────────────────────────── */}
+        <View style={styles.summaryRow}>
+          <View
+            style={[
+              styles.metricCard,
+              {
+                backgroundColor: isDark ? colors.surface : colors.surface,
+                borderColor: colors.border,
+                borderRadius: radius.md,
+                shadowColor: colors.cardShadow,
+              },
+            ]}
+          >
+            <Text style={[styles.metricLabel, { color: colors.textSecondary }]}>
+              Calls Today
             </Text>
+            <Text style={[styles.metricValue, { color: colors.textPrimary }]}>
+              {totalCallsToday}
+            </Text>
+          </View>
+
+          <View
+            style={[
+              styles.metricCard,
+              {
+                backgroundColor: isDark ? colors.surface : colors.surface,
+                borderColor: colors.border,
+                borderRadius: radius.md,
+                shadowColor: colors.cardShadow,
+              },
+            ]}
+          >
+            <Text style={[styles.metricLabel, { color: colors.textSecondary }]}>
+              Alerts
+            </Text>
+            <Text
+              style={[
+                styles.metricValue,
+                { color: totalAlerts > 0 ? colors.warning : colors.textPrimary },
+              ]}
+            >
+              {totalAlerts}
+            </Text>
+          </View>
+
+          <View
+            style={[
+              styles.metricCard,
+              {
+                backgroundColor: isDark ? colors.surface : colors.surface,
+                borderColor: colors.border,
+                borderRadius: radius.md,
+                shadowColor: colors.cardShadow,
+              },
+            ]}
+          >
+            <Text style={[styles.metricLabel, { color: colors.textSecondary }]}>
+              Holds
+            </Text>
+            <Text
+              style={[
+                styles.metricValue,
+                { color: totalHolds > 0 ? colors.danger : colors.textPrimary },
+              ]}
+            >
+              {totalHolds}
+            </Text>
+          </View>
+        </View>
+
+        {/* ── Section: Current Analysis (Section 18) ────────────────────────── */}
+        <View style={styles.sectionHeaderRow}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+            Current Analysis
+          </Text>
+          {isSessionActive && (
+            <TouchableOpacity
+              onPress={() =>
+                currentSessionId &&
+                navigation.navigate("Call", { sessionId: currentSessionId, mode: "live" })
+              }
+            >
+              <Text style={[styles.seeAllLink, { color: colors.accent }]}>
+                Open Live View →
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {isSessionActive ? (
+          <View
+            style={[
+              styles.activeAnalysisCard,
+              {
+                backgroundColor: isDark ? colors.surface : colors.surface,
+                borderColor: colors.border,
+                borderRadius: radius.lg,
+                shadowColor: colors.cardShadow,
+              },
+            ]}
+          >
+            <View style={styles.analysisHeader}>
+              <Text style={[styles.analysisCaller, { color: colors.textPrimary }]}>
+                Live Speech Stream
+              </Text>
+              <Text style={[styles.analysisSubtitle, { color: colors.accent }]}>
+                Live Analysis in Progress
+              </Text>
+            </View>
+
+            <RiskOrb
+              score={currentRiskScore}
+              state={currentRiskState}
+              isActive={true}
+              trend={currentRiskTrend}
+              size={190}
+            />
+
+            {/* Sub-scores Row: Authenticity, Identity, Context */}
+            <View style={styles.subScoresRow}>
+              <View style={styles.subScoreItem}>
+                <Text style={[styles.subScoreLabel, { color: colors.textSecondary }]}>
+                  Authenticity
+                </Text>
+                <Text style={[styles.subScoreValue, { color: colors.textPrimary }]}>
+                  {currentAuthenticity ? currentAuthenticity.score : "--"}
+                </Text>
+              </View>
+
+              <View style={styles.subScoreDivider} />
+
+              <View style={styles.subScoreItem}>
+                <Text style={[styles.subScoreLabel, { color: colors.textSecondary }]}>
+                  Identity
+                </Text>
+                <Text style={[styles.subScoreValue, { color: colors.textPrimary }]}>
+                  {currentIdentity ? `${currentIdentity.match_score}%` : "--"}
+                </Text>
+              </View>
+
+              <View style={styles.subScoreDivider} />
+
+              <View style={styles.subScoreItem}>
+                <Text style={[styles.subScoreLabel, { color: colors.textSecondary }]}>
+                  Context
+                </Text>
+                <Text style={[styles.subScoreValue, { color: colors.textPrimary }]}>
+                  {currentContext ? currentContext.score : "--"}
+                </Text>
+              </View>
+            </View>
+          </View>
+        ) : (
+          <View
+            style={[
+              styles.idleCard,
+              {
+                backgroundColor: isDark ? colors.surface : colors.surface,
+                borderColor: colors.border,
+                borderRadius: radius.lg,
+                shadowColor: colors.cardShadow,
+              },
+            ]}
+          >
+            <Text style={{ fontSize: 32, marginBottom: 8 }}>🎙</Text>
+            <Text style={[styles.idleTitle, { color: colors.textPrimary }]}>
+              No active call analysis
+            </Text>
+            <Text style={[styles.idleSubtitle, { color: colors.textSecondary }]}>
+              Start a live microphone session or analyze an audio file.
+            </Text>
+
+            <View style={styles.idleActionsRow}>
+              <TouchableOpacity
+                onPress={() => handleStartMonitoring("live")}
+                disabled={starting}
+                style={[
+                  styles.idleBtn,
+                  { backgroundColor: colors.accent, borderRadius: radius.md },
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="Start live microphone analysis"
+              >
+                <Text style={styles.idleBtnText}>
+                  {starting ? "Starting..." : "🎙 Start Live Analysis"}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => navigation.navigate("ManualAnalysis")}
+                style={[
+                  styles.idleBtnSecondary,
+                  {
+                    borderColor: colors.border,
+                    backgroundColor: isDark ? colors.surfaceElevated : colors.surfaceElevated,
+                    borderRadius: radius.md,
+                  },
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="Analyze audio file"
+              >
+                <Text style={[styles.idleBtnSecondaryText, { color: colors.textPrimary }]}>
+                  📁 Analyze File
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
 
-        {/* ── Today's activity (Reconciled) ─────────────────────────────────── */}
-        <Text style={styles.sectionTitle}>Today's Activity</Text>
-        <View style={styles.statRow}>
-          <StatCard value={totalCalls} label="Calls" />
-          <StatCard
-            value={totalAlerts}
-            label="Alerts"
-            tone={totalAlerts > 0 ? 'warn' : 'neutral'}
-          />
-        </View>
-        <View style={styles.statRow}>
-          <StatCard
-            value={totalHighCritical}
-            label="High / Critical"
-            tone={totalHighCritical > 0 ? 'bad' : 'neutral'}
-          />
-          <StatCard
-            value={totalSafe}
-            label="Safe"
-            tone="good"
-          />
-        </View>
-
-        <View style={styles.avgCard}>
-          <Text style={styles.avgLabel}>Average Risk</Text>
-          <Text style={styles.avgValue}>{overview?.average_risk ?? 0}</Text>
-          <Text style={styles.avgSub}>
-            {overview?.suspicious_calls ?? 0} suspicious call
-            {(overview?.suspicious_calls ?? 0) === 1 ? '' : 's'} in the last 24h
+        {/* ── Section: Evidence Cards (Section 19) ─────────────────────────── */}
+        <View style={styles.sectionHeaderRow}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+            Security Evidence
+          </Text>
+          <Text style={[styles.evidenceNote, { color: colors.textMuted }]}>
+            Persistent multi-modal telemetry
           </Text>
         </View>
 
-        {/* ── Call Screening Status ─────────────────────────────────────────── */}
-        <TouchableOpacity
-          style={styles.screeningCard}
-          onPress={() => {
-            if (!isRoleHeld) {
-              requestRole();
-            } else {
-              navigation.navigate('Settings');
-            }
-          }}
-          accessibilityLabel="Call Screening Status"
-          accessibilityRole="button">
-          <View style={styles.screeningHeaderRow}>
-            <Text style={styles.screeningTitle}>VoiceShield Call Screening</Text>
-            <View style={styles.screeningStatusBadge}>
-              <Text
-                style={[
-                  styles.statusDot,
-                  isRoleHeld ? styles.screeningStatusDotActive : styles.screeningStatusDotInactive,
-                ]}>
-                {isRoleHeld ? '●' : '○'}
-              </Text>
-              <Text
-                style={[
-                  styles.screeningStatusText,
-                  isRoleHeld ? styles.screeningActiveText : styles.screeningInactiveText,
-                ]}>
-                {isRoleHeld ? 'Active' : 'Inactive'}
-              </Text>
-            </View>
-          </View>
-          <View style={styles.screeningActionRow}>
-            <Text style={styles.screeningDesc}>
-              {isRoleHeld
-                ? 'Incoming cellular calls are screened automatically via Android Telecom.'
-                : 'Role required to screen incoming cellular calls.'}
-            </Text>
-            <Text style={styles.screeningActionText}>
-              {isRoleHeld ? 'Manage Call Screening →' : 'Enable Call Screening →'}
-            </Text>
-          </View>
-          {activeAlert ? (
-            <View style={styles.screeningAlertBox}>
-              <Text style={styles.screeningAlertTitle}>⚠️ Recent Security Warning</Text>
-              <Text style={styles.screeningAlertDesc}>
-                {activeAlert.warningType === 'VERIFICATION_FAILED'
-                  ? `Caller verification failed for ${activeAlert.callerMasked}`
-                  : activeAlert.warningType === 'UNVERIFIED_CALLER'
-                  ? `Unverified caller: ${activeAlert.callerMasked}`
-                  : activeAlert.warningType === 'BLOCKLIST_MATCH'
-                  ? `Blocked caller: ${activeAlert.callerMasked}`
-                  : `Restricted number screened`}
-              </Text>
-            </View>
-          ) : null}
-        </TouchableOpacity>
+        <AuthenticityPanel authenticity={currentAuthenticity} />
+        <IdentityPanel identity={currentIdentity} />
+        <ActiveLivenessPanel
+          challengeState={currentChallengeState}
+          challengeText={currentChallengeText}
+          verificationState={currentVerificationState}
+          audioActive={currentAudioActive}
+        />
+        <ConsequencesPanel context={currentContext} />
 
-        {/* ── Audio Analysis Disclaimer / Mode Info ─────────────────────────── */}
-        <View style={styles.audioNoticeCard}>
-          <Text style={styles.audioNoticeTitle}>ℹ️ Live Audio Analysis Notice</Text>
-          <Text style={styles.audioNoticeDesc}>
-            Android restricts third-party apps from recording raw cellular call audio.
-            This live analysis mode listens via the <Text style={styles.audioNoticeBold}>Device Microphone</Text> (e.g. ambient voice or phone on speakerphone) to detect synthetic/deepfake speech in real time.
+        {/* ── Section: Recent Calls (Section 20) ───────────────────────────── */}
+        <View style={styles.sectionHeaderRow}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+            Recent Calls
           </Text>
+          <TouchableOpacity onPress={() => navigation.navigate("Incidents")}>
+            <Text style={[styles.seeAllLink, { color: colors.accent }]}>
+              See All
+            </Text>
+          </TouchableOpacity>
         </View>
 
-        {/* ── Start Live Audio Analysis (Device Mic) ─────────────────────── */}
-        <TouchableOpacity
-          style={[styles.startBtn, starting && styles.startBtnDisabled]}
-          onPress={() => handleStartMonitoring('live')}
-          disabled={starting}
-          accessibilityLabel="Start live audio analysis with microphone"
-          accessibilityRole="button">
-          {starting ? (
-            <ActivityIndicator color={colors.white} />
-          ) : (
-            <View style={styles.btnContentCol}>
-              <Text style={styles.startBtnText}>🎙️  Start Microphone Analysis</Text>
-              <Text style={styles.startBtnSubtext}>Device Mic · Real-Time Deepfake Detection</Text>
-            </View>
-          )}
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.demoBtn}
-          onPress={() => handleStartMonitoring('mock')}
-          disabled={starting}
-          accessibilityLabel="Run simulated demo scenario"
-          accessibilityRole="button">
-          <Text style={styles.demoBtnText}>🧪  Run Demo Scenario (Mock Audio)</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.manualBtn}
-          onPress={() => navigation.navigate('ManualAnalysis')}
-          accessibilityLabel="Analyze pre-recorded audio file"
-          accessibilityRole="button">
-          <Text style={styles.manualBtnText}>📁  Analyze Audio File (Manual Analysis)</Text>
-        </TouchableOpacity>
-
-        {/* ── Recent Activity Feed ────────────────────────────────────────── */}
-        <Text style={styles.sectionTitle}>Recent Activity</Text>
         {feedItems.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>
-              No call screening or live audio sessions recorded yet.
+          <View
+            style={[
+              styles.emptyCallsBox,
+              {
+                backgroundColor: isDark ? colors.surface : colors.surface,
+                borderColor: colors.border,
+                borderRadius: radius.md,
+              },
+            ]}
+          >
+            <Text style={[styles.emptyCallsText, { color: colors.textSecondary }]}>
+              No calls yet
             </Text>
           </View>
         ) : (
-          feedItems.map(item => {
-            if (item.kind === 'screened') {
-              const isOutgoing = item.record.callDirection === 'OUTGOING';
-              const isInContacts = item.record.contactStatus === 'IN_CONTACTS';
+          feedItems.slice(0, 5).map((item) => {
+            if (item.kind === "screened") {
               return (
-                <TouchableOpacity
-                  key={`screened_${item.id}`}
-                  style={styles.callRow}
+                <CallRow
+                  key={item.id}
+                  callerName={item.callerName}
+                  callerMasked={item.callerMasked}
+                  timestamp={item.timeMs}
+                  riskState={item.state}
+                  decision={item.decision}
+                  category="Incoming SIM Call — Metadata Only"
                   onPress={() =>
-                    navigation.navigate('CallSecurityDetails', { callRecord: item.record })
+                    navigation.navigate("CallSecurityDetails", {
+                      callRecord: item.record,
+                    })
                   }
-                  accessibilityLabel={`View security details for call from ${item.callerMasked}`}
-                  accessibilityRole="button">
-                  <Text style={styles.callTime}>{formatTime(item.timeIso)}</Text>
-                  <View style={styles.callBody}>
-                    <Text style={styles.callSession}>
-                      {isOutgoing ? '↗️ Outgoing' : '📞 Incoming'}{' '}
-                      {item.callerName ? item.callerName : 'SIM Call'}: {item.callerMasked}
-                    </Text>
-                    <Text style={styles.callMeta}>
-                      {item.decision} · {isInContacts ? 'Saved Contact' : 'Not in contacts'} · {item.riskState !== 'safe' && item.riskState !== 'low' ? item.warningType : 'Low risk'}
-                    </Text>
-                  </View>
-                  <RiskStateBadge state={item.state} size="sm" />
-                </TouchableOpacity>
+                />
+              );
+            } else {
+              return (
+                <CallRow
+                  key={item.id}
+                  callerMasked={`Session ${item.sessionId.slice(0, 8)}`}
+                  timestamp={item.timeMs}
+                  riskState={item.state}
+                  decision={item.action}
+                  category="Device Microphone — Live Audio"
+                  onPress={() =>
+                    navigation.navigate("IncidentDetail", { incidentId: item.id })
+                  }
+                />
               );
             }
-            return (
-              <TouchableOpacity
-                key={`incident_${item.id}`}
-                style={styles.callRow}
-                onPress={() =>
-                  navigation.navigate('IncidentDetail', { incidentId: item.id })
-                }
-                accessibilityLabel={`Open incident from ${formatTime(item.timeIso)}`}
-                accessibilityRole="button">
-                <Text style={styles.callTime}>{formatTime(item.timeIso)}</Text>
-                <View style={styles.callBody}>
-                  <Text style={styles.callSession}>
-                    🎙️ Audio Session {item.sessionId.slice(0, 8)}…
-                  </Text>
-                  <Text style={styles.callMeta}>
-                    Risk {item.riskScore}
-                    {item.action ? ` · ${item.action.toUpperCase()}` : ''}
-                  </Text>
-                </View>
-                <RiskStateBadge state={item.state} size="sm" />
-              </TouchableOpacity>
-            );
           })
         )}
-
-        {/* ── Quick actions ────────────────────────────────────────────────── */}
-        <View style={styles.quickActions}>
-          <TouchableOpacity
-            style={styles.quickCard}
-            onPress={() => navigation.navigate('Incidents')}
-            accessibilityLabel="View incident history"
-            accessibilityRole="button">
-            <Text style={styles.quickIcon}>📋</Text>
-            <Text style={styles.quickLabel}>Incidents</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.quickCard}
-            onPress={() => navigation.navigate('Devices')}
-            accessibilityLabel="Manage trusted devices"
-            accessibilityRole="button">
-            <Text style={styles.quickIcon}>📱</Text>
-            <Text style={styles.quickLabel}>Devices</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.quickCard}
-            onPress={() => navigation.navigate('Settings')}
-            accessibilityLabel="Open settings"
-            accessibilityRole="button">
-            <Text style={styles.quickIcon}>⚙️</Text>
-            <Text style={styles.quickLabel}>Settings</Text>
-          </TouchableOpacity>
-        </View>
       </ScrollView>
+
+      {/* ── Section 28: Bottom Navigation ──────────────────────────────────── */}
+      <BottomNavigation activeTab="home" />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
-  scroll: { padding: spacing.lg, gap: spacing.md, paddingBottom: spacing.xxl },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: spacing.sm,
+  screen: {
+    flex: 1,
   },
-  offlineBanner: {
-    backgroundColor: `${colors.warning}22`,
-    borderColor: `${colors.warning}55`,
+  scroll: {
+    paddingHorizontal: 18,
+  },
+  topBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
+  topActions: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  iconBtn: {
+    width: 38,
+    height: 38,
     borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    borderRadius: 19,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  offlineBannerText: {
+  greetingSection: {
+    marginBottom: 18,
+  },
+  greetingTitle: {
+    fontSize: 26,
+    fontWeight: "800",
+    letterSpacing: -0.4,
+    lineHeight: 32,
+  },
+  greetingSubtitle: {
+    fontSize: 14,
+    marginTop: 4,
+  },
+  protectionCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 16,
+    borderWidth: 1,
+    marginBottom: 16,
+    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+  },
+  protectionLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+    marginRight: 12,
+  },
+  shieldBadge: {
+    width: 44,
+    height: 44,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 14,
+  },
+  protectionTextCol: {
+    flex: 1,
+  },
+  protectionTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    letterSpacing: 0.2,
+  },
+  protectionSubtitle: {
     fontSize: 12,
-    color: colors.warning,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  brand: {
-    ...typography.h3,
-    color: colors.brand,
-    letterSpacing: 1.5,
-  },
-  subGreeting: {
-    fontSize: 12,
-    color: colors.textSecondary,
     marginTop: 2,
   },
-  settingsBtn: {
-    backgroundColor: colors.bgElevated,
-    paddingHorizontal: spacing.sm + 2,
-    paddingVertical: spacing.xs + 2,
-    borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: colors.border,
+  summaryRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 22,
   },
-  settingsBtnText: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    fontWeight: '600',
+  metricCard: {
+    flex: 1,
+    borderWidth: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    elevation: 1,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+  },
+  metricLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    letterSpacing: 0.4,
+  },
+  metricValue: {
+    fontSize: 24,
+    fontWeight: "800",
+    marginTop: 6,
+    letterSpacing: -0.5,
+  },
+  sectionHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 8,
+    marginBottom: 10,
   },
   sectionTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
-    marginTop: spacing.xs,
-  },
-  statRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  avgCard: {
-    backgroundColor: colors.bgCard,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-  },
-  avgLabel: {
-    fontSize: 12,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    fontWeight: '600',
-  },
-  avgValue: {
-    fontSize: 36,
-    fontWeight: '800',
-    color: colors.textPrimary,
-    marginVertical: 2,
-  },
-  avgSub: {
-    fontSize: 12,
-    color: colors.textSecondary,
-  },
-  audioNoticeCard: {
-    backgroundColor: `${colors.brand}12`,
-    borderColor: `${colors.brand}33`,
-    borderWidth: 1,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    marginTop: spacing.xs,
-  },
-  audioNoticeTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.brand,
-    marginBottom: 4,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  audioNoticeDesc: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    lineHeight: 18,
-  },
-  audioNoticeBold: {
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  btnContentCol: {
-    alignItems: 'center',
-    gap: 3,
-  },
-  startBtnSubtext: {
-    color: `${colors.white}CC`,
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  startBtn: {
-    backgroundColor: colors.brand,
-    borderRadius: radius.md,
-    paddingVertical: 14,
-    alignItems: 'center',
-    shadowColor: colors.brand,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  startBtnDisabled: {
-    opacity: 0.6,
-  },
-  startBtnText: {
-    color: colors.white,
     fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    fontWeight: "700",
+    letterSpacing: 0.2,
   },
-  demoBtn: {
-    backgroundColor: colors.bgElevated,
-    borderRadius: radius.md,
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  demoBtnText: {
-    color: colors.textSecondary,
+  seeAllLink: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: "600",
   },
-  manualBtn: {
-    backgroundColor: colors.brandDim,
-    borderRadius: radius.md,
-    paddingVertical: 12,
-    alignItems: 'center',
+  evidenceNote: {
+    fontSize: 11,
+  },
+  activeAnalysisCard: {
     borderWidth: 1,
-    borderColor: colors.brand,
+    padding: 16,
+    marginBottom: 16,
+    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
   },
-  manualBtnText: {
-    color: colors.brand,
-    fontSize: 13,
-    fontWeight: '700',
+  analysisHeader: {
+    alignItems: "center",
+    marginBottom: 4,
   },
-  emptyState: {
-    backgroundColor: colors.bgCard,
-    borderRadius: radius.md,
-    padding: spacing.lg,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
+  analysisCaller: {
+    fontSize: 15,
+    fontWeight: "700",
   },
-  emptyText: { color: colors.textMuted, textAlign: 'center', fontSize: 13, lineHeight: 19 },
-  callRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    backgroundColor: colors.bgCard,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  callTime: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.textSecondary,
-    fontVariant: ['tabular-nums'],
-  },
-  callBody: { flex: 1 },
-  callSession: { ...typography.body, fontWeight: '600', fontSize: 14 },
-  callMeta: { ...typography.small, fontSize: 12, marginTop: 1 },
-  quickActions: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.sm },
-  quickCard: {
-    flex: 1,
-    backgroundColor: colors.bgCard,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    alignItems: 'center',
-    gap: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  quickIcon: { fontSize: 24 },
-  quickLabel: { ...typography.small, fontWeight: '600', color: colors.textPrimary },
-  screeningCard: {
-    backgroundColor: colors.bgCard,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: spacing.xs,
-  },
-  screeningHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  screeningTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  screeningStatusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  statusDot: {
+  analysisSubtitle: {
     fontSize: 12,
-  },
-  screeningStatusDotActive: {
-    color: colors.success,
-  },
-  screeningStatusDotInactive: {
-    color: colors.textMuted,
-  },
-  screeningStatusText: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  screeningActiveText: {
-    color: colors.success,
-  },
-  screeningInactiveText: {
-    color: colors.textMuted,
-  },
-  screeningActionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: spacing.xs,
-    paddingTop: spacing.xs,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  screeningDesc: {
-    fontSize: 12,
-    color: colors.textMuted,
-    flex: 1,
-  },
-  screeningActionText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.brand,
-    marginLeft: spacing.sm,
-  },
-  screeningAlertBox: {
-    marginTop: spacing.sm,
-    padding: spacing.sm,
-    backgroundColor: `${colors.warning}18`,
-    borderColor: `${colors.warning}44`,
-    borderWidth: 1,
-    borderRadius: radius.sm,
-  },
-  screeningAlertTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.warning,
-  },
-  screeningAlertDesc: {
-    fontSize: 12,
-    color: colors.textSecondary,
+    fontWeight: "600",
     marginTop: 2,
+  },
+  subScoresRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-around",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(128,128,128,0.2)",
+    paddingTop: 12,
+    marginTop: 8,
+  },
+  subScoreItem: {
+    alignItems: "center",
+    flex: 1,
+  },
+  subScoreDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: "rgba(128,128,128,0.2)",
+  },
+  subScoreLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  subScoreValue: {
+    fontSize: 16,
+    fontWeight: "700",
+    marginTop: 2,
+  },
+  idleCard: {
+    borderWidth: 1,
+    padding: 22,
+    alignItems: "center",
+    marginBottom: 16,
+    elevation: 1,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+  },
+  idleTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  idleSubtitle: {
+    fontSize: 12,
+    marginTop: 4,
+    textAlign: "center",
+  },
+  idleActionsRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 16,
+    width: "100%",
+  },
+  idleBtn: {
+    flex: 1,
+    paddingVertical: 11,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  idleBtnText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  idleBtnSecondary: {
+    flex: 1,
+    borderWidth: 1,
+    paddingVertical: 11,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  idleBtnSecondaryText: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  emptyCallsBox: {
+    borderWidth: 1,
+    padding: 20,
+    alignItems: "center",
+    marginVertical: 4,
+  },
+  emptyCallsText: {
+    fontSize: 13,
   },
 });

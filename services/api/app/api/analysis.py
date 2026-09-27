@@ -2,28 +2,12 @@
 Manual Audio Analysis Endpoint — POST /analysis/audio
 
 Allows a user to upload a recorded audio file (and optional speaker reference)
-and run it through VoiceShield's existing Core:
+and run it through Dhwani AI's multi-modal ML Core:
 
 Manual Audio → Bounded Ingestion → Normalization (16 kHz Mono)
 → Whisper Context Classification → Exact 64,608 / 16,000 Window Geometry
 → AASIST-L Authenticity + ECAPA-TDNN Identity (Adapter)
 → Model B Gated Corroboration Fusion → Policy Engine → ManualAnalysisReport
-
-ADAPTER-LAYER DESIGN NOTE
---------------------------
-This module constructs its own dedicated detector instances
-(authenticity_detector, transcriber, speaker_identity) with
-pipeline_mode="real_ml" and an absolute-resolved MODEL_DIR.
-
-It does NOT import the global mock-configured singletons from
-app.websocket.pipeline; those singletons exist solely for the WebSocket
-real-time path, whose pipeline_mode is governed by settings.PIPELINE_MODE.
-
-The manual-analysis endpoint always attempts real_ml regardless of the global
-PIPELINE_MODE setting. Each detector's existing graceful-fallback logic
-handles the case where a checkpoint or dependency is unavailable on the
-current host — it falls back to its heuristic/demo backend and labels the
-result is_mock=True, so the caller can see exactly what ran.
 """
 
 from __future__ import annotations
@@ -63,19 +47,9 @@ SELF_CONSISTENCY = "SELF_CONSISTENCY"
 
 # ── Absolute model directory ──────────────────────────────────────────────────
 # Resolved from the file's own location so this module is CWD-independent.
-# Layout: services/api/app/api/analysis.py
-#                              parents[0] = api/
-#                              parents[1] = app/
-#                              parents[2] = services/api/
-#                                                       → models/
 _MANUAL_MODEL_DIR: str = str(Path(__file__).resolve().parents[2] / "models")
 
 # ── Dedicated real_ml detector instances for manual analysis ──────────────────
-# Constructed at module import time (once, shared across requests).
-# We temporarily set MODEL_DIR in the environment so that each detector's
-# own _init_real_ml() resolves the absolute path instead of the relative
-# "models" default.  The environment is restored immediately afterwards so
-# the WebSocket path and other subsystems are unaffected.
 _orig_model_dir = os.environ.get("MODEL_DIR")
 os.environ["MODEL_DIR"] = _MANUAL_MODEL_DIR
 
@@ -89,17 +63,12 @@ else:
     os.environ["MODEL_DIR"] = _orig_model_dir
 del _orig_model_dir
 
-# Shared real context classifier (stateless rule engine, no model dir needed):
 context_classifier = ContextClassifier()
 
 
 def _build_model_versions() -> dict:
     """
     Build model_versions from the LIVE instances, not static strings.
-
-    This makes it structurally impossible to report real_ml when a mock
-    backend actually ran: is_mock, pipeline_mode, and model_name all
-    come directly from the instantiated detectors.
     """
     return {
         "authenticity": authenticity_detector.model_version,
@@ -109,13 +78,11 @@ def _build_model_versions() -> dict:
         "authenticity_backend": authenticity_detector.pipeline_mode,
         "identity_backend": speaker_identity.pipeline_mode,
         "stt_backend": transcriber.pipeline_mode,
-        # Reflects what actually initialised, not the global config setting:
         "pipeline_mode": (
             "real_ml"
             if authenticity_detector.pipeline_mode == "real_ml"
             else authenticity_detector.pipeline_mode
         ),
-        # Expose fallback reasons for transparency when real_ml could not load:
         "authenticity_is_mock": not authenticity_detector.is_real_ml,
         "identity_is_mock": not speaker_identity.is_real_ml,
         "stt_is_mock": not transcriber.is_real_ml,
@@ -130,7 +97,8 @@ class WindowAnalysisSnapshot(BaseModel):
     offset_ms: int
     duration_ms: int
     authenticity_spoof_prob: float
-    identity_similarity: Optional[float]
+    spoof_score: Optional[float] = None
+    identity_similarity: Optional[float] = None
     window_risk_score: int
     window_risk_state: str
 
@@ -441,11 +409,14 @@ async def analyze_audio(
                 consecutive_mismatches = 0
 
             # D. Risk Engine Fusion
+            # Directive 2: Do not claim speaker identity verification unless an actual
+            # reference/enrollment comparison exists. In SELF_CONSISTENCY mode, self-consistency
+            # similarity is logged for reporting/telemetry but does not penalize identity risk.
             evidence = EvidenceBundle(
                 authenticity=auth_val,
                 authenticity_confidence=auth_conf,
-                identity_similarity=sim,
-                identity_confidence=id_conf,
+                identity_similarity=sim if identity_mode == ENROLLED else None,
+                identity_confidence=id_conf if identity_mode == ENROLLED else 0.0,
                 context_risk=ctx_risk,
                 context_confidence=ctx_conf,
                 consequence=consequence,
@@ -456,27 +427,30 @@ async def analyze_audio(
             risk_res = compute_risk(evidence, policy_config)
 
             # Record snapshot
+            auth_spoof_val = round(auth_val, 4) if auth_val is not None else 0.0
             snap = WindowAnalysisSnapshot(
                 window_index=k,
                 offset_ms=offset_ms,
                 duration_ms=4038,
-                authenticity_spoof_prob=round(auth_val, 4) if auth_val is not None else 0.0,
-                identity_similarity=round(sim, 4) if sim is not None else None,
+                authenticity_spoof_prob=auth_spoof_val,
+                spoof_score=auth_spoof_val,
+                identity_similarity=round(sim, 4) if (sim is not None and identity_mode == ENROLLED) else None,
                 window_risk_score=risk_res.score,
                 window_risk_state=risk_res.state,
             )
             window_snapshots.append(snap)
 
             last_id_dict = {
-                "match_score": match_score,
-                "confidence": id_conf,
+                "match_score": match_score if identity_mode == ENROLLED else 0,
+                "confidence": id_conf if identity_mode == ENROLLED else 0.0,
                 "consistency": "GOOD" if (sim is not None and sim > 0.70) else ("VARIABLE" if (sim is not None and sim > 0.50) else "POOR"),
                 "enrollment_status": identity_mode,
                 "model_version": speaker_identity.model_version,
                 "is_mock": not speaker_identity.is_real_ml,
                 "model_name": speaker_identity.model_name,
                 "pipeline_mode": speaker_identity.pipeline_mode,
-                "similarity": round(sim, 4) if sim is not None else 0.0,
+                "similarity": round(sim, 4) if (sim is not None and identity_mode == ENROLLED) else 0.0,
+                "self_consistency_similarity": round(sim, 4) if (sim is not None and identity_mode != ENROLLED) else None,
             }
 
             scored_windows.append({

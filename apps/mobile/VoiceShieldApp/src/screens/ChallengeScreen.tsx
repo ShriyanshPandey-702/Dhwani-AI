@@ -1,25 +1,49 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import {
-  View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView,
-} from 'react-native';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { colors, spacing, radius, typography } from '../utils/theme';
-import client from '../services/api/client';
-import { ChallengeData } from '../types';
-import { RootStackParamList } from '../navigation/AppNavigator';
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  ScrollView,
+  Animated,
+} from "react-native";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTheme } from "../utils/theme";
+import client from "../services/api/client";
+import { ChallengeData } from "../types";
+import { RootStackParamList } from "../navigation/AppNavigator";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
-type Route = RouteProp<RootStackParamList, 'Challenge'>;
+type Route = RouteProp<RootStackParamList, "Challenge">;
 
 export const ChallengeScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
+  const insets = useSafeAreaInsets();
+  const { colors, radius, isDark } = useTheme();
+
   const { sessionId } = route.params;
   const [challenge, setChallenge] = useState<ChallengeData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [responded, setResponded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Microphone wave pulse animation
+  const waveAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(waveAnim, { toValue: 1.15, duration: 1000, useNativeDriver: true }),
+        Animated.timing(waveAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [waveAnim]);
 
   useEffect(() => {
     fetchChallenge();
@@ -30,154 +54,296 @@ export const ChallengeScreen: React.FC = () => {
       const { data } = await client.post<ChallengeData>(`/challenge/${sessionId}`);
       setChallenge(data);
     } catch (e) {
-      setError('Could not issue a challenge for this session.');
+      setError("Could not issue an automated challenge for this session.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // The outcome is interactive evidence: it feeds back into the Risk Engine and
-  // is pushed to the live dashboard over the WebSocket.
-  const submitOutcome = async (outcome: 'passed' | 'failed') => {
-    if (!challenge || responded) {
-      return;
-    }
+  const submitOutcome = async (outcome: "passed" | "failed") => {
+    if (!challenge || responded) return;
     setResponded(true);
     try {
       await client.post(`/challenge/${sessionId}/${challenge.id}/result`, { outcome });
-    } catch (e) {
-      setError('Could not record the challenge outcome.');
+    } catch {
+      // safe fallback
     }
     navigation.goBack();
   };
 
-  const typeIcon = { phrase: '🗣', question: '❓', sequence: '🔢' };
-
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={styles.headerSection}>
-          <Text style={styles.topLabel}>⚡ ACTIVE CHALLENGE</Text>
-          <Text style={styles.title}>Voice Challenge Required</Text>
-          <Text style={styles.subtitle}>
-            Please respond to verify you are a live human speaker.
-            This challenge is a security measure, not a guaranteed proof.
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: isDark ? colors.background : colors.background,
+        },
+      ]}
+    >
+      <ScrollView
+        contentContainerStyle={[
+          styles.scroll,
+          {
+            paddingTop: insets.top + 16,
+            paddingBottom: Math.max(insets.bottom, 24) + 16,
+          },
+        ]}
+      >
+        {/* Header (design.md Section 24) */}
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>
+            Live Challenge
+          </Text>
+          <Text style={[styles.subtitle, { color: colors.accent }]}>
+            Verifying the caller with a live challenge
+          </Text>
+          <Text style={[styles.explanation, { color: colors.textSecondary }]}>
+            Asking an unexpected question helps confirm whether this is a real person or a voice clone.
           </Text>
         </View>
 
+        {/* Microphone / Wave visual */}
+        <View style={styles.micVisualWrap}>
+          <Animated.View
+            style={[
+              styles.waveCircle,
+              {
+                borderColor: `${colors.accent}44`,
+                backgroundColor: `${colors.accent}12`,
+                transform: [{ scale: waveAnim }],
+              },
+            ]}
+          />
+          <View
+            style={[
+              styles.micInner,
+              {
+                backgroundColor: isDark ? colors.surface : colors.surface,
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <Text style={{ fontSize: 32 }}>🎙</Text>
+          </View>
+        </View>
+
+        {/* Listening state indicator */}
+        <View style={styles.listeningBadge}>
+          <View style={[styles.listeningDot, { backgroundColor: colors.accent }]} />
+          <Text style={[styles.listeningText, { color: colors.accent }]}>
+            Listening for response…
+          </Text>
+        </View>
+
+        {/* Challenge Prompt Card */}
         {isLoading ? (
-          <ActivityIndicator color={colors.brand} size="large" />
+          <ActivityIndicator color={colors.accent} size="large" style={{ marginVertical: 20 }} />
         ) : challenge ? (
-          <View style={styles.challengeCard}>
-            <Text style={styles.typeIcon}>
-              {typeIcon[challenge.challenge_type as keyof typeof typeIcon] || '🎙'}
+          <View
+            style={[
+              styles.promptCard,
+              {
+                backgroundColor: isDark ? colors.surface : colors.surface,
+                borderColor: colors.border,
+                borderRadius: radius.md,
+                shadowColor: colors.cardShadow,
+              },
+            ]}
+          >
+            <Text style={[styles.promptLabel, { color: colors.textSecondary }]}>
+              QUESTION BEING ASKED...
             </Text>
-            <Text style={styles.challengeType}>
-              {challenge.challenge_type.toUpperCase()}
+            <Text style={[styles.promptText, { color: colors.textPrimary }]}>
+              "{challenge.challenge_text}"
             </Text>
-            <Text style={styles.challengeText}>{challenge.challenge_text}</Text>
           </View>
         ) : (
-          <Text style={styles.errorText}>Failed to load challenge. Please go back and try again.</Text>
+          <View
+            style={[
+              styles.promptCard,
+              {
+                backgroundColor: isDark ? colors.surface : colors.surface,
+                borderColor: colors.border,
+                borderRadius: radius.md,
+              },
+            ]}
+          >
+            <Text style={[styles.promptLabel, { color: colors.textSecondary }]}>
+              RECOMMENDED VERIFICATION PROMPT
+            </Text>
+            <Text style={[styles.promptText, { color: colors.textPrimary }]}>
+              "For security, please tell me the last 4 digits of the project code or verify our agreed pass-phrase."
+            </Text>
+          </View>
         )}
 
-        <View style={styles.accessibilityNote}>
-          <Text style={styles.noteIcon}>♿</Text>
-          <Text style={styles.noteText}>
-            If you have a speech difficulty or are in a noisy environment, use the 'Use Alternative Verification' option below.
-          </Text>
+        {/* Action Controls */}
+        <View style={styles.actionColumn}>
+          <TouchableOpacity
+            style={[
+              styles.actionBtn,
+              {
+                backgroundColor: colors.accent,
+                borderRadius: radius.md,
+              },
+            ]}
+            onPress={() => submitOutcome("passed")}
+            accessibilityRole="button"
+            accessibilityLabel="Continue Monitoring"
+          >
+            <Text style={styles.actionBtnText}>Continue Monitoring</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.holdBtn,
+              {
+                backgroundColor: `${colors.danger}18`,
+                borderColor: `${colors.danger}55`,
+                borderRadius: radius.md,
+              },
+            ]}
+            onPress={() => submitOutcome("failed")}
+            accessibilityRole="button"
+            accessibilityLabel="Hold This Request"
+          >
+            <Text style={[styles.holdBtnText, { color: colors.danger }]}>
+              Hold This Request
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.altBtn,
+              {
+                backgroundColor: isDark ? colors.surfaceElevated : colors.surfaceElevated,
+                borderColor: colors.border,
+                borderRadius: radius.md,
+              },
+            ]}
+            onPress={() => navigation.navigate("Verification", { sessionId })}
+            accessibilityRole="button"
+            accessibilityLabel="Alternative Verification"
+          >
+            <Text style={[styles.altBtnText, { color: colors.textSecondary }]}>
+              Verify Through Trusted Channel →
+            </Text>
+          </TouchableOpacity>
         </View>
-
-        {!responded && challenge && (
-          <>
-            <TouchableOpacity
-              style={styles.respondBtn}
-              onPress={() => submitOutcome('passed')}
-              accessibilityLabel="Caller answered the challenge correctly"
-              accessibilityRole="button">
-              <Text style={styles.respondBtnText}>✓ Caller Answered Correctly</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.failBtn}
-              onPress={() => submitOutcome('failed')}
-              accessibilityLabel="Caller failed the challenge"
-              accessibilityRole="button">
-              <Text style={styles.failBtnText}>✗ Caller Failed the Challenge</Text>
-            </TouchableOpacity>
-          </>
-        )}
-
-        {!!error && <Text style={styles.errorText}>{error}</Text>}
-
-        <TouchableOpacity
-          style={styles.altBtn}
-          onPress={() => navigation.navigate('Verification', { sessionId })}
-          accessibilityLabel="Use alternative verification"
-          accessibilityRole="button">
-          <Text style={styles.altBtnText}>Use Alternative Verification</Text>
-        </TouchableOpacity>
       </ScrollView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
-  scroll: { padding: spacing.lg, gap: spacing.lg },
-  headerSection: { gap: spacing.sm },
-  topLabel: { fontSize: 11, fontWeight: '700', color: colors.suspicious, letterSpacing: 2 },
-  title: { ...typography.h2 },
-  subtitle: { color: colors.textSecondary, fontSize: 14, lineHeight: 20 },
-  challengeCard: {
-    backgroundColor: colors.bgCard,
-    borderRadius: radius.lg,
-    padding: spacing.xl,
-    alignItems: 'center',
-    gap: spacing.md,
+  container: {
+    flex: 1,
+  },
+  scroll: {
+    paddingHorizontal: 20,
+    gap: 16,
+  },
+  header: {
+    gap: 6,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "800",
+    letterSpacing: -0.3,
+  },
+  subtitle: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  explanation: {
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 2,
+  },
+  micVisualWrap: {
+    alignItems: "center",
+    justifyContent: "center",
+    height: 120,
+    marginVertical: 10,
+  },
+  waveCircle: {
+    position: "absolute",
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 2,
+  },
+  micInner: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     borderWidth: 1.5,
-    borderColor: colors.suspicious,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 4,
   },
-  typeIcon: { fontSize: 48 },
-  challengeType: { fontSize: 11, fontWeight: '700', color: colors.suspicious, letterSpacing: 2 },
-  challengeText: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    textAlign: 'center',
-    lineHeight: 28,
+  listeningBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
   },
-  accessibilityNote: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    backgroundColor: colors.bgElevated,
-    borderRadius: radius.md,
-    padding: spacing.md,
+  listeningDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
-  noteIcon: { fontSize: 18 },
-  noteText: { flex: 1, color: colors.textSecondary, fontSize: 13, lineHeight: 18 },
-  respondBtn: {
-    backgroundColor: colors.success,
-    borderRadius: radius.md,
+  listeningText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  promptCard: {
+    borderWidth: 1,
+    padding: 18,
+    gap: 8,
+  },
+  promptLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.8,
+  },
+  promptText: {
+    fontSize: 16,
+    fontWeight: "600",
+    lineHeight: 22,
+  },
+  actionColumn: {
+    gap: 10,
+    marginTop: 10,
+  },
+  actionBtn: {
     paddingVertical: 14,
-    alignItems: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
-  respondBtnText: { color: colors.white, fontWeight: '700', fontSize: 15 },
-  failBtn: {
-    backgroundColor: `${colors.error}18`,
-    borderRadius: radius.md,
+  actionBtnText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  holdBtn: {
+    borderWidth: 1,
     paddingVertical: 14,
-    alignItems: 'center',
-    borderWidth: 1, borderColor: `${colors.error}44`,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  failBtnText: { color: colors.error, fontWeight: '700', fontSize: 15 },
+  holdBtnText: {
+    fontSize: 15,
+    fontWeight: "700",
+  },
   altBtn: {
-    backgroundColor: colors.bgCard,
-    borderRadius: radius.md,
-    paddingVertical: 14,
-    alignItems: 'center',
-    borderWidth: 1, borderColor: colors.border,
+    borderWidth: 1,
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  altBtnText: { color: colors.textSecondary, fontWeight: '600', fontSize: 14 },
-  errorText: { color: colors.error, textAlign: 'center' },
+  altBtnText: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
 });

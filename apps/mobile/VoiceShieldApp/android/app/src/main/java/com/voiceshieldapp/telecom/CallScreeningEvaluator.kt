@@ -196,12 +196,12 @@ object CallScreeningEvaluator {
     ): EvaluationResult {
         val canonical = canonicalize(rawHandle)
         val hash = sha256(canonical)
-        val masked = when {
+        val displayCaller = when {
             presentation == PRESENTATION_RESTRICTED -> "Restricted Number"
-            presentation == PRESENTATION_UNKNOWN && canonical.isBlank() -> "Private / Unknown"
+            presentation == PRESENTATION_UNKNOWN && canonical.isBlank() -> "Unknown caller"
             presentation == PRESENTATION_PAYPHONE -> "Payphone"
-            canonical.isBlank() -> "Unknown Number"
-            else -> mask(canonical)
+            canonical.isBlank() -> "Unknown caller"
+            else -> canonical
         }
 
         val contactStatus = when {
@@ -221,7 +221,7 @@ object CallScreeningEvaluator {
                 riskState = "critical",
                 riskScore = 95,
                 warningType = WarningType.BLOCKLIST_MATCH,
-                maskedCaller = masked,
+                maskedCaller = displayCaller,
                 callerHash = hash,
                 callerName = callerName,
                 contactStatus = contactStatus,
@@ -232,22 +232,21 @@ object CallScreeningEvaluator {
             )
         }
 
-        // 2. Known contact — LOW risk regardless of carrier verification status.
-        //    Carrier STIR/SHAKEN does not sign personal calls in most markets.
+        // 2. Known contact — INSUFFICIENT EVIDENCE risk because no cellular audio is available.
         if (isContact) {
             reasons.add("KNOWN_CONTACT")
             return EvaluationResult(
                 decision = ScreeningDecision.ALLOW,
                 riskLevel = RiskLevel.LOW,
-                riskState = "safe",
+                riskState = "insufficient_evidence",
                 riskScore = 0,
                 warningType = WarningType.NONE,
-                maskedCaller = masked,
+                maskedCaller = displayCaller,
                 callerHash = hash,
                 callerName = callerName,
                 contactStatus = contactStatus,
                 reasonCodes = reasons,
-                explanation = "Known contact. Number is saved in device contacts. Low risk — no adverse caller-screening indicators were detected.",
+                explanation = "Known contact. Number is saved in device contacts. Cellular audio media is not available from carrier signaling.",
                 timestamp = timestamp,
                 callDirection = directionStr
             )
@@ -264,7 +263,7 @@ object CallScreeningEvaluator {
                     riskState = "high",
                     riskScore = 75,
                     warningType = WarningType.VERIFICATION_FAILED,
-                    maskedCaller = masked,
+                    maskedCaller = displayCaller,
                     callerHash = hash,
                     callerName = callerName,
                     contactStatus = contactStatus,
@@ -275,28 +274,25 @@ object CallScreeningEvaluator {
                 )
             }
             VERIFICATION_STATUS_PASSED -> {
-                // Carrier-verified. LOW risk.
+                // Carrier-verified.
                 reasons.add("CALLER_VERIFIED")
                 return EvaluationResult(
                     decision = ScreeningDecision.ALLOW,
                     riskLevel = RiskLevel.LOW,
-                    riskState = "safe",
+                    riskState = "insufficient_evidence",
                     riskScore = 0,
                     warningType = WarningType.NONE,
-                    maskedCaller = masked,
+                    maskedCaller = displayCaller,
                     callerHash = hash,
                     callerName = callerName,
                     contactStatus = contactStatus,
                     reasonCodes = reasons,
-                    explanation = "Carrier verified caller identity (STIR/SHAKEN passed). Low risk — no adverse caller-screening indicators were detected.",
+                    explanation = "Carrier verified caller identity (STIR/SHAKEN passed). Cellular audio media is not available from carrier signaling.",
                     timestamp = timestamp,
                     callDirection = directionStr
                 )
             }
             VERIFICATION_STATUS_NOT_VERIFIED, VERIFICATION_STATUS_UNKNOWN -> {
-                // NOT_VERIFIED is the default in India and most global markets where
-                // STIR/SHAKEN is not deployed. It is a carrier metadata signal, NOT proof of fraud.
-                // Restricted presentation is a separate, elevated signal.
                 if (presentation == PRESENTATION_RESTRICTED) {
                     reasons.add("RESTRICTED_CALLER_ID")
                     return EvaluationResult(
@@ -305,7 +301,7 @@ object CallScreeningEvaluator {
                         riskState = "suspicious",
                         riskScore = 45,
                         warningType = WarningType.RESTRICTED_NUMBER,
-                        maskedCaller = masked,
+                        maskedCaller = displayCaller,
                         callerHash = hash,
                         callerName = callerName,
                         contactStatus = contactStatus,
@@ -315,40 +311,45 @@ object CallScreeningEvaluator {
                         callDirection = directionStr
                     )
                 }
-                // Plain unverified caller: carrier doesn't sign calls in this market.
-                // LOW risk — no negative indicators detected.
+                // Plain unverified / non-contact caller:
+                // Not being in contacts is metadata, NOT proof that voice is synthetic/fake.
+                // In absence of acoustic evidence: INSUFFICIENT EVIDENCE.
                 reasons.add("CALLER_NOT_VERIFIED")
                 return EvaluationResult(
                     decision = ScreeningDecision.ALLOW,
                     riskLevel = RiskLevel.LOW,
-                    riskState = "low",
-                    riskScore = 15,
-                    warningType = WarningType.UNVERIFIED_CALLER,
-                    maskedCaller = masked,
+                    riskState = "insufficient_evidence",
+                    riskScore = 0,
+                    warningType = WarningType.NONE,
+                    maskedCaller = displayCaller,
                     callerHash = hash,
                     callerName = callerName,
                     contactStatus = contactStatus,
                     reasonCodes = reasons,
-                    explanation = "Caller identity could not be verified by carrier. Low risk — no adverse caller-screening indicators were detected. This is normal in markets where STIR/SHAKEN is not deployed.",
+                    explanation = if (contactStatus == "NOT_IN_CONTACTS") {
+                        "Caller is not saved in device contacts. Signaling metadata only — acoustic media is not available from cellular calls. Voice risk: Insufficient evidence."
+                    } else {
+                        "Incoming cellular call. Audio media is not available from cellular signaling. Acoustic analysis: Insufficient evidence."
+                    },
                     timestamp = timestamp,
                     callDirection = directionStr
                 )
             }
             else -> {
-                // Unknown/null: default safe-allow
+                // Unknown/null: default allow with insufficient evidence
                 reasons.add("DEFAULT_ALLOW")
                 return EvaluationResult(
                     decision = ScreeningDecision.ALLOW,
                     riskLevel = RiskLevel.LOW,
-                    riskState = "low",
-                    riskScore = 10,
+                    riskState = "insufficient_evidence",
+                    riskScore = 0,
                     warningType = WarningType.NONE,
-                    maskedCaller = masked,
+                    maskedCaller = displayCaller,
                     callerHash = hash,
                     callerName = callerName,
                     contactStatus = contactStatus,
                     reasonCodes = reasons,
-                    explanation = "No adverse caller-screening indicators were detected. Low risk.",
+                    explanation = "Signaling metadata only — no acoustic media from cellular call. Risk: Insufficient evidence.",
                     timestamp = timestamp,
                     callDirection = directionStr
                 )

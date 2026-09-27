@@ -1,101 +1,79 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect } from "react";
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert,
-} from 'react-native';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { colors, spacing, radius } from '../utils/theme';
-import { useRiskStore } from '../store/riskStore';
-import { useSessionStore } from '../store/sessionStore';
-import { useRiskStream } from '../hooks/useRiskStream';
-import { useAudioCapture } from '../hooks/useAudioCapture';
-import { wsService } from '../services/websocket/wsService';
+import { useTheme } from "../utils/theme";
+import { useRiskStore } from "../store/riskStore";
+import { useSessionStore } from "../store/sessionStore";
+import { useRiskStream } from "../hooks/useRiskStream";
+import { useAudioCapture } from "../hooks/useAudioCapture";
+import { wsService } from "../services/websocket/wsService";
 
-import { RiskGauge } from '../components/RiskGauge';
-import { RiskSparkline } from '../components/RiskSparkline';
-import { AuthenticityPanel } from '../components/AuthenticityPanel';
-import { IdentityPanel } from '../components/IdentityPanel';
-import { ContextPanel } from '../components/ContextPanel';
-import { EventTimeline } from '../components/EventTimeline';
-import { DecisionPanel } from '../components/DecisionPanel';
-import { AlertCard } from '../components/AlertCard';
-import { PipelineModeBanner } from '../components/PipelineModeBanner';
-import { RootStackParamList } from '../navigation/AppNavigator';
-import { SessionStatus } from '../types';
+import { RiskOrb } from "../components/RiskOrb";
+import { RiskBadge } from "../components/RiskBadge";
+import { AuthenticityPanel } from "../components/AuthenticityPanel";
+import { IdentityPanel } from "../components/IdentityPanel";
+import { ActiveLivenessPanel } from "../components/ActiveLivenessPanel";
+import { ConsequencesPanel } from "../components/ConsequencesPanel";
+import { EventTimeline } from "../components/EventTimeline";
+import { DecisionPanel } from "../components/DecisionPanel";
+import { AlertCard } from "../components/AlertCard";
+import { PipelineModeBanner } from "../components/PipelineModeBanner";
+import { RootStackParamList } from "../navigation/AppNavigator";
+import { SessionStatus } from "../types";
+import { notificationService } from "../services/notification/notificationService";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
-type Route = RouteProp<RootStackParamList, 'Call'>;
-
-const STATUS_TEXT: Record<SessionStatus, string> = {
-  idle: 'IDLE',
-  connecting: 'CONNECTING',
-  monitoring: 'ANALYSIS ACTIVE',
-  reconnecting: 'RECONNECTING',
-  ended: 'SESSION ENDED',
-  error: 'CONNECTION FAILED',
-};
-
-const getStatusText = (status: SessionStatus, mode: 'live' | 'mock'): string => {
-  if (status === 'monitoring') {
-    return mode === 'live' ? 'MIC ANALYSIS ACTIVE' : 'SIMULATION ACTIVE';
-  }
-  return STATUS_TEXT[status];
-};
-
-const STATUS_COLOR: Record<SessionStatus, string> = {
-  idle: colors.textMuted,
-  connecting: colors.info,
-  monitoring: colors.safe,
-  reconnecting: colors.suspicious,
-  ended: colors.textMuted,
-  error: colors.error,
-};
+type Route = RouteProp<RootStackParamList, "Call">;
 
 const SEVERITY_TO_CARD = {
-  suspicious: 'warning',
-  high: 'error',
-  critical: 'critical',
+  suspicious: "warning",
+  high: "error",
+  critical: "critical",
 } as const;
 
-/**
- * Live Security Dashboard.
- *
- * Every value on this screen originates from a backend WebSocket event and is
- * read from the Zustand store. Nothing here polls, and nothing here computes a
- * risk figure of its own — the backend is authoritative.
- */
 export const CallScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
-  const { sessionId, mode = 'live' } = route.params;
+  const insets = useSafeAreaInsets();
+  const { colors, riskColors, radius, isDark } = useTheme();
 
-  const stopSession = useSessionStore(s => s.stopSession);
+  const { sessionId, mode = "live" } = route.params;
 
-  const riskScore = useRiskStore(s => s.riskScore);
-  const riskState = useRiskStore(s => s.riskState);
-  const riskTrend = useRiskStore(s => s.riskTrend);
-  const riskHistory = useRiskStore(s => s.riskHistory);
-  const evidenceConfidence = useRiskStore(s => s.evidenceConfidence);
-  const authenticity = useRiskStore(s => s.authenticity);
-  const identity = useRiskStore(s => s.identity);
-  const context = useRiskStore(s => s.context);
-  const audioQuality = useRiskStore(s => s.audioQuality);
-  const audioActive = useRiskStore(s => s.audioActive);
-  const decision = useRiskStore(s => s.decision);
-  const decisionReasons = useRiskStore(s => s.decisionReasons);
-  const recommendedAction = useRiskStore(s => s.recommendedAction);
-  const detectedEvents = useRiskStore(s => s.detectedEvents);
-  const alerts = useRiskStore(s => s.alerts);
-  const challengeState = useRiskStore(s => s.challengeState);
-  const verificationState = useRiskStore(s => s.verificationState);
-  const sessionStatus = useRiskStore(s => s.sessionStatus);
-  const pipelineMode = useRiskStore(s => s.pipelineMode);
-  const lastError = useRiskStore(s => s.lastError);
-  const dismissAlert = useRiskStore(s => s.dismissAlert);
-  const reset = useRiskStore(s => s.reset);
+  const stopSession = useSessionStore((s) => s.stopSession);
 
-  // Audio capture hook for live microphone mode
+  const riskScore = useRiskStore((s) => s.riskScore);
+  const riskState = useRiskStore((s) => s.riskState);
+  const riskTrend = useRiskStore((s) => s.riskTrend);
+  const authenticity = useRiskStore((s) => s.authenticity);
+  const identity = useRiskStore((s) => s.identity);
+  const context = useRiskStore((s) => s.context);
+  const audioQuality = useRiskStore((s) => s.audioQuality);
+  const audioActive = useRiskStore((s) => s.audioActive);
+  const decision = useRiskStore((s) => s.decision);
+  const decisionReasons = useRiskStore((s) => s.decisionReasons);
+  const recommendedAction = useRiskStore((s) => s.recommendedAction);
+  const detectedEvents = useRiskStore((s) => s.detectedEvents);
+  const alerts = useRiskStore((s) => s.alerts);
+  const challengeState = useRiskStore((s) => s.challengeState);
+  const challengeText = useRiskStore((s) => s.challengeText);
+  const verificationState = useRiskStore((s) => s.verificationState);
+  const sessionStatus = useRiskStore((s) => s.sessionStatus);
+  const pipelineMode = useRiskStore((s) => s.pipelineMode);
+  const lastError = useRiskStore((s) => s.lastError);
+  const evidenceConfidence = useRiskStore((s) => s.evidenceConfidence);
+  const dismissAlert = useRiskStore((s) => s.dismissAlert);
+  const reset = useRiskStore((s) => s.reset);
+
   const {
     isRecording: isMicRecording,
     permissionStatus: micPermission,
@@ -106,153 +84,358 @@ export const CallScreen: React.FC = () => {
     stop: stopMicCapture,
   } = useAudioCapture(false);
 
-  // Subscribe the store to the socket before the socket opens.
   useRiskStream(sessionId);
 
-  // Automatically halt microphone streaming once the session has ended
   useEffect(() => {
-    if (sessionStatus === 'ended' && mode === 'live') {
+    if (sessionStatus === "ended" && mode === "live") {
       stopMicCapture();
     }
   }, [sessionStatus, mode, stopMicCapture]);
 
   useEffect(() => {
     let cancelled = false;
-
-    // Clear any previous call's dashboard before this one starts.
     reset();
 
     wsService
       .connect(sessionId)
       .then(() => {
-        // `connect` resolves only once the socket is OPEN, so this send cannot
-        // be dropped. Kicks off the mock scenario in mock mode; in live mode,
-        // audio chunks streamed from device/scripts drive the real pipeline.
-        if (!cancelled && mode === 'mock') {
+        if (!cancelled && mode === "mock") {
           wsService.startDemo();
-        } else if (!cancelled && mode === 'live') {
+        } else if (!cancelled && mode === "live") {
           startMicCapture();
+          notificationService.notifyMicAnalysisStarted().catch(() => {});
         }
       })
-      .catch(() => {
-        // The store's session status already reflects the failure.
-      });
+      .catch(() => {});
 
     return () => {
       cancelled = true;
-      if (mode === 'live') {
+      if (mode === "live") {
         stopMicCapture();
       }
+      notificationService.reset();
       wsService.disconnect();
       stopSession(sessionId).catch(() => {});
       reset();
     };
   }, [sessionId, mode, reset, startMicCapture, stopMicCapture, stopSession]);
 
+  useEffect(() => {
+    if (sessionStatus === "monitoring") {
+      notificationService
+        .notifyRiskTransition(riskState, riskScore, decision, recommendedAction)
+        .catch(() => {});
+    }
+  }, [sessionStatus, riskState, riskScore, decision, recommendedAction]);
+
   const handleEndSession = useCallback(() => {
-    Alert.alert('End Session', 'Stop monitoring this call?', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert("End Monitoring", "Stop monitoring this voice stream?", [
+      { text: "Cancel", style: "cancel" },
       {
-        text: 'End Session',
-        style: 'destructive',
+        text: "End Session",
+        style: "destructive",
         onPress: async () => {
-          if (mode === 'live') {
+          if (mode === "live") {
             await stopMicCapture();
           }
+          notificationService.reset();
           wsService.disconnect();
           try {
             await stopSession(sessionId);
-          } catch {
-            // The session may already have ended server-side.
-          }
+          } catch {}
           if (navigation.canGoBack()) {
             navigation.goBack();
           } else {
-            navigation.navigate('Home');
+            navigation.navigate("Home");
           }
         },
       },
     ]);
   }, [sessionId, mode, stopMicCapture, stopSession, navigation]);
 
-  const statusColor = STATUS_COLOR[sessionStatus];
   const latestAlert = alerts[0];
+  const isElevated = riskState === "high" || riskState === "critical";
 
   return (
-    <View style={styles.container}>
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
-          <View>
-            <Text style={styles.brand}>VOICESHIELD</Text>
-            <Text style={[styles.statusText, { color: statusColor }]}>
-              {getStatusText(sessionStatus, mode)}
-            </Text>
-          </View>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: isDark ? colors.background : colors.background,
+        },
+      ]}
+    >
+      {/* ── Top Bar / Header ─────────────────────────────────────────────── */}
+      <View
+        style={[
+          styles.header,
+          {
+            paddingTop: insets.top + 8,
+            borderBottomColor: colors.border,
+            backgroundColor: isDark ? colors.surface : colors.surface,
+          },
+        ]}
+      >
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backBtn}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+        >
+          <Text style={[styles.backText, { color: colors.textSecondary }]}>‹ Back</Text>
+        </TouchableOpacity>
+
+        <View style={styles.headerTitleWrap}>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
+            Live Analysis
+          </Text>
+          <Text style={[styles.headerSubtitle, { color: colors.accent }]}>
+            {sessionStatus === "monitoring" ? "Active Monitoring" : "Session Connected"}
+          </Text>
         </View>
+
         <TouchableOpacity
           onPress={handleEndSession}
-          style={styles.endBtn}
-          accessibilityLabel="End monitoring session"
-          accessibilityRole="button">
-          <Text style={styles.endBtnText}>End Session</Text>
+          style={[
+            styles.endBtn,
+            {
+              backgroundColor: `${colors.danger}18`,
+              borderColor: `${colors.danger}44`,
+            },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel="End session"
+        >
+          <Text style={[styles.endBtnText, { color: colors.danger }]}>End</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.scroll,
+          { paddingBottom: Math.max(insets.bottom, 24) + 16 },
+        ]}
+      >
         <PipelineModeBanner mode={pipelineMode} />
 
-        {mode === 'live' && (
-          <View style={styles.liveMicCard}>
-            <View style={styles.liveMicHeader}>
-              <View
-                style={[
-                  styles.micDot,
-                  { backgroundColor: isMicRecording ? colors.safe : colors.textMuted },
-                ]}
-              />
-              <Text style={styles.liveMicTitle}>
-                {isMicRecording ? 'LIVE MICROPHONE ACTIVE' : 'MICROPHONE STANDBY'}
+        {/* ── Caller & Channel Information (design.md Section 22 & 23) ───── */}
+        <View
+          style={[
+            styles.callerCard,
+            {
+              backgroundColor: isDark ? colors.surface : colors.surface,
+              borderColor: colors.border,
+              borderRadius: radius.md,
+            },
+          ]}
+        >
+          <View style={styles.callerRow}>
+            <View>
+              <Text style={[styles.callerPhone, { color: colors.textPrimary }]}>
+                {mode === "live" ? "Device Microphone Feed" : "+91 91234 56789"}
+              </Text>
+              <Text style={[styles.callerName, { color: colors.textSecondary }]}>
+                {mode === "live" ? "Acoustic Speech Stream" : "Unknown Caller"}
               </Text>
             </View>
-            <Text style={styles.liveMicSubtitle}>
-              {isMicRecording
-                ? `Streaming 16 kHz PCM · Chunks: ${micMetrics.chunksSent}${
-                    micMetrics.chunksDropped > 0 ? ` (${micMetrics.chunksDropped} dropped)` : ''
-                  }`
-                : micPermission === 'denied' || micPermission === 'blocked'
-                ? 'Microphone permission required to monitor speech.'
-                : 'Connecting to device microphone…'}
+
+            <View
+              style={[
+                styles.sourcePill,
+                {
+                  backgroundColor: `${colors.accent}18`,
+                  borderColor: `${colors.accent}44`,
+                  borderRadius: radius.full,
+                },
+              ]}
+            >
+              <Text style={[styles.sourceText, { color: colors.accent }]}>
+                {mode === "live" ? "Device Mic" : "Simulated Audio"}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* ── Central Voice Risk Orb (Section 14, 22, 23) ─────────────────── */}
+        <RiskOrb
+          score={riskScore}
+          state={riskState}
+          isActive={sessionStatus === "monitoring"}
+          trend={riskTrend}
+          size={210}
+        />
+
+        {/* ── Sub-scores Row: Authenticity, Identity, Context ─────────────── */}
+        <View
+          style={[
+            styles.subMetricsCard,
+            {
+              backgroundColor: isDark ? colors.surface : colors.surface,
+              borderColor: isElevated ? `${colors.danger}44` : colors.border,
+              borderRadius: radius.md,
+            },
+          ]}
+        >
+          <View style={styles.subMetricCol}>
+            <Text style={[styles.subMetricLabel, { color: colors.textSecondary }]}>
+              Authenticity
             </Text>
-            {(micPermission === 'denied' || micPermission === 'blocked') && (
-              <TouchableOpacity
-                style={styles.permBtn}
-                onPress={requestMicPermission}
-                accessibilityLabel="Grant microphone permission"
-                accessibilityRole="button">
-                <Text style={styles.permBtnText}>Grant Microphone Permission</Text>
-              </TouchableOpacity>
+            <Text style={[styles.subMetricScore, { color: colors.textPrimary }]}>
+              {authenticity ? authenticity.score : "--"}
+            </Text>
+            <Text style={[styles.subMetricBand, { color: colors.textMuted }]}>
+              {authenticity ? authenticity.acoustic_anomaly : "Accumulating"}
+            </Text>
+          </View>
+
+          <View style={[styles.subMetricDivider, { backgroundColor: colors.border }]} />
+
+          <View style={styles.subMetricCol}>
+            <Text style={[styles.subMetricLabel, { color: colors.textSecondary }]}>
+              Identity
+            </Text>
+            <Text style={[styles.subMetricScore, { color: colors.textPrimary }]}>
+              {identity && identity.enrollment_status !== "NOT_ENROLLED"
+                ? `${identity.match_score}%`
+                : "--"}
+            </Text>
+            <Text style={[styles.subMetricBand, { color: colors.textMuted }]}>
+              {identity?.enrollment_status === "NOT_ENROLLED"
+                ? "No Reference"
+                : identity?.consistency || "Awaiting"}
+            </Text>
+          </View>
+
+          <View style={[styles.subMetricDivider, { backgroundColor: colors.border }]} />
+
+          <View style={styles.subMetricCol}>
+            <Text style={[styles.subMetricLabel, { color: colors.textSecondary }]}>
+              Context
+            </Text>
+            <Text style={[styles.subMetricScore, { color: colors.textPrimary }]}>
+              {context ? context.score : "--"}
+            </Text>
+            <Text style={[styles.subMetricBand, { color: colors.textMuted }]}>
+              {context ? context.consequence.toUpperCase() : "Awaiting STT"}
+            </Text>
+          </View>
+        </View>
+
+        {/* ── Context Intent Banner ───────────────────────────────────────── */}
+        <View
+          style={[
+            styles.intentBanner,
+            {
+              backgroundColor:
+                context && (context.financial_request || context.otp_request || context.urgency)
+                  ? `${colors.danger}18`
+                  : `${colors.accent}14`,
+              borderColor:
+                context && (context.financial_request || context.otp_request || context.urgency)
+                  ? `${colors.danger}44`
+                  : `${colors.accent}44`,
+              borderRadius: radius.sm,
+            },
+          ]}
+        >
+          <Text
+            style={[
+              styles.intentText,
+              {
+                color:
+                  context && (context.financial_request || context.otp_request || context.urgency)
+                    ? colors.danger
+                    : colors.accent,
+              },
+            ]}
+          >
+            {context && (context.financial_request || context.otp_request || context.urgency)
+              ? "⚠️ Sensitive / high-consequence request detected"
+              : "🛡 No sensitive financial or credential intent detected"}
+          </Text>
+        </View>
+
+        {/* ── Partial Live Transcript ─────────────────────────────────────── */}
+        <View
+          style={[
+            styles.transcriptCard,
+            {
+              backgroundColor: isDark ? colors.surface : colors.surface,
+              borderColor: colors.border,
+              borderRadius: radius.md,
+            },
+          ]}
+        >
+          <Text style={[styles.transcriptHeader, { color: colors.textSecondary }]}>
+            LIVE TRANSCRIPT (PARTIAL)
+          </Text>
+          <Text
+            style={[
+              styles.transcriptContent,
+              {
+                color: context?.transcript ? colors.textPrimary : colors.textMuted,
+                fontStyle: context?.transcript ? "normal" : "italic",
+              },
+            ]}
+          >
+            {context?.transcript
+              ? `"${context.transcript}"`
+              : "Listening for spoken speech… Transcriptions will stream here in real time."}
+          </Text>
+        </View>
+
+        {/* ── Action Buttons: Challenge / Independent Verification ────────── */}
+        <View style={styles.actionControlsRow}>
+          <TouchableOpacity
+            style={[
+              styles.controlBtn,
+              {
+                backgroundColor: isDark ? colors.surfaceElevated : colors.surfaceElevated,
+                borderColor: colors.border,
+                borderRadius: radius.md,
+              },
+            ]}
+            onPress={() => navigation.navigate("Challenge", { sessionId })}
+            accessibilityRole="button"
+            accessibilityLabel="Challenge Caller"
+          >
+            <Text style={{ fontSize: 16 }}>🧩</Text>
+            <Text style={[styles.controlBtnText, { color: colors.textPrimary }]}>
+              Challenge Caller
+            </Text>
+            {challengeState !== "idle" && (
+              <Text style={[styles.controlBtnSub, { color: colors.accent }]}>
+                {challengeState.toUpperCase()}
+              </Text>
             )}
-            {micError && <Text style={styles.micErrorText}>⚠️ {micError}</Text>}
-          </View>
-        )}
+          </TouchableOpacity>
 
-        {sessionStatus === 'reconnecting' && (
-          <View style={styles.notice}>
-            <Text style={styles.noticeText}>
-              Connection lost — reconnecting. The risk picture below may be stale.
+          <TouchableOpacity
+            style={[
+              styles.controlBtn,
+              {
+                backgroundColor: isDark ? colors.surfaceElevated : colors.surfaceElevated,
+                borderColor: colors.border,
+                borderRadius: radius.md,
+              },
+            ]}
+            onPress={() => navigation.navigate("Verification", { sessionId })}
+            accessibilityRole="button"
+            accessibilityLabel="Independent Verification"
+          >
+            <Text style={{ fontSize: 16 }}>🔐</Text>
+            <Text style={[styles.controlBtnText, { color: colors.textPrimary }]}>
+              Verify Channel
             </Text>
-          </View>
-        )}
+            {verificationState !== "idle" && (
+              <Text style={[styles.controlBtnSub, { color: colors.accent }]}>
+                {verificationState.toUpperCase()}
+              </Text>
+            )}
+          </TouchableOpacity>
+        </View>
 
-        {/* ── Overall security ─────────────────────────────────────────────── */}
-        <RiskGauge score={riskScore} state={riskState} trend={riskTrend} size={200} />
-
-        {/* ── Live risk graph ──────────────────────────────────────────────── */}
-        <RiskSparkline history={riskHistory} />
-
-        {/* ── Security decision ────────────────────────────────────────────── */}
+        {/* ── Security Decision ───────────────────────────────────────────── */}
         <DecisionPanel
           decision={decision}
           reasons={decisionReasons}
@@ -260,198 +443,211 @@ export const CallScreen: React.FC = () => {
           evidenceConfidence={evidenceConfidence}
         />
 
-        {/* ── Challenge / independent verification ─────────────────────────── */}
-        <View style={styles.actions}>
-          <TouchableOpacity
-            style={[styles.actionBtn, styles.challengeBtn]}
-            onPress={() => navigation.navigate('Challenge', { sessionId })}
-            accessibilityLabel="Challenge the caller"
-            accessibilityRole="button">
-            <Text style={styles.actionText}>Challenge Caller</Text>
-            {challengeState !== 'idle' && (
-              <Text style={styles.actionState}>{challengeState.toUpperCase()}</Text>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.actionBtn, styles.verifyBtn]}
-            onPress={() => navigation.navigate('Verification', { sessionId })}
-            accessibilityLabel="Start independent verification"
-            accessibilityRole="button">
-            <Text style={styles.actionText}>Independent Verification</Text>
-            {verificationState !== 'idle' && (
-              <Text style={styles.actionState}>{verificationState.toUpperCase()}</Text>
-            )}
-          </TouchableOpacity>
-        </View>
-
-        {/* ── Active alert ─────────────────────────────────────────────────── */}
+        {/* ── Active Alert ────────────────────────────────────────────────── */}
         {latestAlert && (
-          <View>
+          <View style={{ marginVertical: 6 }}>
             <AlertCard
-              severity={SEVERITY_TO_CARD[latestAlert.severity] ?? 'warning'}
+              severity={SEVERITY_TO_CARD[latestAlert.severity] ?? "warning"}
               title="Security Alert"
               message={latestAlert.message}
               recommendedAction={latestAlert.recommendedAction}
             />
             <TouchableOpacity
               onPress={() => dismissAlert(latestAlert.id)}
-              accessibilityLabel="Dismiss alert"
-              accessibilityRole="button">
-              <Text style={styles.dismiss}>Dismiss</Text>
+              style={{ alignSelf: "center", paddingVertical: 6 }}
+            >
+              <Text style={{ color: colors.textMuted, fontSize: 12 }}>Dismiss</Text>
             </TouchableOpacity>
           </View>
         )}
 
-        {/* ── Independent evidence streams ─────────────────────────────────── */}
+        {/* ── 4 Persistent Evidence Panels ────────────────────────────────── */}
         <AuthenticityPanel authenticity={authenticity} />
         <IdentityPanel identity={identity} />
-        <ContextPanel context={context} />
+        <ActiveLivenessPanel
+          challengeState={challengeState}
+          challengeText={challengeText}
+          verificationState={verificationState}
+          audioActive={audioActive}
+        />
+        <ConsequencesPanel context={context} />
 
-        {/* ── Live event timeline ──────────────────────────────────────────── */}
+        {/* ── Event Timeline ──────────────────────────────────────────────── */}
         <EventTimeline events={detectedEvents} />
 
-        {/* ── Channel quality ──────────────────────────────────────────────── */}
-        <View style={styles.audioRow}>
-          <Text style={styles.audioLabel}>
-            Audio {audioActive ? 'active' : 'idle'}
-          </Text>
-          <Text style={styles.audioValue}>
-            {audioQuality
-              ? `${audioQuality.quality} · SNR ${audioQuality.estimated_snr_db} dB`
-              : 'no signal yet'}
+        {/* ── Technical Diagnostics Disclosure ────────────────────────────── */}
+        <View
+          style={[
+            styles.disclosureBox,
+            {
+              backgroundColor: isDark ? colors.surfaceElevated : colors.surfaceElevated,
+              borderColor: colors.border,
+              borderRadius: radius.sm,
+            },
+          ]}
+        >
+          <Text style={[styles.disclosureText, { color: colors.textMuted }]}>
+            ℹ Notice: Audio analysis evaluates captured device microphone PCM. Raw cellular SIM media cannot be recorded by Android applications.
           </Text>
         </View>
-
-        {!!lastError && <Text style={styles.error}>{lastError}</Text>}
-
-        <Text style={styles.sessionNote}>Session {sessionId.slice(0, 8)}…</Text>
       </ScrollView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: spacing.md,
-    paddingTop: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  statusDot: { width: 8, height: 8, borderRadius: 4 },
-  brand: { fontSize: 13, fontWeight: '800', color: colors.textPrimary, letterSpacing: 1.5 },
-  statusText: { fontSize: 10, fontWeight: '700', letterSpacing: 1.2, marginTop: 1 },
-  endBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    backgroundColor: `${colors.error}22`,
-    borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: `${colors.error}44`,
-  },
-  endBtnText: { color: colors.error, fontWeight: '700', fontSize: 13 },
-  scroll: { padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xxl },
-  notice: {
-    backgroundColor: `${colors.suspicious}18`,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: `${colors.suspicious}44`,
-    padding: spacing.sm,
-  },
-  noticeText: { color: colors.suspicious, fontSize: 12 },
-  actions: { flexDirection: 'row', gap: spacing.md },
-  actionBtn: {
+  container: {
     flex: 1,
-    borderRadius: radius.md,
-    paddingVertical: 14,
-    paddingHorizontal: 10,
-    alignItems: 'center',
-    gap: 2,
   },
-  challengeBtn: { backgroundColor: colors.brand },
-  verifyBtn: { backgroundColor: colors.high },
-  actionText: {
-    color: colors.white,
-    fontWeight: '700',
-    fontSize: 13,
-    textAlign: 'center',
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
   },
-  actionState: {
-    color: colors.white,
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 1,
-    opacity: 0.85,
+  backBtn: {
+    paddingVertical: 6,
+    paddingRight: 10,
   },
-  dismiss: {
-    color: colors.textMuted,
-    fontSize: 12,
-    textAlign: 'center',
-    paddingVertical: spacing.sm,
+  backText: {
+    fontSize: 16,
+    fontWeight: "600",
   },
-  audioRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    backgroundColor: colors.bgCard,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+  headerTitleWrap: {
+    alignItems: "center",
   },
-  audioLabel: { fontSize: 12, color: colors.textSecondary },
-  audioValue: { fontSize: 12, color: colors.textMuted, fontWeight: '600' },
-  error: { color: colors.error, fontSize: 12, textAlign: 'center' },
-  sessionNote: { textAlign: 'center', fontSize: 11, color: colors.textMuted },
-  liveMicCard: {
-    backgroundColor: colors.bgCard,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.md,
-    gap: spacing.xs,
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: "700",
   },
-  liveMicHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  micDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  liveMicTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    letterSpacing: 1,
-  },
-  liveMicSubtitle: {
+  headerSubtitle: {
     fontSize: 11,
-    color: colors.textSecondary,
+    fontWeight: "600",
+    marginTop: 1,
   },
-  permBtn: {
-    marginTop: spacing.xs,
-    paddingVertical: 8,
+  endBtn: {
     paddingHorizontal: 12,
-    backgroundColor: colors.brand,
-    borderRadius: radius.sm,
-    alignItems: 'center',
+    paddingVertical: 5,
+    borderRadius: 999,
+    borderWidth: 1,
   },
-  permBtnText: {
-    color: colors.white,
+  endBtnText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: "700",
   },
-  micErrorText: {
-    color: colors.error,
+  scroll: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    gap: 12,
+  },
+  callerCard: {
+    borderWidth: 1,
+    padding: 14,
+  },
+  callerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  callerPhone: {
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  callerName: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  sourcePill: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderWidth: 1,
+  },
+  sourceText: {
     fontSize: 11,
-    marginTop: spacing.xs,
+    fontWeight: "700",
+  },
+  subMetricsCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-around",
+    borderWidth: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 8,
+  },
+  subMetricCol: {
+    alignItems: "center",
+    flex: 1,
+  },
+  subMetricLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  subMetricScore: {
+    fontSize: 20,
+    fontWeight: "800",
+    marginVertical: 2,
+  },
+  subMetricBand: {
+    fontSize: 10,
+    fontWeight: "500",
+  },
+  subMetricDivider: {
+    width: 1,
+    height: 32,
+  },
+  intentBanner: {
+    borderWidth: 1,
+    padding: 10,
+    alignItems: "center",
+  },
+  intentText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  transcriptCard: {
+    borderWidth: 1,
+    padding: 14,
+    gap: 6,
+  },
+  transcriptHeader: {
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.8,
+  },
+  transcriptContent: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  actionControlsRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  controlBtn: {
+    flex: 1,
+    borderWidth: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    alignItems: "center",
+    gap: 4,
+  },
+  controlBtnText: {
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  controlBtnSub: {
+    fontSize: 9,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+  },
+  disclosureBox: {
+    borderWidth: 1,
+    padding: 12,
+    marginTop: 6,
+  },
+  disclosureText: {
+    fontSize: 11,
+    lineHeight: 15,
   },
 });

@@ -14,7 +14,7 @@ class Settings(BaseSettings):
 
     # App
     APP_ENV: str = "development"
-    APP_NAME: str = "VoiceShield"
+    APP_NAME: str = "Dhwani AI"
     CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:8081"]
 
     # Database

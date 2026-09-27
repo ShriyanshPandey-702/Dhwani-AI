@@ -83,7 +83,7 @@ export const useAudioCapture = (autoStart: boolean = false): UseAudioCaptureRetu
         {
           title: 'Microphone Permission',
           message:
-            'VoiceShield requires microphone access to analyze voice authenticity during monitored calls.',
+            'Dhwani AI requires microphone access to analyze voice authenticity during monitored calls.',
           buttonNeutral: 'Ask Me Later',
           buttonNegative: 'Cancel',
           buttonPositive: 'Grant Access',

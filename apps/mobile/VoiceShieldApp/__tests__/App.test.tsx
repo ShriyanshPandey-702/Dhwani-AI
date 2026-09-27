@@ -46,7 +46,7 @@ describe('App', () => {
       )
       .join(' ');
 
-    expect(text).toContain('VoiceShield');
+    expect(text).toContain('Dhwani AI');
 
     await ReactTestRenderer.act(async () => {
       tree.unmount();

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -9,46 +9,78 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
-} from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { colors, spacing, radius, typography } from '../utils/theme';
+} from "react-native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTheme } from "../utils/theme";
+import { ThemeToggle } from "../components/ThemeToggle";
+import { BottomNavigation } from "../components/BottomNavigation";
 import {
   useConnectionStore,
   getApiBaseUrl,
   getWsBaseUrl,
-} from '../store/connectionStore';
-import { useCallScreeningStore } from '../store/callScreeningStore';
-import { callScreeningService } from '../services/telecom/callScreeningService';
+} from "../store/connectionStore";
+import { useCallScreeningStore } from "../store/callScreeningStore";
+import { useAuthStore } from "../store/authStore";
+import { callScreeningService } from "../services/telecom/callScreeningService";
+import { DhwaniLogo } from "../components/DhwaniLogo";
+
+const SettingRow: React.FC<{
+  label: string;
+  description?: string;
+  children: React.ReactNode;
+}> = ({ label, description, children }) => {
+  const { colors } = useTheme();
+  return (
+    <View style={styles.settingRow}>
+      <View style={styles.settingTextCol}>
+        <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>{label}</Text>
+        {description ? (
+          <Text style={[styles.settingDesc, { color: colors.textSecondary }]}>
+            {description}
+          </Text>
+        ) : null}
+      </View>
+      <View style={styles.settingControlCol}>{children}</View>
+    </View>
+  );
+};
 
 export const SettingsScreen: React.FC = () => {
   const navigation = useNavigation();
-  const [pushEnabled, setPushEnabled] = React.useState(true);
-  const [rawAudioEnabled, setRawAudioEnabled] = React.useState(false);
+  const insets = useSafeAreaInsets();
+  const { colors, radius, isDark } = useTheme();
 
-  const isRoleHeld = useCallScreeningStore(s => s.isRoleHeld);
-  const checkRoleStatus = useCallScreeningStore(s => s.checkRoleStatus);
-  const requestRole = useCallScreeningStore(s => s.requestRole);
-  const openSettings = useCallScreeningStore(s => s.openSettings);
-  const isRoleLoading = useCallScreeningStore(s => s.isLoading);
+  // Notification toggles
+  const [notifyIncoming, setNotifyIncoming] = useState(true);
+  const [notifyAlerts, setNotifyAlerts] = useState(true);
+  const [notifyEmail, setNotifyEmail] = useState(false);
 
-  const [hasContactsPermission, setHasContactsPermission] = React.useState<boolean | null>(null);
+  // Analysis toggles
+  const [riskUpdates, setRiskUpdates] = useState(true);
+  const [liveTranscript, setLiveTranscript] = useState(true);
+  const [audioRetention, setAudioRetention] = useState(false);
+
+  const isRoleHeld = useCallScreeningStore((s) => s.isRoleHeld);
+  const checkRoleStatus = useCallScreeningStore((s) => s.checkRoleStatus);
+  const requestRole = useCallScreeningStore((s) => s.requestRole);
+  const openSettings = useCallScreeningStore((s) => s.openSettings);
+  const isRoleLoading = useCallScreeningStore((s) => s.isLoading);
+
+  const logout = useAuthStore((s) => s.logout);
 
   useFocusEffect(
     React.useCallback(() => {
       checkRoleStatus();
-      // Check contacts permission status on focus
-      callScreeningService.hasContactsPermission?.().then(granted => {
-        setHasContactsPermission(granted);
-      }).catch(() => setHasContactsPermission(false));
-    }, [checkRoleStatus]),
+    }, [checkRoleStatus])
   );
 
   const handleTestNotification = async () => {
     try {
       await callScreeningService.testSecurityNotification();
-      Alert.alert('Notification Sent', 'A local test security alert was sent. Check your notifications shade.');
+      Alert.alert("Notification Sent", "A local test security alert was dispatched to your notification shade.");
     } catch (err: any) {
-      Alert.alert('Notification Test Failed', err?.message || 'Could not send test notification.');
+      Alert.alert("Notification Test Failed", err?.message || "Could not send test notification.");
     }
   };
 
@@ -68,533 +100,567 @@ export const SettingsScreen: React.FC = () => {
   const activeWsUrl = getWsBaseUrl();
 
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.title}>Settings</Text>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: isDark ? colors.background : colors.background,
+        },
+      ]}
+    >
+      <ScrollView
+        contentContainerStyle={[
+          styles.scroll,
+          {
+            paddingTop: insets.top + 16,
+            paddingBottom: Math.max(insets.bottom, 20) + 16,
+          },
+        ]}
+      >
+        <Text style={[styles.title, { color: colors.textPrimary }]}>Settings</Text>
 
-        {/* Backend Connection */}
-        <Section title="Backend Connection">
-          <View style={styles.modeSelector}>
+        {/* ── Section: Appearance (design.md Section 33) ─────────────────── */}
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: isDark ? colors.surface : colors.surface,
+              borderColor: colors.border,
+              borderRadius: radius.md,
+            },
+          ]}
+        >
+          <Text style={[styles.cardHeader, { color: colors.textSecondary }]}>
+            APPEARANCE
+          </Text>
+          <Text style={[styles.cardSubtext, { color: colors.textMuted }]}>
+            Select interface theme mode. Changes apply immediately across all screens.
+          </Text>
+          <ThemeToggle />
+        </View>
+
+        {/* ── Section: Notifications ───────────────────────────────────────── */}
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: isDark ? colors.surface : colors.surface,
+              borderColor: colors.border,
+              borderRadius: radius.md,
+            },
+          ]}
+        >
+          <Text style={[styles.cardHeader, { color: colors.textSecondary }]}>
+            NOTIFICATIONS
+          </Text>
+
+          <SettingRow
+            label="Incoming Calls"
+            description="Display heads-up alert banner on screened incoming calls"
+          >
+            <Switch
+              value={notifyIncoming}
+              onValueChange={setNotifyIncoming}
+              trackColor={{ false: colors.border, true: colors.accent }}
+            />
+          </SettingRow>
+
+          <SettingRow
+            label="Security Alerts"
+            description="High-priority alerts when deepfake or fraud is detected"
+          >
+            <Switch
+              value={notifyAlerts}
+              onValueChange={setNotifyAlerts}
+              trackColor={{ false: colors.border, true: colors.accent }}
+            />
+          </SettingRow>
+
+          <SettingRow
+            label="Email Alerts"
+            description="Send incident summary report to registered email"
+          >
+            <Switch
+              value={notifyEmail}
+              onValueChange={setNotifyEmail}
+              trackColor={{ false: colors.border, true: colors.accent }}
+            />
+          </SettingRow>
+        </View>
+
+        {/* ── Section: Analysis & Privacy ─────────────────────────────────── */}
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: isDark ? colors.surface : colors.surface,
+              borderColor: colors.border,
+              borderRadius: radius.md,
+            },
+          ]}
+        >
+          <Text style={[styles.cardHeader, { color: colors.textSecondary }]}>
+            ANALYSIS & PRIVACY
+          </Text>
+
+          <SettingRow
+            label="Risk Updates"
+            description="Continuous multi-modal score calculation during speech"
+          >
+            <Switch
+              value={riskUpdates}
+              onValueChange={setRiskUpdates}
+              trackColor={{ false: colors.border, true: colors.accent }}
+            />
+          </SettingRow>
+
+          <SettingRow
+            label="Live Transcript"
+            description="Show partial speech recognition transcript during call"
+          >
+            <Switch
+              value={liveTranscript}
+              onValueChange={setLiveTranscript}
+              trackColor={{ false: colors.border, true: colors.accent }}
+            />
+          </SettingRow>
+
+          <SettingRow
+            label="Audio Retention"
+            description="Temporarily save raw audio chunks for forensic replay (disabled by default)"
+          >
+            <Switch
+              value={audioRetention}
+              onValueChange={setAudioRetention}
+              trackColor={{ false: colors.border, true: colors.accent }}
+            />
+          </SettingRow>
+        </View>
+
+        {/* ── Section: Call Screening ─────────────────────────────────────── */}
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: isDark ? colors.surface : colors.surface,
+              borderColor: colors.border,
+              borderRadius: radius.md,
+            },
+          ]}
+        >
+          <Text style={[styles.cardHeader, { color: colors.textSecondary }]}>
+            TELECOM CALL SCREENING
+          </Text>
+
+          <View style={styles.roleRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>
+                Screening Service Status
+              </Text>
+              <Text style={[styles.settingDesc, { color: colors.textSecondary }]}>
+                {isRoleHeld
+                  ? "Dhwani AI is active as your Android Call Screening app."
+                  : "Requires user designation in Android System Settings."}
+              </Text>
+            </View>
+            <View
+              style={[
+                styles.statusBadge,
+                {
+                  backgroundColor: isRoleHeld ? `${colors.success}18` : `${colors.warning}18`,
+                  borderColor: isRoleHeld ? `${colors.success}44` : `${colors.warning}44`,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.statusBadgeText,
+                  { color: isRoleHeld ? colors.success : colors.warning },
+                ]}
+              >
+                {isRoleHeld ? "Active" : "Disabled"}
+              </Text>
+            </View>
+          </View>
+
+          {!isRoleHeld && (
             <TouchableOpacity
-              style={[styles.modeBtn, mode === 'usb' && styles.modeBtnActive]}
-              onPress={() => setMode('usb')}
-              accessibilityLabel="USB ADB mode"
-              accessibilityRole="button">
-              <Text style={[styles.modeBtnText, mode === 'usb' && styles.modeBtnTextActive]}>
+              style={[styles.actionBtn, { backgroundColor: colors.accent }]}
+              onPress={requestRole}
+              disabled={isRoleLoading}
+            >
+              <Text style={styles.actionBtnText}>
+                {isRoleLoading ? "Requesting..." : "Enable Call Screening"}
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity
+            style={[
+              styles.secondaryBtn,
+              {
+                backgroundColor: isDark ? colors.surfaceElevated : colors.surfaceElevated,
+                borderColor: colors.border,
+              },
+            ]}
+            onPress={handleTestNotification}
+          >
+            <Text style={[styles.secondaryBtnText, { color: colors.textPrimary }]}>
+              🔔 Test Security Alert Notification
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* ── Section: Backend Connection ─────────────────────────────────── */}
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: isDark ? colors.surface : colors.surface,
+              borderColor: colors.border,
+              borderRadius: radius.md,
+            },
+          ]}
+        >
+          <Text style={[styles.cardHeader, { color: colors.textSecondary }]}>
+            BACKEND CONNECTION & NETWORK
+          </Text>
+
+          <View style={styles.modeTabs}>
+            <TouchableOpacity
+              style={[
+                styles.modeTab,
+                mode === "usb" && { backgroundColor: colors.accent },
+              ]}
+              onPress={() => setMode("usb")}
+            >
+              <Text
+                style={[
+                  styles.modeTabText,
+                  { color: mode === "usb" ? "#FFFFFF" : colors.textSecondary },
+                ]}
+              >
                 USB / ADB
               </Text>
             </TouchableOpacity>
+
             <TouchableOpacity
-              style={[styles.modeBtn, mode === 'wifi' && styles.modeBtnActive]}
-              onPress={() => setMode('wifi')}
-              accessibilityLabel="Wi-Fi LAN mode"
-              accessibilityRole="button">
-              <Text style={[styles.modeBtnText, mode === 'wifi' && styles.modeBtnTextActive]}>
+              style={[
+                styles.modeTab,
+                mode === "wifi" && { backgroundColor: colors.accent },
+              ]}
+              onPress={() => setMode("wifi")}
+            >
+              <Text
+                style={[
+                  styles.modeTabText,
+                  { color: mode === "wifi" ? "#FFFFFF" : colors.textSecondary },
+                ]}
+              >
                 Wi-Fi / LAN
               </Text>
             </TouchableOpacity>
           </View>
 
-          {mode === 'wifi' && (
-            <View style={styles.wifiConfigContainer}>
-              <View style={styles.inputRow}>
-                <Text style={styles.inputLabel}>Backend Host (IP)</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={wifiHost}
-                  onChangeText={setWifiHost}
-                  placeholder="192.168.1.5 (Mac LAN IP)"
-                  placeholderTextColor={colors.textMuted}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  keyboardType="default"
-                  accessibilityLabel="Backend host IP"
-                />
-              </View>
-
-              <View style={styles.inputRow}>
-                <Text style={styles.inputLabel}>Backend Port</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={wifiPort}
-                  onChangeText={setWifiPort}
-                  placeholder="8000"
-                  placeholderTextColor={colors.textMuted}
-                  keyboardType="numeric"
-                  accessibilityLabel="Backend port"
-                />
-              </View>
-
-              {!wifiHost.trim() && (
-                <View style={styles.warningBox}>
-                  <Text style={styles.warningText}>
-                    Please enter the Mac's LAN IP to connect over Wi-Fi.
-                  </Text>
-                </View>
-              )}
-            </View>
-          )}
-
-          <Row
-            label="REST Endpoint"
-            value={activeApiUrl || 'Not configured'}
-          />
-          <Row
-            label="WebSocket"
-            value={activeWsUrl || 'Not configured'}
-          />
-
-          <View style={styles.testConnectionContainer}>
-            <TouchableOpacity
-              style={[
-                styles.testBtn,
-                connectionStatus === 'checking' && styles.testBtnDisabled,
-              ]}
-              onPress={() => testConnection()}
-              disabled={connectionStatus === 'checking'}
-              accessibilityLabel="Test backend connection"
-              accessibilityRole="button">
-              {connectionStatus === 'checking' ? (
-                <ActivityIndicator size="small" color={colors.white} />
-              ) : (
-                <Text style={styles.testBtnText}>Test Connection</Text>
-              )}
-            </TouchableOpacity>
-
-            {statusMessage && (
-              <View
+          {mode === "wifi" && (
+            <View style={styles.wifiConfig}>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                Host IP / Domain
+              </Text>
+              <TextInput
                 style={[
-                  styles.statusBadge,
-                  connectionStatus === 'connected' && styles.statusBadgeSuccess,
-                  connectionStatus === 'error' && styles.statusBadgeError,
-                ]}>
-                <Text
-                  style={[
-                    styles.statusText,
-                    connectionStatus === 'connected' && styles.statusTextSuccess,
-                    connectionStatus === 'error' && styles.statusTextError,
-                  ]}>
-                  {statusMessage}
-                </Text>
-              </View>
-            )}
-          </View>
-        </Section>
-
-        {/* Account & Trust */}
-        <Section title="Account & Trust">
-          <Row label="Client Mode" value="Standalone Direct Access" />
-          <Row label="Enrolment Status" value="Demo Enrolment Active" />
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Devices' as never)}
-            style={styles.linkRow}
-            accessibilityLabel="Manage trusted devices"
-            accessibilityRole="button">
-            <Text style={styles.linkText}>Manage Trusted Devices →</Text>
-          </TouchableOpacity>
-        </Section>
-
-        {/* Call Screening Protection */}
-        <Section title="Call Screening Protection">
-          <Row
-            label="Protection Status"
-            value={isRoleHeld ? 'Active' : 'Inactive'}
-          />
-          {!isRoleHeld ? (
-            <TouchableOpacity
-              onPress={() => requestRole()}
-              style={styles.enableRoleBtn}
-              disabled={isRoleLoading}
-              accessibilityLabel="Enable Call Screening"
-              accessibilityRole="button">
-              {isRoleLoading ? (
-                <ActivityIndicator color={colors.white} />
-              ) : (
-                <Text style={styles.enableRoleBtnText}>Enable Call Screening</Text>
-              )}
-            </TouchableOpacity>
-          ) : (
-            <View style={styles.roleControlsContainer}>
-              <View style={styles.activeBadge}>
-                <Text style={styles.activeBadgeText}>● Active</Text>
-              </View>
-
-              <TouchableOpacity
-                onPress={() => openSettings()}
-                style={styles.roleActionBtn}
-                disabled={isRoleLoading}
-                accessibilityLabel="Change Call Screening App"
-                accessibilityRole="button">
-                <Text style={styles.roleActionBtnText}>Change Call Screening App</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => openSettings()}
-                style={[styles.roleActionBtn, styles.roleDisableBtn]}
-                disabled={isRoleLoading}
-                accessibilityLabel="Disable VoiceShield Screening"
-                accessibilityRole="button">
-                <Text style={styles.roleDisableBtnText}>Disable VoiceShield Screening</Text>
-              </TouchableOpacity>
+                  styles.input,
+                  {
+                    backgroundColor: isDark ? colors.surfaceElevated : colors.surfaceElevated,
+                    color: colors.textPrimary,
+                    borderColor: colors.border,
+                  },
+                ]}
+                value={wifiHost}
+                onChangeText={setWifiHost}
+                placeholder="192.168.1.X"
+                placeholderTextColor={colors.textMuted}
+                autoCapitalize="none"
+              />
+              <Text style={[styles.inputLabel, { color: colors.textSecondary, marginTop: 6 }]}>
+                Port
+              </Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: isDark ? colors.surfaceElevated : colors.surfaceElevated,
+                    color: colors.textPrimary,
+                    borderColor: colors.border,
+                  },
+                ]}
+                value={wifiPort}
+                onChangeText={setWifiPort}
+                placeholder="8000"
+                placeholderTextColor={colors.textMuted}
+                keyboardType="numeric"
+              />
             </View>
           )}
-          <Text style={styles.roleExplanation}>
-            Android requires user control over call screening. To change or disable VoiceShield, select 'Caller ID & spam app' in Android system settings.
-          </Text>
-        </Section>
 
-        {/* Contacts Permission */}
-        <Section title="Contacts Permission">
-          <Row
-            label="Status"
-            value={
-              hasContactsPermission === null
-                ? 'Checking…'
-                : hasContactsPermission
-                ? '✅ Granted'
-                : '⚠️ Not Granted'
-            }
-          />
-          <Text style={styles.roleExplanation}>
-            Allow VoiceShield to detect known contacts so calls from friends and family are
-            recognized as safe and screened seamlessly. Without this permission, all calls
-            appear as "unknown" to the screening service.
-          </Text>
-          {!hasContactsPermission && hasContactsPermission !== null && (
-            <Text style={styles.roleExplanation}>
-              To grant access: Android Settings → Apps → VoiceShield → Permissions → Contacts.
+          <View style={styles.urlBox}>
+            <Text style={[styles.urlLabel, { color: colors.textMuted }]}>
+              REST API: <Text style={{ color: colors.textPrimary }}>{activeApiUrl}</Text>
             </Text>
-          )}
-        </Section>
+            <Text style={[styles.urlLabel, { color: colors.textMuted }]}>
+              WebSocket: <Text style={{ color: colors.textPrimary }}>{activeWsUrl}</Text>
+            </Text>
+          </View>
 
-        {/* Notifications */}
-        <Section title="Notifications">
-          <ToggleRow
-            label="Security Alerts"
-            value={pushEnabled}
-            onChange={setPushEnabled}
-            description="Receive push alerts for high-risk events"
-          />
           <TouchableOpacity
-            onPress={handleTestNotification}
-            style={styles.testNotificationBtn}
-            accessibilityLabel="Test Security Notification"
-            accessibilityRole="button">
-            <Text style={styles.testNotificationBtnText}>🔔  Test Security Notification</Text>
+            style={[
+              styles.secondaryBtn,
+              {
+                backgroundColor: isDark ? colors.surfaceElevated : colors.surfaceElevated,
+                borderColor: colors.border,
+              },
+            ]}
+            onPress={testConnection}
+          >
+            {connectionStatus === "checking" ? (
+              <ActivityIndicator color={colors.accent} size="small" />
+            ) : (
+              <Text style={[styles.secondaryBtnText, { color: colors.textPrimary }]}>
+                ⚡ Test Backend Health
+              </Text>
+            )}
           </TouchableOpacity>
-          <Text style={styles.testNotificationDesc}>
-            Fires a local test alert to verify heads-up display, sound, and notification permission. (Does not affect dashboard stats or create call records).
+
+          {statusMessage ? (
+            <Text
+              style={[
+                styles.statusMsg,
+                {
+                  color:
+                    connectionStatus === "connected"
+                      ? colors.success
+                      : connectionStatus === "error"
+                      ? colors.danger
+                      : colors.textSecondary,
+                },
+              ]}
+            >
+              {statusMessage}
+            </Text>
+          ) : null}
+        </View>
+
+        {/* ── Section: About & Sign Out ────────────────────────────────────── */}
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: isDark ? colors.surface : colors.surface,
+              borderColor: colors.border,
+              borderRadius: radius.md,
+            },
+          ]}
+        >
+          <Text style={[styles.cardHeader, { color: colors.textSecondary }]}>
+            ABOUT DHWANI AI
           </Text>
-        </Section>
 
-        {/* Privacy */}
-        <Section title="Privacy">
-          <ToggleRow
-            label="Raw Audio Retention"
-            value={rawAudioEnabled}
-            onChange={setRawAudioEnabled}
-            description="Store raw audio for debugging (off by default per privacy policy)"
-          />
-          <Row label="Data Minimization" value="Feature-only logging enabled" />
-          <Row label="Third-party Processing" value="None — analysis runs on the VoiceShield backend" />
-        </Section>
+          <View style={styles.aboutRow}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <DhwaniLogo size="sm" showText={false} style={{ marginRight: 8 }} />
+              <Text style={[styles.aboutTitle, { color: colors.textPrimary }]}>
+                Dhwani AI
+              </Text>
+            </View>
+            <Text style={[styles.aboutVersion, { color: colors.textMuted }]}>
+              Version 1.0.0 (Build 2026.09)
+            </Text>
+          </View>
+          <Text style={[styles.aboutTagline, { color: colors.textSecondary }]}>
+            Secure Calls. Trusted People. Built for a Safer India.
+          </Text>
 
-        {/* Detection pipeline */}
-        <Section title="Detection Pipeline">
-          <Row label="Authenticity" value="AASIST-L real authenticity detection" />
-          <Row label="Speaker Identity" value="ECAPA-TDNN real speaker identity inference" />
-          <Row label="Speech-to-Text" value="faster-whisper tiny real transcription" />
-          <Row label="Context Rules" value="Rule-based, active" />
-          <Row label="Audio Source" value="Real microphone/audio capture in live mode" />
-        </Section>
-
-        {/* Security */}
-        <Section title="Security">
-          <Row label="Transport" value="TLS / LAN WebSocket" />
-          <Row label="Local Storage" value="Android Keystore" />
-          <Row label="Evidence Integrity" value="SHA-256 hashing" />
-          <Row label="Policy Version" value="v1" />
-        </Section>
-
-        <Text style={styles.version}>VoiceShield v0.1.0 · SIH 2026 · Problem 26104</Text>
+          <TouchableOpacity
+            style={[
+              styles.logoutBtn,
+              {
+                backgroundColor: `${colors.danger}18`,
+                borderColor: `${colors.danger}44`,
+                borderRadius: radius.sm,
+              },
+            ]}
+            onPress={logout}
+          >
+            <Text style={[styles.logoutText, { color: colors.danger }]}>
+              Sign Out
+            </Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
+
+      {/* Persistent Bottom Navigation (Section 28) */}
+      <BottomNavigation activeTab="settings" />
     </View>
   );
 };
 
-const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-  <View style={styles.section}>
-    <Text style={styles.sectionTitle}>{title}</Text>
-    <View style={styles.sectionContent}>{children}</View>
-  </View>
-);
-
-const Row: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <View style={styles.row}>
-    <Text style={styles.rowLabel}>{label}</Text>
-    <Text style={styles.rowValue}>{value}</Text>
-  </View>
-);
-
-const ToggleRow: React.FC<{ label: string; value: boolean; onChange: (v: boolean) => void; description: string }> =
-  ({ label, value, onChange, description }) => (
-    <View style={styles.toggleRow}>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.rowLabel}>{label}</Text>
-        <Text style={styles.rowDesc}>{description}</Text>
-      </View>
-      <Switch
-        value={value}
-        onValueChange={onChange}
-        trackColor={{ false: colors.bgElevated, true: colors.brand }}
-        thumbColor={colors.white}
-        accessibilityLabel={label}
-      />
-    </View>
-  );
-
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
-  scroll: { padding: spacing.lg, gap: spacing.md },
-  title: { ...typography.h2, marginBottom: spacing.sm },
-  section: { gap: spacing.sm },
-  sectionTitle: {
-    fontSize: 12, fontWeight: '700', color: colors.textMuted,
-    textTransform: 'uppercase', letterSpacing: 1.2,
+  container: {
+    flex: 1,
   },
-  sectionContent: {
-    backgroundColor: colors.bgCard,
-    borderRadius: radius.md,
-    borderWidth: 1, borderColor: colors.border,
-    overflow: 'hidden',
+  scroll: {
+    paddingHorizontal: 20,
+    gap: 12,
   },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: spacing.md,
-    borderBottomWidth: 1, borderBottomColor: colors.border,
+  title: {
+    fontSize: 26,
+    fontWeight: "800",
+    letterSpacing: -0.4,
+    marginBottom: 4,
   },
-  rowLabel: { color: colors.textSecondary, fontSize: 14 },
-  rowValue: { color: colors.textPrimary, fontSize: 13, fontWeight: '600', maxWidth: '60%', textAlign: 'right' },
-  rowDesc: { color: colors.textMuted, fontSize: 11, marginTop: 2 },
-  toggleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: spacing.md,
-    borderBottomWidth: 1, borderBottomColor: colors.border,
+  card: {
+    borderWidth: 1,
+    padding: 16,
+    gap: 12,
   },
-  modeSelector: {
-    flexDirection: 'row',
-    backgroundColor: colors.bgElevated,
-    padding: 4,
-    borderRadius: radius.sm,
-    margin: spacing.sm,
-    gap: 4,
+  cardHeader: {
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.8,
   },
-  modeBtn: {
+  cardSubtext: {
+    fontSize: 12,
+    marginTop: -4,
+  },
+  settingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 6,
+  },
+  settingTextCol: {
+    flex: 1,
+    marginRight: 12,
+  },
+  settingLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  settingDesc: {
+    fontSize: 12,
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  settingControlCol: {
+    alignItems: "flex-end",
+  },
+  roleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  statusBadgeText: {
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  actionBtn: {
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 8,
+  },
+  actionBtnText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  secondaryBtn: {
+    borderWidth: 1,
+    paddingVertical: 11,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 8,
+  },
+  secondaryBtnText: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  modeTabs: {
+    flexDirection: "row",
+    borderRadius: 8,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(128,128,128,0.2)",
+  },
+  modeTab: {
     flex: 1,
     paddingVertical: 10,
-    alignItems: 'center',
-    borderRadius: radius.sm,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  modeBtnActive: {
-    backgroundColor: colors.brand,
-  },
-  modeBtnText: {
-    color: colors.textSecondary,
+  modeTabText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: "600",
   },
-  modeBtnTextActive: {
-    color: colors.white,
-    fontWeight: '700',
-  },
-  wifiConfigContainer: {
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    gap: spacing.sm,
-  },
-  inputRow: {
+  wifiConfig: {
     gap: 4,
   },
   inputLabel: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 11,
+    fontWeight: "600",
   },
-  textInput: {
-    backgroundColor: colors.bgElevated,
+  input: {
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.md,
+    borderRadius: 6,
+    paddingHorizontal: 12,
     paddingVertical: 8,
-    color: colors.textPrimary,
-    fontSize: 14,
+    fontSize: 13,
   },
-  warningBox: {
-    backgroundColor: `${colors.warning}18`,
-    borderWidth: 1,
-    borderColor: `${colors.warning}44`,
-    borderRadius: radius.sm,
-    padding: spacing.sm,
+  urlBox: {
+    padding: 10,
+    borderRadius: 6,
+    backgroundColor: "rgba(128,128,128,0.08)",
+    gap: 4,
+  },
+  urlLabel: {
+    fontSize: 11,
+    fontFamily: "monospace",
+  },
+  statusMsg: {
+    fontSize: 12,
+    textAlign: "center",
     marginTop: 2,
   },
-  warningText: {
-    color: colors.warning,
-    fontSize: 12,
-    fontWeight: '500',
+  aboutRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    justifyContent: "space-between",
   },
-  testConnectionContainer: {
-    padding: spacing.md,
-    gap: spacing.sm,
+  aboutTitle: {
+    fontSize: 16,
+    fontWeight: "800",
   },
-  testBtn: {
-    backgroundColor: colors.bgElevated,
-    borderWidth: 1,
-    borderColor: colors.brand,
-    borderRadius: radius.sm,
-    paddingVertical: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  testBtnDisabled: {
-    opacity: 0.6,
-  },
-  testBtnText: {
-    color: colors.brandLight,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  statusBadge: {
-    backgroundColor: colors.bgElevated,
-    padding: spacing.sm,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  statusBadgeSuccess: {
-    backgroundColor: `${colors.success}18`,
-    borderColor: `${colors.success}44`,
-  },
-  statusBadgeError: {
-    backgroundColor: `${colors.error}18`,
-    borderColor: `${colors.error}44`,
-  },
-  statusText: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    textAlign: 'center',
-  },
-  statusTextSuccess: {
-    color: colors.success,
-    fontWeight: '600',
-  },
-  statusTextError: {
-    color: colors.error,
-    fontWeight: '600',
-  },
-  linkRow: {
-    padding: spacing.md,
-  },
-  linkText: { color: colors.brand, fontWeight: '600', fontSize: 14 },
-  logoutBtn: {
-    backgroundColor: `${colors.error}18`,
-    borderRadius: radius.md,
-    paddingVertical: 14, alignItems: 'center',
-    borderWidth: 1, borderColor: `${colors.error}44`,
-    marginTop: spacing.md,
-  },
-  logoutText: { color: colors.error, fontWeight: '700', fontSize: 15 },
-  version: { textAlign: 'center', color: colors.textMuted, fontSize: 11, marginTop: spacing.sm },
-  enableRoleBtn: {
-    backgroundColor: colors.brand,
-    borderRadius: radius.md,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginHorizontal: spacing.md,
-    marginVertical: spacing.sm,
-  },
-  enableRoleBtnText: {
-    color: colors.white,
-    fontWeight: '700',
-    fontSize: 14,
-  },
-  activeBadge: {
-    backgroundColor: `${colors.success}18`,
-    borderColor: `${colors.success}44`,
-    borderWidth: 1,
-    borderRadius: radius.sm,
-    paddingVertical: 8,
-    paddingHorizontal: spacing.md,
-    marginHorizontal: spacing.md,
-    marginVertical: spacing.xs,
-    alignItems: 'center',
-  },
-  activeBadgeText: {
-    color: colors.success,
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  roleExplanation: {
-    color: colors.textMuted,
-    fontSize: 12,
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.sm,
-    lineHeight: 16,
-  },
-  roleControlsContainer: {
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.xs,
-    gap: spacing.xs,
-  },
-  roleActionBtn: {
-    backgroundColor: colors.bgElevated,
-    borderRadius: radius.sm,
-    paddingVertical: 10,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  roleActionBtnText: {
-    color: colors.brand,
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  roleDisableBtn: {
-    backgroundColor: `${colors.error}10`,
-    borderColor: `${colors.error}33`,
-  },
-  roleDisableBtnText: {
-    color: colors.error,
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  testNotificationBtn: {
-    backgroundColor: colors.bgElevated,
-    borderRadius: radius.sm,
-    paddingVertical: 10,
-    alignItems: 'center',
-    marginHorizontal: spacing.md,
-    marginTop: spacing.xs,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  testNotificationBtnText: {
-    color: colors.brand,
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  testNotificationDesc: {
-    color: colors.textMuted,
+  aboutVersion: {
     fontSize: 11,
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.xs,
-    paddingBottom: spacing.sm,
-    lineHeight: 15,
+  },
+  aboutTagline: {
+    fontSize: 12,
+  },
+  logoutBtn: {
+    borderWidth: 1,
+    paddingVertical: 11,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 6,
+  },
+  logoutText: {
+    fontSize: 13,
+    fontWeight: "700",
   },
 });

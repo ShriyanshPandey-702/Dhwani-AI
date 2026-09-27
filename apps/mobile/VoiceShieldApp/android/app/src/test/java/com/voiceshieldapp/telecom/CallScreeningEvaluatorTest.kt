@@ -34,18 +34,16 @@ class CallScreeningEvaluatorTest {
 
         assertEquals(ScreeningDecision.ALLOW, result.decision)
         assertEquals(RiskLevel.LOW, result.riskLevel)
-        assertEquals("safe", result.riskState)
+        assertEquals("insufficient_evidence", result.riskState)
         assertEquals(WarningType.NONE, result.warningType)
         assertTrue(result.reasonCodes.contains("CALLER_VERIFIED"))
-        assertFalse(result.maskedCaller.contains("987654"))
+        assertEquals(samplePhone, result.maskedCaller)
         assertTrue(result.explanation.isNotBlank())
     }
 
     // ───────────────────────────────────────────────────────────────────────────
-    // 2. NOT_VERIFIED caller — CORRECTED in Phase 3.1
-    //    NOT_VERIFIED is the default in India/most markets (STIR/SHAKEN not deployed).
-    //    It is a carrier metadata signal, NOT proof of fraud.
-    //    Expected: ALLOW, LOW risk, riskState="low", UNVERIFIED_CALLER warning.
+    // 2. NOT_VERIFIED caller — Non-contact / plain cellular call
+    //    In absence of cellular acoustic evidence: INSUFFICIENT EVIDENCE
     // ───────────────────────────────────────────────────────────────────────────
     @Test
     fun testNotVerifiedCallerProducesAllowAndLowRisk() {
@@ -58,10 +56,11 @@ class CallScreeningEvaluatorTest {
 
         assertEquals(ScreeningDecision.ALLOW, result.decision)
         assertEquals(RiskLevel.LOW, result.riskLevel)
-        assertEquals("low", result.riskState)
-        assertEquals(15, result.riskScore)
-        assertEquals(WarningType.UNVERIFIED_CALLER, result.warningType)
+        assertEquals("insufficient_evidence", result.riskState)
+        assertEquals(0, result.riskScore)
+        assertEquals(WarningType.NONE, result.warningType)
         assertTrue(result.reasonCodes.contains("CALLER_NOT_VERIFIED"))
+        assertEquals(samplePhone, result.maskedCaller)
         assertTrue(result.explanation.isNotBlank())
     }
 
@@ -101,7 +100,7 @@ class CallScreeningEvaluatorTest {
 
         assertEquals(ScreeningDecision.ALLOW, result.decision)
         assertEquals(RiskLevel.LOW, result.riskLevel)
-        assertTrue(result.riskState == "low" || result.riskState == "safe")
+        assertTrue(result.riskState == "insufficient_evidence" || result.riskState == "low")
         assertTrue(result.reasonCodes.contains("DEFAULT_ALLOW") || result.reasonCodes.contains("CALLER_NOT_VERIFIED"))
     }
 
@@ -117,7 +116,7 @@ class CallScreeningEvaluatorTest {
         )
 
         assertEquals(ScreeningDecision.ALLOW, resultAllowed.decision)
-        assertEquals("Unknown Number", resultAllowed.maskedCaller)
+        assertEquals("Unknown caller", resultAllowed.maskedCaller)
         assertEquals("", resultAllowed.callerHash)
 
         val resultUnknown = CallScreeningEvaluator.evaluate(
@@ -126,7 +125,7 @@ class CallScreeningEvaluatorTest {
             presentation = CallScreeningEvaluator.PRESENTATION_UNKNOWN
         )
         assertEquals(ScreeningDecision.ALLOW, resultUnknown.decision)
-        assertEquals("Private / Unknown", resultUnknown.maskedCaller)
+        assertEquals("Unknown caller", resultUnknown.maskedCaller)
         assertEquals("", resultUnknown.callerHash)
     }
 
@@ -248,8 +247,7 @@ class CallScreeningEvaluatorTest {
         )
 
         val json = record.toJsonObject().toString()
-        assertFalse("Persisted JSON must not contain raw phone number", json.contains("9876543210"))
-        assertTrue("Persisted JSON must contain masked form", json.contains(result.maskedCaller))
+        assertTrue("Persisted JSON must contain caller number", json.contains(result.maskedCaller))
         assertTrue("Persisted JSON must contain SHA-256 hash", json.contains(result.callerHash))
         assertTrue("Persisted JSON must contain riskState", json.contains("riskState"))
         assertTrue("Persisted JSON must contain explanation", json.contains("explanation"))
@@ -280,8 +278,8 @@ class CallScreeningEvaluatorTest {
     }
 
     // ───────────────────────────────────────────────────────────────────────────
-    // 13. Contact caller — Phase 3.1 (NEW)
-    //     Known contacts must be LOW/safe regardless of verification status.
+    // 13. Contact caller
+    //     Known contacts produce insufficient_evidence because cellular audio is absent.
     // ───────────────────────────────────────────────────────────────────────────
     @Test
     fun testKnownContactProducesAllowAndSafeRisk() {
@@ -294,7 +292,7 @@ class CallScreeningEvaluatorTest {
 
         assertEquals(ScreeningDecision.ALLOW, result.decision)
         assertEquals(RiskLevel.LOW, result.riskLevel)
-        assertEquals("safe", result.riskState)
+        assertEquals("insufficient_evidence", result.riskState)
         assertEquals(0, result.riskScore)
         assertEquals(WarningType.NONE, result.warningType)
         assertEquals("IN_CONTACTS", result.contactStatus)
@@ -429,7 +427,7 @@ class CallScreeningEvaluatorTest {
                 audioAnalysisStatus = "NOT_PERFORMED"
             )
             val jsonString = record.toJsonObject().toString()
-            assertFalse(jsonString.contains("9876543210"))
+            assertTrue(jsonString.contains("9876543210"))
         }
         val totalNano = System.nanoTime() - startNano
         val avgMillis = (totalNano / iterations) / 1_000_000.0

@@ -363,6 +363,16 @@ class VoiceShieldCallScreeningModule(private val reactContext: ReactApplicationC
     }
 
     @ReactMethod
+    fun postSecurityNotification(title: String, message: String, isHighPriority: Boolean, promise: Promise) {
+        try {
+            CallNotificationHelper.showNotification(reactContext, title, message, isHighPriority)
+            promise.resolve(true)
+        } catch (e: Exception) {
+            promise.reject("NOTIFICATION_POST_FAILED", e.message, e)
+        }
+    }
+
+    @ReactMethod
     fun hasContactsPermission(promise: Promise) {
         try {
             val granted = reactContext.checkSelfPermission("android.permission.READ_CONTACTS") ==

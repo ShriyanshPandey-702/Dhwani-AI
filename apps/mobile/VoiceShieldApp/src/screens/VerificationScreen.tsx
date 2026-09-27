@@ -1,23 +1,34 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import {
-  View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Animated,
-} from 'react-native';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { colors, spacing, radius, typography } from '../utils/theme';
-import client from '../services/api/client';
-import { VerificationData } from '../types';
-import { RootStackParamList } from '../navigation/AppNavigator';
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  ScrollView,
+  Animated,
+  Alert,
+} from "react-native";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTheme } from "../utils/theme";
+import client from "../services/api/client";
+import { VerificationData } from "../types";
+import { RootStackParamList } from "../navigation/AppNavigator";
 
-type Route = RouteProp<RootStackParamList, 'Verification'>;
+type Route = RouteProp<RootStackParamList, "Verification">;
 
 export const VerificationScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<Route>();
+  const insets = useSafeAreaInsets();
+  const { colors, radius, isDark } = useTheme();
+
   const { sessionId } = route.params;
   const [verification, setVerification] = useState<VerificationData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [resolving, setResolving] = useState(false);
-  const [result, setResult] = useState<'approved' | 'rejected' | null>(null);
+  const [result, setResult] = useState<"approved" | "rejected" | null>(null);
   const countdown = useRef(120);
   const [timeLeft, setTimeLeft] = useState(120);
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -39,100 +50,285 @@ export const VerificationScreen: React.FC = () => {
       setTimeLeft(countdown.current);
       if (countdown.current <= 0) {
         clearInterval(timer);
-        setResult('rejected');
+        setResult("rejected");
       }
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [pulseAnim]);
 
-  const requestVerification = async () => {
+  const requestVerification = async (method: string = "trusted_device") => {
     try {
-      const { data } = await client.post<VerificationData>(`/verification/${sessionId}/request`);
+      const { data } = await client.post<VerificationData>(`/verification/${sessionId}/request`, { method });
       setVerification(data);
-    } catch (e) {
-      console.error(e);
+      countdown.current = 120;
+      setTimeLeft(120);
+    } catch (e: any) {
+      Alert.alert("Verification Error", e?.response?.data?.detail || "Could not request verification from server.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const resolve = async (action: 'approve' | 'reject') => {
-    if (!verification) return;
+  const resolve = async (action: "approve" | "reject") => {
+    if (!verification) {
+      Alert.alert("Verification Error", "No active verification nonce found for this session.");
+      return;
+    }
     setResolving(true);
     try {
       await client.post(`/verification/${sessionId}/${action}`, { nonce: verification.nonce });
-      setResult(action === 'approve' ? 'approved' : 'rejected');
-    } catch (e) {
-      console.error(e);
+      setResult(action === "approve" ? "approved" : "rejected");
+    } catch (e: any) {
+      Alert.alert("Verification Error", e?.response?.data?.detail || "Could not complete verification on backend.");
     } finally {
       setResolving(false);
     }
   };
 
-  return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.topLabel}>🔐 INDEPENDENT TRUST CHANNEL</Text>
-        <Text style={styles.title}>Verification Required</Text>
-        <Text style={styles.subtitle}>
-          This action requires approval from your trusted device — separate from the
-          suspected call channel.
-        </Text>
+  const handleCallBack = () => {
+    Alert.alert(
+      "Call Back",
+      "Request out-of-band phone callback on verified line?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Confirm",
+          onPress: () => requestVerification("callback"),
+        },
+      ]
+    );
+  };
 
-        {isLoading ? (
-          <ActivityIndicator color={colors.brand} size="large" />
-        ) : result ? (
-          <View style={[styles.resultCard, { borderColor: result === 'approved' ? colors.safe : colors.error }]}>
-            <Text style={styles.resultIcon}>{result === 'approved' ? '✅' : '❌'}</Text>
-            <Text style={[styles.resultText, { color: result === 'approved' ? colors.safe : colors.error }]}>
-              {result === 'approved' ? 'Verification Approved' : 'Verification Rejected / Timed Out'}
+  return (
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: isDark ? colors.background : colors.background,
+        },
+      ]}
+    >
+      <ScrollView
+        contentContainerStyle={[
+          styles.scroll,
+          {
+            paddingTop: insets.top + 16,
+            paddingBottom: Math.max(insets.bottom, 24) + 16,
+          },
+        ]}
+      >
+        {/* Header (design.md Section 25) */}
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>
+            Verify Through Trusted Channel
+          </Text>
+          <Text style={[styles.explanation, { color: colors.textSecondary }]}>
+            This is a high-risk request. We recommend confirming through an independent channel.
+          </Text>
+        </View>
+
+        {result ? (
+          <View
+            style={[
+              styles.resultCard,
+              {
+                backgroundColor: isDark ? colors.surface : colors.surface,
+                borderColor: result === "approved" ? colors.success : colors.danger,
+                borderRadius: radius.lg,
+              },
+            ]}
+          >
+            <Text style={{ fontSize: 48, marginBottom: 8 }}>
+              {result === "approved" ? "✅" : "❌"}
             </Text>
-            <TouchableOpacity style={styles.doneBtn} onPress={() => navigation.goBack()}>
-              <Text style={styles.doneBtnText}>Return to Call</Text>
+            <Text
+              style={[
+                styles.resultTitle,
+                { color: result === "approved" ? colors.success : colors.danger },
+              ]}
+            >
+              {result === "approved" ? "Verification Approved" : "Verification Rejected / Timed Out"}
+            </Text>
+            <Text style={[styles.resultSubtitle, { color: colors.textSecondary }]}>
+              {result === "approved"
+                ? "The independent check validated caller authenticity."
+                : "The request has been held or denied for security."}
+            </Text>
+            <TouchableOpacity
+              style={[styles.doneBtn, { backgroundColor: colors.accent, borderRadius: radius.md }]}
+              onPress={() => navigation.goBack()}
+            >
+              <Text style={styles.doneBtnText}>Return to Live Session</Text>
             </TouchableOpacity>
           </View>
         ) : (
           <>
-            {/* Timer */}
-            <View style={styles.timerSection}>
-              <Animated.View style={[styles.timerRing, { transform: [{ scale: pulseAnim }],
-                borderColor: timeLeft < 30 ? colors.error : colors.brand }]}>
-                <Text style={[styles.timerText, { color: timeLeft < 30 ? colors.error : colors.textPrimary }]}>
-                  {timeLeft}s
-                </Text>
-                <Text style={styles.timerLabel}>remaining</Text>
-              </Animated.View>
+            {/* 3 Trusted Channel Actions (Section 25) */}
+            <View style={styles.channelsSection}>
+              <Text style={[styles.channelsHeader, { color: colors.textSecondary }]}>
+                INDEPENDENT CHANNELS
+              </Text>
+
+              {/* 1. Call Back (Connected to backend callback verification) */}
+              <TouchableOpacity
+                style={[
+                  styles.channelCard,
+                  {
+                    backgroundColor: isDark ? colors.surface : colors.surface,
+                    borderColor: colors.border,
+                    borderRadius: radius.md,
+                  },
+                ]}
+                onPress={handleCallBack}
+                accessibilityRole="button"
+                accessibilityLabel="Call Back"
+              >
+                <View style={styles.channelIconBox}>
+                  <Text style={{ fontSize: 20 }}>📞</Text>
+                </View>
+                <View style={styles.channelTextBox}>
+                  <Text style={[styles.channelTitle, { color: colors.textPrimary }]}>
+                    Call Back
+                  </Text>
+                  <Text style={[styles.channelDesc, { color: colors.textSecondary }]}>
+                    Trigger out-of-band carrier callback verification
+                  </Text>
+                </View>
+                <Text style={[styles.channelArrow, { color: colors.textMuted }]}>›</Text>
+              </TouchableOpacity>
+
+              {/* 2. Send Verification Link (Unconfigured Gateway) */}
+              <View
+                style={[
+                  styles.channelCard,
+                  {
+                    backgroundColor: isDark ? colors.surface : colors.surface,
+                    borderColor: colors.border,
+                    borderRadius: radius.md,
+                    opacity: 0.55,
+                  },
+                ]}
+              >
+                <View style={styles.channelIconBox}>
+                  <Text style={{ fontSize: 20 }}>🔗</Text>
+                </View>
+                <View style={styles.channelTextBox}>
+                  <Text style={[styles.channelTitle, { color: colors.textMuted }]}>
+                    Send Verification Link (Gateway Unavailable)
+                  </Text>
+                  <Text style={[styles.channelDesc, { color: colors.textMuted }]}>
+                    SMS/Email delivery gateway not configured on server
+                  </Text>
+                </View>
+                <Text style={[styles.channelArrow, { color: colors.textMuted }]}>—</Text>
+              </View>
+
+              {/* 3. Notify Trusted Contact (Unconfigured Gateway) */}
+              <View
+                style={[
+                  styles.channelCard,
+                  {
+                    backgroundColor: isDark ? colors.surface : colors.surface,
+                    borderColor: colors.border,
+                    borderRadius: radius.md,
+                    opacity: 0.55,
+                  },
+                ]}
+              >
+                <View style={styles.channelIconBox}>
+                  <Text style={{ fontSize: 20 }}>👥</Text>
+                </View>
+                <View style={styles.channelTextBox}>
+                  <Text style={[styles.channelTitle, { color: colors.textMuted }]}>
+                    Notify Trusted Contact (Gateway Unavailable)
+                  </Text>
+                  <Text style={[styles.channelDesc, { color: colors.textMuted }]}>
+                    Enterprise directory webhook not configured on server
+                  </Text>
+                </View>
+                <Text style={[styles.channelArrow, { color: colors.textMuted }]}>—</Text>
+              </View>
             </View>
 
-            {/* Nonce */}
-            {verification && (
-              <View style={styles.nonceBox}>
-                <Text style={styles.nonceLabel}>Verification Nonce (show on trusted device)</Text>
-                <Text style={styles.nonceValue} numberOfLines={2} selectable>
-                  {verification.nonce}
-                </Text>
+            {/* Cryptographic Device Nonce Approval */}
+            <View
+              style={[
+                styles.deviceVerificationBox,
+                {
+                  backgroundColor: isDark ? colors.surface : colors.surface,
+                  borderColor: colors.border,
+                  borderRadius: radius.md,
+                },
+              ]}
+            >
+              <View style={styles.timerWrap}>
+                <Animated.View
+                  style={[
+                    styles.timerRing,
+                    {
+                      borderColor: timeLeft < 30 ? colors.danger : colors.accent,
+                      transform: [{ scale: pulseAnim }],
+                    },
+                  ]}
+                >
+                  <Text style={[styles.timerValue, { color: colors.textPrimary }]}>
+                    {timeLeft}s
+                  </Text>
+                  <Text style={[styles.timerSub, { color: colors.textMuted }]}>
+                    timeout
+                  </Text>
+                </Animated.View>
               </View>
-            )}
 
-            {/* Action Buttons */}
-            <TouchableOpacity
-              style={styles.approveBtn}
-              onPress={() => resolve('approve')}
-              disabled={resolving}
-              accessibilityLabel="Approve verification"
-              accessibilityRole="button">
-              {resolving ? <ActivityIndicator color={colors.white} /> :
-                <Text style={styles.approveBtnText}>✓ Approve on This Device</Text>}
-            </TouchableOpacity>
+              {verification ? (
+                <View style={styles.nonceContainer}>
+                  <Text style={[styles.nonceHeader, { color: colors.textMuted }]}>
+                    CHALLENGE NONCE
+                  </Text>
+                  <Text style={[styles.nonceCode, { color: colors.textPrimary }]}>
+                    {verification.nonce}
+                  </Text>
+                </View>
+              ) : null}
 
-            <TouchableOpacity
-              style={styles.rejectBtn}
-              onPress={() => resolve('reject')}
-              disabled={resolving}
-              accessibilityLabel="Reject verification"
-              accessibilityRole="button">
-              <Text style={styles.rejectBtnText}>✗ Reject — Block Action</Text>
-            </TouchableOpacity>
+              <View style={styles.resolveButtonsRow}>
+                <TouchableOpacity
+                  style={[
+                    styles.approveBtn,
+                    { backgroundColor: colors.success, borderRadius: radius.md },
+                  ]}
+                  onPress={() => resolve("approve")}
+                  disabled={resolving}
+                  accessibilityRole="button"
+                  accessibilityLabel="Approve Verification"
+                >
+                  {resolving ? (
+                    <ActivityIndicator color="#FFFFFF" size="small" />
+                  ) : (
+                    <Text style={styles.btnText}>✓ Confirm Legitimacy</Text>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.rejectBtn,
+                    {
+                      backgroundColor: `${colors.danger}18`,
+                      borderColor: `${colors.danger}55`,
+                      borderRadius: radius.md,
+                    },
+                  ]}
+                  onPress={() => resolve("reject")}
+                  disabled={resolving}
+                  accessibilityRole="button"
+                  accessibilityLabel="Reject / Block Request"
+                >
+                  <Text style={[styles.rejectBtnText, { color: colors.danger }]}>
+                    ✗ Reject & Block
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </>
         )}
       </ScrollView>
@@ -141,57 +337,152 @@ export const VerificationScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
-  scroll: { padding: spacing.lg, gap: spacing.lg },
-  topLabel: { fontSize: 11, fontWeight: '700', color: colors.brand, letterSpacing: 2 },
-  title: { ...typography.h2 },
-  subtitle: { color: colors.textSecondary, fontSize: 14, lineHeight: 20 },
-  timerSection: { alignItems: 'center', paddingVertical: spacing.md },
-  timerRing: {
-    width: 120, height: 120, borderRadius: 60,
-    borderWidth: 3,
-    alignItems: 'center', justifyContent: 'center',
-    backgroundColor: colors.bgCard,
+  container: {
+    flex: 1,
   },
-  timerText: { fontSize: 32, fontWeight: '800' },
-  timerLabel: { fontSize: 11, color: colors.textMuted, marginTop: -4 },
-  nonceBox: {
-    backgroundColor: colors.bgCard,
-    borderRadius: radius.md,
-    padding: spacing.md,
+  scroll: {
+    paddingHorizontal: 20,
+    gap: 16,
+  },
+  header: {
     gap: 6,
-    borderWidth: 1, borderColor: colors.border,
   },
-  nonceLabel: { fontSize: 11, color: colors.textMuted, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1 },
-  nonceValue: { ...typography.mono, fontSize: 13 },
+  title: {
+    fontSize: 24,
+    fontWeight: "800",
+    letterSpacing: -0.4,
+  },
+  explanation: {
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  channelsSection: {
+    gap: 8,
+  },
+  channelsHeader: {
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.8,
+    marginBottom: 2,
+  },
+  channelCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    padding: 14,
+  },
+  channelIconBox: {
+    width: 38,
+    height: 38,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  channelTextBox: {
+    flex: 1,
+  },
+  channelTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  channelDesc: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+  channelArrow: {
+    fontSize: 20,
+    fontWeight: "300",
+  },
+  deviceVerificationBox: {
+    borderWidth: 1,
+    padding: 18,
+    alignItems: "center",
+    gap: 14,
+  },
+  timerWrap: {
+    alignItems: "center",
+    marginVertical: 4,
+  },
+  timerRing: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    borderWidth: 2.5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  timerValue: {
+    fontSize: 24,
+    fontWeight: "800",
+  },
+  timerSub: {
+    fontSize: 10,
+    fontWeight: "600",
+    textTransform: "uppercase",
+  },
+  nonceContainer: {
+    alignItems: "center",
+    gap: 2,
+  },
+  nonceHeader: {
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1,
+  },
+  nonceCode: {
+    fontSize: 13,
+    fontFamily: "monospace",
+    fontWeight: "600",
+  },
+  resolveButtonsRow: {
+    flexDirection: "row",
+    gap: 10,
+    width: "100%",
+  },
   approveBtn: {
-    backgroundColor: colors.safe,
-    borderRadius: radius.md,
-    paddingVertical: 14, alignItems: 'center',
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  approveBtnText: { color: colors.white, fontWeight: '700', fontSize: 15 },
   rejectBtn: {
-    backgroundColor: `${colors.error}18`,
-    borderRadius: radius.md,
-    paddingVertical: 14, alignItems: 'center',
-    borderWidth: 1, borderColor: `${colors.error}44`,
+    flex: 1,
+    borderWidth: 1,
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  rejectBtnText: { color: colors.error, fontWeight: '700', fontSize: 15 },
+  btnText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  rejectBtnText: {
+    fontSize: 13,
+    fontWeight: "700",
+  },
   resultCard: {
-    backgroundColor: colors.bgCard,
-    borderRadius: radius.lg,
-    padding: spacing.xl,
-    alignItems: 'center',
-    gap: spacing.md,
     borderWidth: 1.5,
+    padding: 24,
+    alignItems: "center",
+    gap: 8,
   },
-  resultIcon: { fontSize: 52 },
-  resultText: { fontSize: 18, fontWeight: '700', textAlign: 'center' },
+  resultTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+  },
+  resultSubtitle: {
+    fontSize: 13,
+    textAlign: "center",
+  },
   doneBtn: {
-    backgroundColor: colors.brand,
-    borderRadius: radius.md,
-    paddingVertical: 12, paddingHorizontal: 24,
-    marginTop: spacing.sm,
+    marginTop: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
   },
-  doneBtnText: { color: colors.white, fontWeight: '700', fontSize: 14 },
+  doneBtnText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
+  },
 });

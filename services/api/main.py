@@ -1,5 +1,5 @@
 """
-VoiceShield FastAPI Backend — Main Entry Point
+Dhwani AI FastAPI Backend — Main Entry Point
 """
 
 from contextlib import asynccontextmanager
@@ -18,19 +18,19 @@ log = structlog.get_logger()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    log.info("voiceshield.startup", env=settings.APP_ENV)
+    log.info("dhwani.startup", env=settings.APP_ENV)
     # Create tables on startup (dev convenience — use Alembic in production)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
     # Phase 1.6: clean shutdown of the ML inference thread pool.
     shutdown_ml_pool()
-    log.info("voiceshield.shutdown")
+    log.info("dhwani.shutdown")
 
 
 app = FastAPI(
-    title="VoiceShield API",
-    description="Real-time voice security backend — DETECT → SCORE → CHALLENGE → VERIFY → PROTECT",
+    title="Dhwani AI Security Core",
+    description="Real-time voice security backend — DETECT · SCORE · CHALLENGE · VERIFY · PROTECT",
     version="0.1.0",
     lifespan=lifespan,
 )
@@ -59,4 +59,4 @@ app.include_router(ws_router,                                    tags=["WebSocke
 
 @app.get("/health", tags=["Health"])
 async def health():
-    return {"status": "ok", "service": "voiceshield-api"}
+    return {"status": "ok", "service": "dhwani-ai-api"}

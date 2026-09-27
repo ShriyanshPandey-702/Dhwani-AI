@@ -19,7 +19,7 @@ import com.voiceshieldapp.R
 object CallNotificationHelper {
 
     const val CHANNEL_ID = "voiceshield_call_screening"
-    private const val CHANNEL_NAME = "VoiceShield Call Screening"
+    private const val CHANNEL_NAME = "Dhwani AI Call Screening"
     private const val CHANNEL_DESC = "Security alerts for incoming screened calls"
 
     fun ensureChannel(context: Context) {
@@ -39,6 +39,58 @@ object CallNotificationHelper {
                 }
                 notificationManager.createNotificationChannel(channel)
             }
+        }
+    }
+
+    fun showNotification(
+        context: Context,
+        title: String,
+        message: String,
+        isHighPriority: Boolean = false,
+        notificationId: Int = 1001
+    ) {
+        try {
+            ensureChannel(context)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (ContextCompat.checkSelfPermission(
+                        context,
+                        "android.permission.POST_NOTIFICATIONS"
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    return
+                }
+            }
+
+            val launchIntent = Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+            val pendingIntent = PendingIntent.getActivity(
+                context,
+                0,
+                launchIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val smallIconRes = R.drawable.ic_notification
+
+            val priority = if (isHighPriority) NotificationCompat.PRIORITY_HIGH else NotificationCompat.PRIORITY_DEFAULT
+
+            val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(smallIconRes)
+                .setColor(0xFF00E5FF.toInt())
+                .setContentTitle(title)
+                .setContentText(message)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+                .setPriority(priority)
+                .setAutoCancel(true)
+                .setContentIntent(pendingIntent)
+                .build()
+
+            val notificationManager =
+                context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+            notificationManager?.notify(notificationId, notification)
+        } catch (e: Exception) {
+            // Safe fallback
         }
     }
 
@@ -71,15 +123,15 @@ object CallNotificationHelper {
                 priority = NotificationCompat.PRIORITY_HIGH
                 val pair = when (evaluation.riskState) {
                     "critical" -> Pair(
-                        "VoiceShield Security Alert: Critical call risk",
+                        "Dhwani AI Security Alert: Critical call risk",
                         "Strong impersonation/fraud indicators detected for call from $callerDisplay. Follow recommended verification steps before trusting this caller."
                     )
                     "high" -> Pair(
-                        "VoiceShield Security Alert: High-risk call",
+                        "Dhwani AI Security Alert: High-risk call",
                         "Incoming call from $callerDisplay shows high-risk indicators. ${evaluation.explanation}"
                     )
                     else -> Pair(
-                        "VoiceShield Security Alert: Potential suspicious call",
+                        "Dhwani AI Security Alert: Potential suspicious call",
                         "Incoming call from $callerDisplay. ${evaluation.explanation} Call allowed — avoid sharing OTPs, passwords, or payment details."
                     )
                 }
@@ -87,7 +139,7 @@ object CallNotificationHelper {
                 message = pair.second
             } else {
                 priority = NotificationCompat.PRIORITY_DEFAULT
-                title = "VoiceShield: Screening incoming call"
+                title = "Dhwani AI: Incoming call screened"
                 val verifiedText = when (evaluation.warningType) {
                     WarningType.NONE -> if (evaluation.contactStatus == "IN_CONTACTS") "Known Contact" else "Carrier Verified"
                     WarningType.UNVERIFIED_CALLER -> "Unverified Carrier"
@@ -98,7 +150,8 @@ object CallNotificationHelper {
                     ScreeningDecision.SILENCE -> "Silenced"
                     ScreeningDecision.REJECT -> "Rejected"
                 }
-                message = "Caller: $callerDisplay · Status: $verifiedText · Decision: $decisionText · Risk: Low (Safe)"
+                val riskDisplay = if (evaluation.riskState == "insufficient_evidence") "Insufficient Evidence" else "Low"
+                message = "Caller: $callerDisplay · Status: $verifiedText · Decision: $decisionText · Risk: $riskDisplay"
             }
 
             val launchIntent = Intent(context, MainActivity::class.java).apply {
@@ -111,12 +164,12 @@ object CallNotificationHelper {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
-            // Use launcher icon as fallback small icon
-            val smallIconRes = context.applicationInfo.icon.takeIf { it != 0 }
-                ?: android.R.drawable.ic_dialog_info
+            // Use dedicated Dhwani AI monochrome vector small icon
+            val smallIconRes = R.drawable.ic_notification
 
             val notification = NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(smallIconRes)
+                .setColor(0xFF00E5FF.toInt())
                 .setContentTitle(title)
                 .setContentText(message)
                 .setStyle(NotificationCompat.BigTextStyle().bigText(message))
@@ -163,14 +216,14 @@ object CallNotificationHelper {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
-            val smallIconRes = context.applicationInfo.icon.takeIf { it != 0 }
-                ?: android.R.drawable.ic_dialog_info
+            val smallIconRes = R.drawable.ic_notification
 
-            val title = "VoiceShield Security Test"
+            val title = "Dhwani AI Security Test"
             val message = "Notification channel and alert delivery verified successfully. (Test only — no calls or stats affected)"
 
             val notification = NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(smallIconRes)
+                .setColor(0xFF00E5FF.toInt())
                 .setContentTitle(title)
                 .setContentText(message)
                 .setStyle(NotificationCompat.BigTextStyle().bigText(message))
