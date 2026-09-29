@@ -31,6 +31,8 @@ URGENCY = [
     "urgent", "urgently", "immediately", "right now", "right away", "asap",
     "time sensitive", "before the cut-off", "cut off", "hurry", "quickly",
     "no time", "stay on the line", "don't hang up",
+    # Hindi / Hinglish urgency indicators
+    "turant", "abhi ke abhi", "jaldi karo", "phone mat katna", "call mat kaatna",
 ]
 
 FINANCIAL = [
@@ -39,29 +41,41 @@ FINANCIAL = [
     "send money", "fund", "deposit", "settle",
     "lottery", "prize", "reward", "cashback", "refund", "won ", "winner",
     "bank", "credit card", "debit card", "kyc",
+    # Hindi / Hinglish financial scam vocabulary
+    "paise", "paisa", "rupaye", "rupiya", "bhejo", "khata block", "khate",
+    "inaam", "jeet gaye", "lucky draw",
 ]
 
 OTP = [
     "otp", "one time password", "one-time password", "verification code",
     "security code", "read it back", "code i sent", "sms code", "6 digit",
     "six digit",
+    # Hindi / Hinglish OTP extraction requests
+    "otp batao", "otp share", "otp bhejo", "code batao", "pin batao",
 ]
 
 CREDENTIAL = [
     "password", "pin", "cvv", "card number", "username", "login",
     "credentials", "net banking", "netbanking", "mpin", "passcode",
+    # Hindi / Hinglish credential extraction requests
+    "password batao", "mpin batao", "cvv batao",
 ]
 
 SENSITIVE = [
     "aadhaar", "aadhar", "pan number", "confidential", "do not discuss",
     "don't tell", "keep this between", "private document", "internal report",
     "share the file", "send the document",
+    # Hindi / Hinglish identity document extraction
+    "aadhaar card", "aadhar card", "pan card",
 ]
 
 AUTHORITY = [
     "director", "ceo", "cfo", "manager", "head of", "board", "compliance",
     "audit", "police", "income tax", "bank official", "corporate finance",
     "i'm your", "this is your",
+    # Hindi / Hinglish authority impersonation and digital arrest scams
+    "digital arrest", "cyber crime", "cybercrime", "cbi", "customs officer",
+    "police thana", "police station", "court order", "arrest warrant",
 ]
 
 SECRECY = [

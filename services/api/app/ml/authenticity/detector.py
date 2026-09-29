@@ -72,6 +72,12 @@ class AuthenticityResult:
     calibrated_spoof_probability: Optional[float] = None
     calibration_method: Optional[str] = None
     calibration_version: Optional[str] = None
+    pitch: Optional[dict] = None
+    prosody: Optional[dict] = None
+    rhythm: Optional[dict] = None
+    pause_analysis: Optional[dict] = None
+    microvariation: Optional[dict] = None
+    spectral_details: Optional[dict] = None
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -228,8 +234,9 @@ class AuthenticityDetector:
         if float(np.mean(np.asarray(audio, dtype=np.float64) ** 2)) < MIN_SPEECH_ENERGY:
             return None
 
-        # DSP bands are independent observations, computed either way.
-        bands = dsp.anomaly_bands(audio, self.sample_rate)
+        # DSP evidence pass (independent observations, computed either way).
+        dsp_evidence = dsp.extract_dsp_evidence(audio, self.sample_rate)
+        bands = dsp_evidence["bands"]
 
         mode = self._mode
         model_name = self.model_name
@@ -283,6 +290,12 @@ class AuthenticityDetector:
             calibrated_spoof_probability=calibrated,
             calibration_method=method,
             calibration_version=version,
+            pitch=dsp_evidence.get("pitch"),
+            prosody=dsp_evidence.get("prosody"),
+            rhythm=dsp_evidence.get("rhythm"),
+            pause_analysis=dsp_evidence.get("pause_analysis"),
+            microvariation=dsp_evidence.get("microvariation"),
+            spectral_details=dsp_evidence.get("spectral"),
             **bands,
         )
 

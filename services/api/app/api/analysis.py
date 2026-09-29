@@ -101,6 +101,7 @@ class WindowAnalysisSnapshot(BaseModel):
     identity_similarity: Optional[float] = None
     window_risk_score: int
     window_risk_state: str
+    f0_mean_hz: Optional[float] = None
 
 
 class ManualAnalysisReport(BaseModel):
@@ -128,6 +129,10 @@ class ManualAnalysisReport(BaseModel):
     authenticity: Optional[dict] = None
     identity: Optional[dict] = None
     context: Optional[dict] = None
+    prosody: Optional[dict] = None
+    microvariation: Optional[dict] = None
+    pitch: Optional[dict] = None
+    pause_analysis: Optional[dict] = None
 
     # Windows & Execution Telemetry
     windows_evaluated: int
@@ -438,6 +443,9 @@ async def analyze_audio(
 
             # Record snapshot
             auth_spoof_val = round(auth_val, 4) if auth_val is not None else 0.0
+            f0_mean = None
+            if auth and auth.pitch and auth.pitch.get("mean_f0_hz"):
+                f0_mean = auth.pitch["mean_f0_hz"]
             snap = WindowAnalysisSnapshot(
                 window_index=k,
                 offset_ms=offset_ms,
@@ -447,6 +455,7 @@ async def analyze_audio(
                 identity_similarity=round(sim, 4) if (sim is not None and identity_mode == ENROLLED) else None,
                 window_risk_score=risk_res.score,
                 window_risk_state=risk_res.state,
+                f0_mean_hz=f0_mean,
             )
             window_snapshots.append(snap)
 
@@ -490,6 +499,8 @@ async def analyze_audio(
         )
 
         proc_ms = round((time.perf_counter() - t_start) * 1000, 2)
+        peak_auth_obj = peak_entry["auth"] or last_auth
+        peak_auth_dict = peak_auth_obj.to_dict() if peak_auth_obj else None
 
         return ManualAnalysisReport(
             status="completed",
@@ -507,9 +518,13 @@ async def analyze_audio(
             reasons=list(dict.fromkeys(peak_risk.reasons + decision.reasons)),
             evidence_confidence=peak_risk.evidence_confidence,
             contributions=peak_risk.contributions,
-            authenticity=peak_entry["auth"].to_dict() if peak_entry["auth"] else (last_auth.to_dict() if last_auth else None),
+            authenticity=peak_auth_dict,
             identity=peak_entry["identity"],
             context=context_result.to_dict() if context_result else None,
+            prosody=peak_auth_dict.get("prosody") if peak_auth_dict else None,
+            microvariation=peak_auth_dict.get("microvariation") if peak_auth_dict else None,
+            pitch=peak_auth_dict.get("pitch") if peak_auth_dict else None,
+            pause_analysis=peak_auth_dict.get("pause_analysis") if peak_auth_dict else None,
             windows_evaluated=len(window_snapshots),
             window_timeline=window_snapshots,
             processing_time_ms=proc_ms,

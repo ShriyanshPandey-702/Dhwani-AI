@@ -43,6 +43,60 @@ export type PipelineMode = 'mock' | 'live';
 
 // ── Evidence streams (kept structurally separate on purpose) ──────────────────
 
+export interface PitchEvidence {
+  mean_f0_hz?: number | null;
+  f0_std_hz?: number | null;
+  f0_variance?: number | null;
+  f0_min_hz?: number | null;
+  f0_max_hz?: number | null;
+  voiced_frame_ratio?: number | null;
+}
+
+export interface ProsodyEvidence {
+  mean_f0_hz?: number | null;
+  f0_std_hz?: number | null;
+  f0_min_hz?: number | null;
+  f0_max_hz?: number | null;
+  pitch_variability?: number | null;
+  energy_variability?: number | null;
+  voiced_ratio?: number | null;
+  speech_segment_count?: number | null;
+  average_speech_duration_ms?: number | null;
+  average_pause_duration_ms?: number | null;
+  longest_pause_duration_ms?: number | null;
+  pause_ratio?: number | null;
+  note?: string;
+}
+
+export interface RhythmEvidence {
+  speech_segment_count?: number | null;
+  total_speech_duration_ms?: number | null;
+  average_speech_duration_ms?: number | null;
+  speech_to_pause_ratio?: number | null;
+}
+
+export interface PauseEvidence {
+  pause_count?: number | null;
+  total_pause_duration_ms?: number | null;
+  average_pause_duration_ms?: number | null;
+  longest_pause_duration_ms?: number | null;
+  pause_to_speech_ratio?: number | null;
+}
+
+export interface MicrovariationEvidence {
+  energy_variability?: number | null;
+  zcr_variability?: number | null;
+  spectral_variability?: number | null;
+  f0_variability?: number | null;
+  jitter_shimmer_status?: string;
+}
+
+export interface SpectralDetailsEvidence {
+  centroid_hz?: number | null;
+  flatness?: number | null;
+  spectral_anomaly?: AnomalyBand;
+}
+
 export interface AuthenticityEvidence {
   score: number;                 // 0–100
   spoof_probability: number;     // 0.0–1.0
@@ -56,14 +110,15 @@ export interface AuthenticityEvidence {
   pipeline_mode?: InferenceMode;
   inference_ms?: number;
   device?: string;
-  /**
-   * `spoof_probability` above is always the RAW model score. When a calibrator
-   * is configured the calibrated probability is reported alongside it; it never
-   * replaces the raw value.
-   */
   calibrated_spoof_probability?: number | null;
   calibration_method?: string | null;
   calibration_version?: string | null;
+  pitch?: PitchEvidence | null;
+  prosody?: ProsodyEvidence | null;
+  rhythm?: RhythmEvidence | null;
+  pause_analysis?: PauseEvidence | null;
+  microvariation?: MicrovariationEvidence | null;
+  spectral_details?: SpectralDetailsEvidence | null;
 }
 
 export interface IdentityEvidence {
