@@ -325,7 +325,11 @@ async def _apply_transcript(job: STTJob, segment) -> None:
     if ctx is None:
         return
 
-    state.last_context = ctx.to_dict()
+    accumulated = state.append_transcript(segment.text)
+    ctx_dict = ctx.to_dict()
+    ctx_dict["transcript"] = accumulated
+    ctx_dict["latest_segment"] = segment.text
+    state.last_context = ctx_dict
     state.consequence = ctx.consequence
 
     # Re-decide with the same Risk Engine and the same policy — only the

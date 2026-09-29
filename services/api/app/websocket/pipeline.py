@@ -184,6 +184,7 @@ def analyze_window(state: SessionState, pcm_bytes: bytes,
             out.extend(_timeline(state, "audio_quality_poor"))
         # Correction 3: Silence / invalid identity evidence: streak = 0
         state.consecutive_identity_mismatches = 0
+        state.consecutive_authenticity_anomalies = 0
         return out
 
     audio = raw
@@ -200,6 +201,10 @@ def analyze_window(state: SessionState, pcm_bytes: bytes,
     stage_ms["authenticity"] = round((time.perf_counter() - _t) * 1000, 2)
     if auth is not None:
         state.last_authenticity = auth.to_dict()
+        if auth.spoof_probability > 0.65 and auth.confidence >= 0.50:
+            state.consecutive_authenticity_anomalies += 1
+        else:
+            state.consecutive_authenticity_anomalies = 0
 
     # ── Evidence stream 2: identity (independent) ────────────────────────────
     # Demo enrolment happens once, from the first analysable window, and is
@@ -275,7 +280,11 @@ def analyze_window(state: SessionState, pcm_bytes: bytes,
         )
         stage_ms["context"] = round((time.perf_counter() - _t) * 1000, 2)
         if ctx is not None:
-            state.last_context = ctx.to_dict()
+            accumulated = state.append_transcript(segment.text)
+            ctx_dict = ctx.to_dict()
+            ctx_dict["transcript"] = accumulated
+            ctx_dict["latest_segment"] = segment.text
+            state.last_context = ctx_dict
             state.consequence = ctx.consequence
 
     # ── Fusion, policy and the resulting events ──────────────────────────────
@@ -326,11 +335,21 @@ def fuse_and_decide(state: SessionState, pipeline_mode: str) -> tuple:
     audio window.
     """
     result = compute_risk(state.evidence(), state.policy_config)
-    state.record_risk(result.score, result.state)
+    if pipeline_mode == "mock":
+        state.record_risk(result.score, result.state)
+        final_score = result.score
+        final_state = result.state
+    else:
+        temporal_score = state.record_risk(result.score, result.state)
+        final_score = temporal_score
+        final_state = classify_state(final_score, state.policy_config.get("thresholds"))
+        if result.state == "insufficient_evidence":
+            final_score = 0
+            final_state = "insufficient_evidence"
     trend = risk_trend(state.risk_history)
 
     decision = evaluate(
-        risk_state=result.state,
+        risk_state=final_state,
         consequence=state.consequence,
         reasons=result.reasons,
         evidence_confidence=result.evidence_confidence,
@@ -343,8 +362,8 @@ def fuse_and_decide(state: SessionState, pipeline_mode: str) -> tuple:
 
     update = ev.risk_update(
         session_id=state.session_id,
-        risk_score=result.score,
-        risk_state=result.state,
+        risk_score=final_score,
+        risk_state=final_state,
         risk_trend=trend,
         evidence_confidence=result.evidence_confidence,
         authenticity=state.last_authenticity,

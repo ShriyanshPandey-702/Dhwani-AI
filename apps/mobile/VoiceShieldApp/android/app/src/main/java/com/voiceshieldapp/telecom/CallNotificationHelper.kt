@@ -119,39 +119,14 @@ object CallNotificationHelper {
             val message: String
             val priority: Int
 
+            priority = NotificationCompat.PRIORITY_HIGH
             if (isElevated) {
-                priority = NotificationCompat.PRIORITY_HIGH
-                val pair = when (evaluation.riskState) {
-                    "critical" -> Pair(
-                        "Dhwani AI Security Alert: Critical call risk",
-                        "Strong impersonation/fraud indicators detected for call from $callerDisplay. Follow recommended verification steps before trusting this caller."
-                    )
-                    "high" -> Pair(
-                        "Dhwani AI Security Alert: High-risk call",
-                        "Incoming call from $callerDisplay shows high-risk indicators. ${evaluation.explanation}"
-                    )
-                    else -> Pair(
-                        "Dhwani AI Security Alert: Potential suspicious call",
-                        "Incoming call from $callerDisplay. ${evaluation.explanation} Call allowed — avoid sharing OTPs, passwords, or payment details."
-                    )
-                }
-                title = pair.first
-                message = pair.second
+                title = "Dhwani AI Security Alert"
+                val riskUpper = evaluation.riskState.uppercase()
+                message = "Incoming call from $callerDisplay · Risk: $riskUpper. Review call security."
             } else {
-                priority = NotificationCompat.PRIORITY_DEFAULT
-                title = "Dhwani AI: Incoming call screened"
-                val verifiedText = when (evaluation.warningType) {
-                    WarningType.NONE -> if (evaluation.contactStatus == "IN_CONTACTS") "Known Contact" else "Carrier Verified"
-                    WarningType.UNVERIFIED_CALLER -> "Unverified Carrier"
-                    else -> "Screened"
-                }
-                val decisionText = when (evaluation.decision) {
-                    ScreeningDecision.ALLOW -> "Allowed"
-                    ScreeningDecision.SILENCE -> "Silenced"
-                    ScreeningDecision.REJECT -> "Rejected"
-                }
-                val riskDisplay = if (evaluation.riskState == "insufficient_evidence") "Insufficient Evidence" else "Low"
-                message = "Caller: $callerDisplay · Status: $verifiedText · Decision: $decisionText · Risk: $riskDisplay"
+                title = "Dhwani AI"
+                message = "Incoming call detected: $callerDisplay · Risk: LOW. Tap to view security details."
             }
 
             val launchIntent = Intent(context, MainActivity::class.java).apply {

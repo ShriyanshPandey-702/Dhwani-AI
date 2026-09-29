@@ -64,6 +64,8 @@ class EvidenceBundle:
     # compute_risk() MUST NOT infer identity corroboration directly from raw identity_similarity.
     identity_corroborated: bool = False
     identity_corroboration_pending: bool = False
+    authenticity_corroborated: bool = False
+    authenticity_corroboration_pending: bool = False
 
 
 @dataclass
@@ -193,13 +195,19 @@ def compute_risk(
     if id_corroborates:
         reasons.append("identity_corroboration_confirmed")
 
+    auth_corroborates = bool(evidence.authenticity_corroborated)
+    if evidence.authenticity_corroboration_pending:
+        reasons.append("authenticity_corroboration_pending")
+    if auth_corroborates:
+        reasons.append("authenticity_corroboration_confirmed")
+
     ctx_thresh = cfg.get(
         "context_corroboration_threshold",
         cfg.get("corroboration_threshold", _DEFAULT_CONTEXT_CORROBORATION_THRESHOLD),
     )
     ctx_corroborates = (ctx_raw is not None) and (ctx_raw >= ctx_thresh)
 
-    is_corroborated = id_corroborates or ctx_corroborates
+    is_corroborated = id_corroborates or ctx_corroborates or auth_corroborates
 
     if evidence.authenticity is not None:
         contributions["authenticity"] = raw_auth_contrib

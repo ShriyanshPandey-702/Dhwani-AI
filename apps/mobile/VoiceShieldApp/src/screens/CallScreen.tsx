@@ -367,7 +367,7 @@ export const CallScreen: React.FC = () => {
           ]}
         >
           <Text style={[styles.transcriptHeader, { color: colors.textSecondary }]}>
-            LIVE TRANSCRIPT (PARTIAL)
+            LIVE TRANSCRIPT
           </Text>
           <Text
             style={[

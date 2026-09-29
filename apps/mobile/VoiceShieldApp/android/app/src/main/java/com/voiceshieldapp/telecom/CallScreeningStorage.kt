@@ -128,10 +128,11 @@ class CallScreeningStorage(context: Context) {
     fun saveEvent(
         evaluation: EvaluationResult,
         verificationStatusString: String,
-        screeningLatencyMs: Long = 0L
+        screeningLatencyMs: Long = 0L,
+        incidentId: String? = null
     ): ScreenedCallRecord {
         val record = ScreenedCallRecord(
-            eventId = UUID.randomUUID().toString(),
+            eventId = incidentId ?: UUID.randomUUID().toString(),
             timestamp = evaluation.timestamp,
             callerMasked = evaluation.maskedCaller,
             callerName = evaluation.callerName,

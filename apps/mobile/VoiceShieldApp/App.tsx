@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useState } from "react";
-import { StatusBar } from "react-native";
+import { StatusBar, Platform, PermissionsAndroid } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AppNavigator } from "./src/navigation/AppNavigator";
@@ -19,6 +19,13 @@ function MainApp(): React.JSX.Element {
 
   useEffect(() => {
     loadConfig();
+    if (Platform.OS === "android") {
+      const perms: any[] = [PermissionsAndroid.PERMISSIONS.RECORD_AUDIO];
+      if (Platform.Version >= 33) {
+        perms.push(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
+      }
+      PermissionsAndroid.requestMultiple(perms).catch(() => {});
+    }
   }, [loadConfig]);
 
   if (showSplash) {

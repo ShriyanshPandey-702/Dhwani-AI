@@ -71,3 +71,25 @@ export interface AudioFileInfo {
   type: string;
   size: number;
 }
+
+export interface CanonicalIncident {
+  incidentId: string;
+  timestamp: number;
+  source: 'SIM_CALL' | 'DEVICE_MICROPHONE' | 'VOIP_MEDIA';
+  phoneNumber: string;
+  callerName?: string | null;
+  riskScore: number;
+  riskState: RiskState;
+  decision: string;
+  status: 'active' | 'finalized';
+  latestEvidence?: {
+    authenticity?: number;
+    identity?: number;
+    context?: number;
+  };
+  transcript?: string;
+  createdAt: string;
+  updatedAt: string;
+  endedAt?: string | null;
+  rawRecord?: ScreenedCallEvent;
+}

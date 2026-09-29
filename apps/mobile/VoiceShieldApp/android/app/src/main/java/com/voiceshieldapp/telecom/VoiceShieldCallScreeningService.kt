@@ -138,9 +138,19 @@ class VoiceShieldCallScreeningService : CallScreeningService() {
             else -> "UNKNOWN"
         }
 
+        val incidentId = "sim-${evaluation.timestamp}-${if (evaluation.callerHash.length >= 8) evaluation.callerHash.take(8) else "call"}"
+
+        Log.i("DHWANI-CALL", "[DHWANI-CALL] onScreenCall received")
+        Log.i("DHWANI-CALL", "[DHWANI-CALL] number=${evaluation.maskedCaller}")
+        Log.i("DHWANI-CALL", "[DHWANI-CALL] direction=${evaluation.callDirection}")
+        Log.i("DHWANI-CALL", "[DHWANI-CALL] timestamp=${evaluation.timestamp}")
+        Log.i("DHWANI-CALL", "[DHWANI-CALL] contactStatus=${evaluation.contactStatus}")
+        Log.i("DHWANI-CALL", "[DHWANI-CALL] screeningDecision=${evaluation.decision}")
+        Log.i("DHWANI-CALL", "[DHWANI-CALL] incidentId=$incidentId")
+
         val preRespondLatencyMs = System.currentTimeMillis() - startTime
         val record: ScreenedCallRecord? = try {
-            storage.saveEvent(evaluation, verificationStatusStr, preRespondLatencyMs)
+            storage.saveEvent(evaluation, verificationStatusStr, preRespondLatencyMs, incidentId)
         } catch (e: Exception) {
             Log.w(TAG, "Failed to persist screening event: ${e.message}")
             null
@@ -163,7 +173,7 @@ class VoiceShieldCallScreeningService : CallScreeningService() {
         try {
             CallNotificationHelper.showScreeningNotification(applicationContext, evaluation)
         } catch (e: Exception) {
-            // Non-critical
+            Log.w(TAG, "CallNotificationHelper failed: ${e.message}")
         }
 
         // 9. Post-screening non-critical: dispatch event to React Native if bridge is active
@@ -171,7 +181,7 @@ class VoiceShieldCallScreeningService : CallScreeningService() {
             try {
                 VoiceShieldCallScreeningModule.notifyCallScreened(record)
             } catch (e: Exception) {
-                // Bridge inactive or in background, safe to ignore
+                Log.w(TAG, "VoiceShieldCallScreeningModule dispatch failed: ${e.message}")
             }
         }
     }

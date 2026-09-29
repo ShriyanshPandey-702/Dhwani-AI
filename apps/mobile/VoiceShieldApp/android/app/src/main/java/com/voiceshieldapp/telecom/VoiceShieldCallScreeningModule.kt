@@ -433,6 +433,10 @@ class VoiceShieldCallScreeningModule(private val reactContext: ReactApplicationC
     private fun recordToWritableMap(record: ScreenedCallRecord): WritableMap {
         return Arguments.createMap().apply {
             putString("eventId", record.eventId)
+            putString("incidentId", record.eventId)
+            putString("phoneNumber", record.callerMasked)
+            putString("carrierVerification", record.verificationStatus)
+            putString("status", "finalized")
             putDouble("timestamp", record.timestamp.toDouble())
             putString("callerMasked", record.callerMasked)
             putString("callerName", record.callerName)
@@ -458,9 +462,10 @@ class VoiceShieldCallScreeningModule(private val reactContext: ReactApplicationC
 
     private fun sendCallScreenedEvent(record: ScreenedCallRecord) {
         if (!reactContext.hasActiveReactInstance()) return
-        reactContext
-            .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
-            .emit(EVENT_CALL_SCREENED, recordToWritableMap(record))
+        val map = recordToWritableMap(record)
+        val emitter = reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
+        emitter.emit(EVENT_CALL_SCREENED, map)
+        emitter.emit("CALL_SCREENING_EVENT", map)
     }
 
     private fun sendRoleStatusChanged(isHeld: Boolean) {

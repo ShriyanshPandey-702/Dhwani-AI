@@ -62,7 +62,7 @@ class Settings(BaseSettings):
     # CPU; "base"/"small" are more accurate and slower. Empty language = detect.
     WHISPER_MODEL_SIZE: str = "tiny"
     WHISPER_COMPUTE_TYPE: str = "int8"
-    WHISPER_LANGUAGE: str = ""
+    WHISPER_LANGUAGE: str = "en"
     WHISPER_BEAM_SIZE: int = 1
 
     # Authenticity score calibration. The raw model score is ALWAYS kept; a

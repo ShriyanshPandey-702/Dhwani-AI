@@ -91,13 +91,54 @@ class SessionState:
 
     # Phase 1 Step 5.4 Gated Corroboration Persistence (P=2 consecutive ML analysis windows)
     consecutive_identity_mismatches: int = 0
+    consecutive_authenticity_anomalies: int = 0
+    temporal_risk_score: Optional[float] = None
+    transcript_segments: List[str] = field(default_factory=list)
 
-    def record_risk(self, score: int, state: str) -> None:
-        self.risk_history.append(score)
+    def record_risk(self, score: int, state: str, alpha: float = 0.40) -> int:
+        if self.pipeline_mode == "mock":
+            self.risk_history.append(score)
+            del self.risk_history[:-MAX_HISTORY]
+            if score > self.peak_risk_score:
+                self.peak_risk_score = score
+                self.peak_risk_state = state
+            return score
+
+        if self.temporal_risk_score is None:
+            self.temporal_risk_score = float(score)
+        else:
+            self.temporal_risk_score = alpha * score + (1.0 - alpha) * self.temporal_risk_score
+
+        smooth_score = int(round(self.temporal_risk_score))
+        self.risk_history.append(smooth_score)
         del self.risk_history[:-MAX_HISTORY]
-        if score > self.peak_risk_score:
-            self.peak_risk_score = score
+        if smooth_score > self.peak_risk_score:
+            self.peak_risk_score = smooth_score
             self.peak_risk_state = state
+        return smooth_score
+
+    def append_transcript(self, text: str) -> str:
+        text = text.strip()
+        if not text:
+            return " ".join(self.transcript_segments)
+        if self.transcript_segments:
+            last = self.transcript_segments[-1]
+            if text.lower() == last.lower():
+                return " ".join(self.transcript_segments)
+            words_last = last.split()
+            words_new = text.split()
+            overlap = 0
+            for i in range(1, min(len(words_last), len(words_new)) + 1):
+                if [w.lower() for w in words_last[-i:]] == [w.lower() for w in words_new[:i]]:
+                    overlap = i
+            if overlap > 0:
+                text = " ".join(words_new[overlap:])
+        if text:
+            self.transcript_segments.append(text)
+        return " ".join(self.transcript_segments)
+
+    def get_accumulated_transcript(self) -> str:
+        return " ".join(self.transcript_segments)
 
     def evidence(self) -> EvidenceBundle:
         """Build the fusion input from the latest per-stream observations."""
@@ -108,6 +149,9 @@ class SessionState:
         P = self.policy_config.get("corroboration_persistence", 2)
         is_confirmed = (self.consecutive_identity_mismatches >= P)
         is_pending = (self.consecutive_identity_mismatches == 1)
+
+        is_auth_confirmed = (self.consecutive_authenticity_anomalies >= P)
+        is_auth_pending = (self.consecutive_authenticity_anomalies == 1)
 
         return EvidenceBundle(
             authenticity=(auth or {}).get("spoof_probability"),
@@ -125,6 +169,8 @@ class SessionState:
             verification_outcome=self.verification_outcome,
             identity_corroborated=is_confirmed,
             identity_corroboration_pending=is_pending,
+            authenticity_corroborated=is_auth_confirmed,
+            authenticity_corroboration_pending=is_auth_pending,
         )
 
 
