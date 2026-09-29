@@ -1,7 +1,7 @@
 """
 Streaming analysis windows.
 
-VoiceShield is a real-time system: a call is never fed to a model in one piece.
+Dhwani AI is a real-time system: a call is never fed to a model in one piece.
 Client frames arrive roughly every second, but the anti-spoofing checkpoint was
 trained on ~4.04 s of audio, so a rolling per-session buffer assembles
 overlapping windows of the length the model expects.

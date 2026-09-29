@@ -201,7 +201,7 @@ def analyze_window(state: SessionState, pcm_bytes: bytes,
     stage_ms["authenticity"] = round((time.perf_counter() - _t) * 1000, 2)
     if auth is not None:
         state.last_authenticity = auth.to_dict()
-        if auth.spoof_probability > 0.65 and auth.confidence >= 0.50:
+        if authenticity_detector.is_real_ml and auth.spoof_probability > 0.65 and auth.confidence >= 0.50:
             state.consecutive_authenticity_anomalies += 1
         else:
             state.consecutive_authenticity_anomalies = 0

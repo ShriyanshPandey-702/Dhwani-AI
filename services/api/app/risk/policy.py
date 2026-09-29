@@ -1,6 +1,6 @@
 """
 Security Policy Engine — maps (risk state, consequence, evidence confidence)
-to the action VoiceShield requires before a consequential decision proceeds.
+to the action Dhwani AI requires before a consequential decision proceeds.
 
 The Risk Engine produces evidence. This module decides what should happen.
 All thresholds live in the policy config (DB-backed, versioned) rather than
@@ -50,6 +50,7 @@ DEFAULT_POLICY_CONFIG = {
     "min_confidence_for_allow": 0.25,
     # Gated Corroboration Fusion (Model B with Multi-Window Persistence)
     "authenticity_uncorroborated_cap": 35.0,
+    "authenticity_persistent_cap": 50.0,
     "uncorroborated_total_cap": 38.0,
     "identity_corroboration_threshold": 0.40,
     "context_corroboration_threshold": 0.25,

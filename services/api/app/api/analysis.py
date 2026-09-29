@@ -171,7 +171,7 @@ async def analyze_audio(
     speaker_reference: Optional[UploadFile] = File(None),
 ):
     """
-    Analyze a pre-recorded audio file using VoiceShield's multi-modal ML core.
+    Analyze a pre-recorded audio file using Dhwani AI's multi-modal ML core.
     Supports WAV, MP3, FLAC, OGG.
     """
     t_start = time.perf_counter()
@@ -341,6 +341,7 @@ async def analyze_audio(
         corroboration_persistence = policy_config.get("corroboration_persistence", 2)
 
         consecutive_mismatches = 0
+        consecutive_authenticity_anomalies = 0
         window_snapshots: List[WindowAnalysisSnapshot] = []
         scored_windows: List[dict] = []
 
@@ -391,7 +392,7 @@ async def analyze_audio(
                     sim = None
 
             # C. Persistence & Corroboration Evaluation
-            # CRITICAL (Directive 2): SELF_CONSISTENCY must NEVER corroborate identity
+            # Identity persistence
             identity_corroborated = False
             identity_corroboration_pending = False
 
@@ -408,10 +409,16 @@ async def analyze_audio(
             else:
                 consecutive_mismatches = 0
 
+            # Authenticity persistence
+            if auth_val is not None and auth_val > 0.65 and auth_conf >= 0.50:
+                consecutive_authenticity_anomalies += 1
+            else:
+                consecutive_authenticity_anomalies = 0
+
+            authenticity_corroborated = (consecutive_authenticity_anomalies >= corroboration_persistence)
+            authenticity_corroboration_pending = (consecutive_authenticity_anomalies == 1)
+
             # D. Risk Engine Fusion
-            # Directive 2: Do not claim speaker identity verification unless an actual
-            # reference/enrollment comparison exists. In SELF_CONSISTENCY mode, self-consistency
-            # similarity is logged for reporting/telemetry but does not penalize identity risk.
             evidence = EvidenceBundle(
                 authenticity=auth_val,
                 authenticity_confidence=auth_conf,
@@ -422,6 +429,9 @@ async def analyze_audio(
                 consequence=consequence,
                 identity_corroborated=identity_corroborated,
                 identity_corroboration_pending=identity_corroboration_pending,
+                authenticity_corroborated=authenticity_corroborated,
+                authenticity_corroboration_pending=authenticity_corroboration_pending,
+                authenticity_streak=consecutive_authenticity_anomalies,
             )
 
             risk_res = compute_risk(evidence, policy_config)

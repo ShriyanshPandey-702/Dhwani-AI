@@ -11,7 +11,7 @@ STATUS: REAL MODEL, PRETRAINED CHECKPOINT, NOT EVALUATED BY US.
   Output     2 logits; index 1 is the bona-fide class (upstream convention)
 
 What this is NOT:
-  * Not trained or fine-tuned by VoiceShield.
+  * Not trained or fine-tuned by Dhwani AI.
   * Not evaluated on Indian telecom audio, codecs, or unseen generators.
   * Not calibrated — the softmax output is a raw decision score, not a
     probability you should read as a likelihood.

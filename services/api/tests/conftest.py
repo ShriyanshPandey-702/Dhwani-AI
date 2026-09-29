@@ -1,4 +1,4 @@
-"""Shared pytest configuration for the VoiceShield backend test suite."""
+"""Shared pytest configuration for the Dhwani AI backend test suite."""
 
 import os
 import sys

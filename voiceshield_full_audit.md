@@ -1,4 +1,4 @@
-# VoiceShield — Full Project Audit Report
+# Dhwani AI (formerly VoiceShield) — Full Project Audit Report
 **Date:** 2026-09-16  
 **Auditor:** Antigravity  
 **Phase:** Post-Phase-2.0 forensic audit  
@@ -8,7 +8,7 @@
 
 ## 1. EXECUTIVE SUMMARY
 
-VoiceShield is a real-time voice anti-spoofing system. Three phases have been accepted:
+Dhwani AI is a real-time voice anti-spoofing system. Three phases have been accepted:
 - **Phase 1.7** — Real-time prototype with real ML (AASIST-L, ECAPA-TDNN, Whisper)
 - **Phase 1.8** — Multi-domain evaluation & robustness benchmarking
 - **Phase 2.0** — Native Android audio capture (AudioRecord) into React Native
@@ -521,4 +521,4 @@ Only background operation: Gradle `assembleRelease` writing to the `.gitignore`d
 
 ---
 
-*End of VoiceShield Full Project Audit Report — 2026-09-16*
+*End of Dhwani AI Full Project Audit Report — 2026-09-16*

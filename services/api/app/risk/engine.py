@@ -66,6 +66,7 @@ class EvidenceBundle:
     identity_corroboration_pending: bool = False
     authenticity_corroborated: bool = False
     authenticity_corroboration_pending: bool = False
+    authenticity_streak: int = 0
 
 
 @dataclass
@@ -106,6 +107,7 @@ _VERIFICATION_DELTA = {"rejected": 25.0, "approved": -20.0}
 
 _DEFAULT_UNCORROBORATED_CAP = 38.0
 _DEFAULT_AUTH_CAP = 35.0
+_DEFAULT_PERSISTENT_AUTH_CAP = 50.0
 _DEFAULT_IDENTITY_CORROBORATION_THRESHOLD = 0.40
 _DEFAULT_CONTEXT_CORROBORATION_THRESHOLD = 0.25
 
@@ -195,19 +197,30 @@ def compute_risk(
     if id_corroborates:
         reasons.append("identity_corroboration_confirmed")
 
-    auth_corroborates = bool(evidence.authenticity_corroborated)
-    if evidence.authenticity_corroboration_pending:
-        reasons.append("authenticity_corroboration_pending")
-    if auth_corroborates:
-        reasons.append("authenticity_corroboration_confirmed")
-
     ctx_thresh = cfg.get(
         "context_corroboration_threshold",
         cfg.get("corroboration_threshold", _DEFAULT_CONTEXT_CORROBORATION_THRESHOLD),
     )
     ctx_corroborates = (ctx_raw is not None) and (ctx_raw >= ctx_thresh)
+    if ctx_corroborates:
+        reasons.append("context_corroboration_confirmed")
 
-    is_corroborated = id_corroborates or ctx_corroborates or auth_corroborates
+    # Independent Cross-Stream Corroboration:
+    # A single acoustic model (AASIST) CANNOT corroborate itself. True corroboration
+    # requires independent evidence from speaker verification (identity mismatch)
+    # or linguistic intent (suspicious context).
+    cross_stream_corroborated = id_corroborates or ctx_corroborates
+
+    # Authenticity temporal persistence:
+    # Measures whether the acoustic model's observation is persistent across
+    # consecutive windows (streak >= P) rather than a transient 1-window glitch.
+    P = cfg.get("corroboration_persistence", 2)
+    streak = getattr(evidence, "authenticity_streak", 0)
+    auth_persistent = bool(evidence.authenticity_corroborated) or (streak >= P)
+    if evidence.authenticity_corroboration_pending:
+        reasons.append("authenticity_corroboration_pending")
+    if auth_persistent:
+        reasons.append("authenticity_corroboration_confirmed")
 
     if evidence.authenticity is not None:
         contributions["authenticity"] = raw_auth_contrib
@@ -226,20 +239,36 @@ def compute_risk(
         reasons.append(f"consequence_{evidence.consequence}")
     raw *= mult
 
-    # ── Uncorroborated total-risk cap (Model B) ──────────────────────────────
+    # ── Uncorroborated single-stream & transient caps (Model B) ─────────────
     # Applied AFTER the consequence multiplier so consequence cannot force an
-    # uncorroborated passive score to cross SUSPICIOUS (>=40).
+    # uncorroborated passive score to cross thresholds arbitrarily.
+    #
+    # 1. Isolated / non-persistent anomaly (streak < P):
+    #    Capped at uncorroborated_total_cap (38.0 -> LOW).
+    # 2. Persistent single-stream anomaly (streak >= P, but no cross-stream corroboration):
+    #    Lifts the 38 cap into SUSPICIOUS, but strictly bounded by the stream's
+    #    maximum allocation (50.0). It CANNOT cross into HIGH (>=65) or CRITICAL (>=85)
+    #    on model persistence alone, preventing out-of-domain AASIST false positives
+    #    on telephone speech from triggering false alarms.
     uncorroborated_total_cap = cfg.get("uncorroborated_total_cap", _DEFAULT_UNCORROBORATED_CAP)
     auth_cap = cfg.get("authenticity_uncorroborated_cap", _DEFAULT_AUTH_CAP)
+    persistent_cap = cfg.get("authenticity_persistent_cap", _DEFAULT_PERSISTENT_AUTH_CAP)
 
-    if evidence.authenticity is not None and not is_corroborated:
-        if raw > uncorroborated_total_cap:
-            raw = uncorroborated_total_cap
-            reasons.append("total_risk_uncorroborated_cap_active")
-        if raw_auth_contrib > auth_cap:
-            reasons.append("authenticity_uncorroborated_provisional")
-            if contributions["authenticity"] > auth_cap:
-                contributions["authenticity"] = auth_cap
+    if evidence.authenticity is not None and not cross_stream_corroborated:
+        if auth_persistent:
+            if raw > persistent_cap:
+                raw = persistent_cap
+                reasons.append("uncorroborated_single_stream_cap_active")
+            if contributions["authenticity"] > persistent_cap:
+                contributions["authenticity"] = persistent_cap
+        else:
+            if raw > uncorroborated_total_cap:
+                raw = uncorroborated_total_cap
+                reasons.append("total_risk_uncorroborated_cap_active")
+            if raw_auth_contrib > auth_cap:
+                reasons.append("authenticity_uncorroborated_provisional")
+                if contributions["authenticity"] > auth_cap:
+                    contributions["authenticity"] = auth_cap
 
     # ── Interactive evidence ─────────────────────────────────────────────────
     # Interactive challenge/verification deltas apply AFTER the cap so an explicit

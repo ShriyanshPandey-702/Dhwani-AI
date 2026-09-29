@@ -1,5 +1,5 @@
 -- ─────────────────────────────────────────────────────────────────────────────
--- VoiceShield PostgreSQL Schema
+-- Dhwani AI PostgreSQL Schema
 -- ─────────────────────────────────────────────────────────────────────────────
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";

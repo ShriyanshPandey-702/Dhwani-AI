@@ -1,4 +1,4 @@
-# VoiceShield — Phase 1: Controlled AASIST-L Fine-Tuning
+# Dhwani AI — Phase 1: Controlled AASIST-L Fine-Tuning
 
 **Status of the frozen baseline: untouched.** The original AASIST-L checkpoint
 (`sha256 814331d0…ce27a`) is never written to. Every Phase 1 model is a separate

@@ -46,7 +46,7 @@ function getNativeModule() {
 
 /**
  * Service orchestrating native audio capture and forwarding raw PCM chunks
- * directly to the VoiceShield WebSocket gateway.
+ * directly to the Dhwani AI WebSocket gateway.
  *
  * Sequence Number Invariant:
  * The native AudioRecord module is the sole owner of sequence numbers

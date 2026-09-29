@@ -1,4 +1,4 @@
-# VoiceShield — Phase 0 Dataset & Experiment Design Review
+# Dhwani AI — Phase 0 Dataset & Experiment Design Review
 
 **PLANNING ONLY.** Nothing downloaded, no code changed, no training run, no
 dataset modified, no Risk Engine or dashboard change. Verified numbers come from

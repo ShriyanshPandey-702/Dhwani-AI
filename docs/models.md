@@ -1,8 +1,8 @@
-# VoiceShield — Models, Provenance and Limitations
+# Dhwani AI — Models, Provenance and Limitations
 
 Everything in this document is either a fact about a third-party checkpoint or a
 number measured on a named machine. **No accuracy figure appears here, because
-VoiceShield has not evaluated any of these models on its own data.**
+Dhwani AI has not evaluated any of these models on its own data.**
 
 ---
 
@@ -113,7 +113,7 @@ Transcription runs on the same rolling analysis window as the other streams —
 **chunked window transcription, not streaming ASR** with cross-window context.
 
 **Known limitations.**
-- Whisper supports many languages. That is **not** a claim that VoiceShield is
+- Whisper supports many languages. That is **not** a claim that Dhwani AI is
   production-ready for Hindi or code-mixed Hinglish; we have not measured it.
 - `tiny` is fast and error-prone. In testing it rendered "lakh" as "lock" — the
   risk-bearing tokens survived, but that is luck, not a guarantee.
@@ -261,7 +261,7 @@ excluding transport. See `docs/ml_evaluation.md` §7.7.
 
 So the supportable claim is unchanged in spirit and now has numbers behind it:
 
-> VoiceShield performs multi-signal detection and risk-based decisioning using
+> Dhwani AI performs multi-signal detection and risk-based decisioning using
 > pretrained open-source models. Its authenticity detector is strong in-domain
 > (ASVspoof 2019 LA: ROC-AUC 0.9987, EER 1.07%) and **near chance out of domain**
 > (MLAAD-tiny unseen TTS: 0.6055; WaveFake unseen vocoders: 0.5970), because it
@@ -273,7 +273,7 @@ WaveFake + LJSpeech (documented subset). Not yet obtained: IndieFake, SEA-Spoof,
 HAV-DF. The full MLAAD v9 release is
 behind a Fraunhofer owncloud share that returned 401 to automated access.
 
-VoiceShield has **not** trained on private telecom or banking data, and has no
+Dhwani AI has **not** trained on private telecom or banking data, and has no
 partnerships or data-sharing arrangements of any kind. No model in this repo has
 been fine-tuned by us; all weights are upstream releases.
 

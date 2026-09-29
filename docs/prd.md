@@ -1,13 +1,13 @@
-# VoiceShield Mobile App — Product Requirements Document (PRD)
+# Dhwani AI Mobile App — Product Requirements Document (PRD)
 
-**Project:** VoiceShield
+**Project:** Dhwani AI
 **SIH 2026:** Problem Statement 26104
 **Platform:** Android-first mobile security application
 **Status:** Product specification for prototype and phased implementation
 
 ## 1. Product Summary
 
-VoiceShield is a real-time voice-security client designed to detect possible voice-cloning/AI-generated speech during an authorized live communication session, continuously assess impersonation risk, warn the user, trigger an active challenge when justified, and require independent verification before consequential actions proceed.
+Dhwani AI is a real-time voice-security client designed to detect possible voice-cloning/AI-generated speech during an authorized live communication session, continuously assess impersonation risk, warn the user, trigger an active challenge when justified, and require independent verification before consequential actions proceed.
 
 The product follows:
 
@@ -15,7 +15,7 @@ The product follows:
 
 The mobile application is a **consented screening extension**, not an unrestricted raw cellular-call recorder. The primary production integration path is authorized VoIP/contact-center media APIs.
 
-VoiceShield includes a **real-time in-app Security Dashboard** that visualizes
+Dhwani AI includes a **real-time in-app Security Dashboard** that visualizes
 continuously changing authenticity, identity, context, risk, events and security
 decisions during an active monitored call. This is a core product feature, not an
 administrative or backend-only view: while a monitored call is active, the mobile
@@ -25,7 +25,7 @@ app becomes a live security analysis dashboard.
 
 ## 2. Problem
 
-AI-generated voices can convincingly impersonate trusted people. Caller ID, familiarity with a person's voice, and manual verification are insufficient by themselves in high-pressure situations. VoiceShield addresses the missing real-time security layer that evaluates voice authenticity, identity consistency, conversation context, and consequence before a sensitive action is allowed.
+AI-generated voices can convincingly impersonate trusted people. Caller ID, familiarity with a person's voice, and manual verification are insufficient by themselves in high-pressure situations. Dhwani AI addresses the missing real-time security layer that evaluates voice authenticity, identity consistency, conversation context, and consequence before a sensitive action is allowed.
 
 ## 3. Product Goals
 
@@ -85,12 +85,12 @@ Protection for sensitive telephonic instructions and approvals.
 
 ## 6. Core User Journey
 
-1. User installs VoiceShield.
+1. User installs Dhwani AI.
 2. User signs in.
 3. User registers the device as trusted.
 4. User grants only required permissions.
 5. User starts/receives a supported monitored session.
-6. VoiceShield shows monitoring status.
+6. Dhwani AI shows monitoring status.
 7. Audio is processed continuously.
 8. Authenticity, identity and context signals are calculated separately.
 9. Risk Engine updates the Security Risk Index.
@@ -360,10 +360,10 @@ The MVP is successful when:
 
 ## 11. Explicit Product Limitations
 
-- VoiceShield does not guarantee perfect detection.
+- Dhwani AI does not guarantee perfect detection.
 - No challenge can be guaranteed to defeat every future real-time voice converter.
 - Mobile cellular-call audio access is platform/permission dependent.
-- No third-party detection API is used. Authenticity detection is VoiceShield's
+- No third-party detection API is used. Authenticity detection is Dhwani AI's
   own pipeline, and no single detector within it is treated as the sole source
   of truth.
 - Blockchain is evidence integrity, not AI detection.
@@ -374,7 +374,7 @@ The MVP is successful when:
 - Unrestricted cellular call recording.
 - Guaranteed carrier-level integration.
 - Court-admissibility claims.
-- Automatic financial transactions controlled directly by VoiceShield.
+- Automatic financial transactions controlled directly by Dhwani AI.
 - Production multi-bank consortium blockchain.
 - Fully autonomous blocking without configured policy/authorization.
 
@@ -388,7 +388,7 @@ Expected:
 3. Identity/context analysis runs independently.
 4. Context detects high-consequence transfer + urgency.
 5. Risk rises.
-6. VoiceShield issues a challenge.
+6. Dhwani AI issues a challenge.
 7. Risk remains high.
 8. Independent Trust Channel requests trusted-device approval.
 9. Transaction is held.
@@ -397,7 +397,7 @@ Expected:
 
 ## 14. Product Principle
 
-VoiceShield is not merely a fake-voice detector. It is a real-time security decision layer that detects, scores, verifies and protects the final consequential action.
+Dhwani AI is not merely a fake-voice detector. It is a real-time security decision layer that detects, scores, verifies and protects the final consequential action.
 
 ---
 

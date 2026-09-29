@@ -1,4 +1,4 @@
-# VoiceShield Mobile App — Technical Specification
+# Dhwani AI Mobile App — Technical Specification
 
 ## 1. Final Technology Stack
 
@@ -451,7 +451,7 @@ between calls.
 
 ## 12. Voice Authenticity Pipeline
 
-VoiceShield performs authenticity detection with its own pipeline. **No
+Dhwani AI performs authenticity detection with its own pipeline. **No
 third-party detection API is called**, and no external detection vendor is a
 dependency.
 
@@ -673,7 +673,7 @@ Critical ────────→ Hold
 
 ## 19. Real-Time Dashboard Data Flow
 
-VoiceShield includes a real-time in-app Security Dashboard that visualizes
+Dhwani AI includes a real-time in-app Security Dashboard that visualizes
 continuously changing authenticity, identity, context, risk, events and security
 decisions during an active monitored call.
 

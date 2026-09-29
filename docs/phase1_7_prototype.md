@@ -1,8 +1,8 @@
-# VoiceShield Phase 1.7 — Real-Time Prototype Architecture & Validation
+# Dhwani AI Phase 1.7 — Real-Time Prototype Architecture & Validation
 
 ## 1. Executive Summary
 
-VoiceShield Phase 1.7 operationalizes the end-to-end real-time AI-powered voice cloning detection and prevention pipeline on top of the frozen Phase 1.6 asynchronous concurrency baseline.
+Dhwani AI Phase 1.7 operationalizes the end-to-end real-time AI-powered voice cloning detection and prevention pipeline on top of the frozen Phase 1.6 asynchronous concurrency baseline.
 
 The pipeline ingests raw 16 kHz mono 16-bit PCM audio from live microphones or audio files, packetizes audio into 250ms chunks over WebSockets, buffers and hops through a streaming windower (64,608 samples window, 16,000 samples hop), concurrently runs deepfake authenticity detection (AASIST-L with AASIST cascade) and speaker identity verification (ECAPA-TDNN) in a dedicated thread-pool executor, performs asynchronous transcription and contextual threat analysis (faster-whisper), fuses multimodal signals in the Risk Engine, enforces Security Policy (ALLOW, CHALLENGE, HOLD, BLOCK), issues interactive cryptographic/semantic challenges, and broadcasts real-time threat telemetry to client applications.
 
@@ -90,7 +90,7 @@ The real-time streaming pipeline strictly preserves all Phase 1.6 invariants:
 
 ## 3. Real-Time Streaming CLI Client
 
-The demonstration client `services/api/scripts/demo_realtime_stream.py` provides an interactive terminal interface for streaming audio into VoiceShield.
+The demonstration client `services/api/scripts/demo_realtime_stream.py` provides an interactive terminal interface for streaming audio into Dhwani AI.
 
 ### Capabilities:
 1. **Live Microphone Mode**: Captures audio directly from default system microphone using `ffmpeg` (`-f avfoundation -i :0` on macOS or `pulse`/`alsa` on Linux) at 16,000 Hz, 16-bit signed PCM mono, chunked into 250ms packets.

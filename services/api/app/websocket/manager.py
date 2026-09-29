@@ -171,6 +171,7 @@ class SessionState:
             identity_corroboration_pending=is_pending,
             authenticity_corroborated=is_auth_confirmed,
             authenticity_corroboration_pending=is_auth_pending,
+            authenticity_streak=self.consecutive_authenticity_anomalies,
         )
 
 

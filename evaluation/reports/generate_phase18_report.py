@@ -60,7 +60,7 @@ def generate_report(
     lines: List[str] = []
 
     # Title & Metadata
-    lines.append("# VoiceShield — Phase 1.8 Multi-Domain Evaluation & Robustness Benchmarking")
+    lines.append("# Dhwani AI — Phase 1.8 Multi-Domain Evaluation & Robustness Benchmarking")
     lines.append("")
     lines.append(f"**Date:** {time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())}  ")
     lines.append("**System Status:** FROZEN PRODUCTION PIPELINE (Phase 1.7 Tag `phase-1.7-pass`)  ")
@@ -73,7 +73,7 @@ def generate_report(
     # 1. Executive Summary
     lines.append("## 1. Executive Summary")
     lines.append("")
-    lines.append("Phase 1.8 benchmarks the frozen VoiceShield production security pipeline across multiple diverse audio domains "
+    lines.append("Phase 1.8 benchmarks the frozen Dhwani AI production security pipeline across multiple diverse audio domains "
                  "and realistic transmission degradations. Unlike earlier evaluations that scored static audio files on an isolated detector, "
                  "Phase 1.8 evaluates the **complete real-time streaming pipeline** under production windowing geometry:")
     lines.append("")
@@ -86,7 +86,7 @@ def generate_report(
     lines.append("2. **Out-of-Domain Generalisation Gap**: On unseen modern TTS generators (MLAAD-tiny) and internet-collected in-the-wild audio, "
                  "raw acoustic anti-spoofing degrades substantially (AUC drops to 0.50–0.65). This proves that standalone voice deepfake detectors cannot "
                  "be relied upon in isolation.")
-    lines.append("3. **Multimodal Defense In-Depth**: Despite acoustic detector degradation on unseen domains, VoiceShield's Risk Engine and Security Policy "
+    lines.append("3. **Multimodal Defense In-Depth**: Despite acoustic detector degradation on unseen domains, Dhwani AI's Risk Engine and Security Policy "
                  "maintain security posture: high-risk calls and anomalous voices are routed to `VERIFY` (challenging the caller) rather than falsely "
                  "granting `ALLOW`.")
     lines.append("4. **Acoustic & Telephony Fragility**: Narrowband telephony filtering (300–3400 Hz passband, 8 kHz downsampling, and G.711 $\\mu$-law companding) "
@@ -100,7 +100,7 @@ def generate_report(
     # 2. System Under Test
     lines.append("## 2. System Under Test")
     lines.append("")
-    lines.append("The complete VoiceShield security pipeline operates as an integrated, multi-layered defense:")
+    lines.append("The complete Dhwani AI security pipeline operates as an integrated, multi-layered defense:")
     lines.append("- **Audio Ingestion**: 16 kHz mono 16-bit linear PCM received in 250 ms chunks.")
     lines.append("- **StreamWindower**: Rolling bounded ring buffer (64,608 samples analysis window, 16,000 samples hop, 80,608 samples max capacity).")
     lines.append("- **Evidence Stream 1 (Authenticity)**: AASIST-L raw graph attention model (85k parameters, input `NB_SAMP = 64,600`, center-cropped).")
@@ -235,7 +235,7 @@ def generate_report(
     # 8. Full Streaming Pipeline Metrics
     lines.append("## 8. Full Streaming Pipeline & Policy Behavior")
     lines.append("")
-    lines.append("VoiceShield does not rely on a single score threshold. The Risk Engine fuses three independent signals and applies policy:")
+    lines.append("Dhwani AI does not rely on a single score threshold. The Risk Engine fuses three independent signals and applies policy:")
     lines.append("")
     lines.append("| Dataset | Policy False Accept Rate (%) | Policy False Reject Rate (%) | Bona-Fide Verify Rate (%) | Spoof Verify Rate (%) |")
     lines.append("|:---|:---:|:---:|:---:|:---:|")
@@ -252,7 +252,7 @@ def generate_report(
     lines.append("### Understanding Policy `VERIFY` Decisions:")
     lines.append("> [!IMPORTANT]")
     lines.append("> A `VERIFY` decision is **NOT** a false positive or system failure. It represents the intended security policy: "
-                 "when confidence is moderate or acoustic indicators are ambiguous, VoiceShield prompts for interactive verification "
+                 "when confidence is moderate or acoustic indicators are ambiguous, Dhwani AI prompts for interactive verification "
                  "(e.g. in-band challenge or out-of-band verification) rather than blocking the call or naively allowing it.")
     lines.append("")
     lines.append("---")
@@ -296,7 +296,7 @@ def generate_report(
     # 10. Telephony & Acoustic Channel Analysis
     lines.append("## 10. Telephony Channel Analysis")
     lines.append("")
-    lines.append("VoiceShield's target operational domain includes VoIP and contact-center telephony. "
+    lines.append("Dhwani AI's target operational domain includes VoIP and contact-center telephony. "
                  "The benchmark reveals critical transmission sensitivities:")
     lines.append("- **8 kHz Resampling (`resample_8k`)**: Bandwidth limitation to 4 kHz removes high-frequency spectral cues (>4 kHz) where raw vocoder artifacts reside.")
     lines.append("- **Telephone Bandpass (`telephone_band`)**: Narrowband filter (300–3400 Hz) causes a positive shift in AASIST scores, pushing clean audio into suspicious territory.")
@@ -304,7 +304,7 @@ def generate_report(
     lines.append("- **Telephone Chain (`telephone_chain`)**: Combining 300–3400 Hz bandpass, 8 kHz downsampling, and $\\mu$-law companding results in systematic $\\Delta\\text{Risk} > +20$ points.")
     lines.append("")
     lines.append("> [!WARNING]")
-    lines.append("> VoiceShield is an audio-channel security pipeline, **NOT** a cellular-call interception system. "
+    lines.append("> Dhwani AI is an audio-channel security pipeline, **NOT** a cellular-call interception system. "
                  "Deployments operating over narrowband telephony must incorporate telephony-domain retraining or score recalibration.")
     lines.append("")
     lines.append("---")
@@ -368,15 +368,15 @@ def generate_report(
     # 14. Defensible SIH Claims & Limitations
     lines.append("## 14. Defensible SIH Hackathon Claims & Honest Limitations")
     lines.append("")
-    lines.append("### What VoiceShield CAN Claim (Scientifically Grounded):")
+    lines.append("### What Dhwani AI CAN Claim (Scientifically Grounded):")
     lines.append("1. **End-to-End Real-Time Architecture**: Fully operational, verified streaming pipeline integrating acoustic, biometric, and contextual defense with sub-second turnaround on standard CPU.")
     lines.append("2. **In-Domain State-of-the-Art Authenticity**: Achieves $>99.8\\%$ ROC-AUC on standard ASVspoof 2019 logical access benchmarks.")
     lines.append("3. **Multimodal Resilience**: Multimodal risk fusion prevents false single-point failures: even when one stream is undecided, the overall security policy safeguards the interaction.")
     lines.append("4. **Zero Cloud / Zero GPU Overhead**: Runs completely on-premise on commodity hardware.")
     lines.append("")
-    lines.append("### What VoiceShield MUST NOT Claim (Disproven by Benchmark):")
+    lines.append("### What Dhwani AI MUST NOT Claim (Disproven by Benchmark):")
     lines.append("1. **DO NOT Claim >99% Accuracy Across All Domains**: Generalisation to modern unseen TTS drops significantly.")
-    lines.append("2. **DO NOT Claim Cellular Interception Capability**: VoiceShield is an application/VoIP audio-channel monitor, not a telecom telco tap.")
+    lines.append("2. **DO NOT Claim Cellular Interception Capability**: Dhwani AI is an application/VoIP audio-channel monitor, not a telecom telco tap.")
     lines.append("3. **DO NOT Claim Perfect Narrowband Telephony Robustness**: Narrowband companded telephony requires domain adaptation.")
     lines.append("")
     lines.append("---")

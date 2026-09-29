@@ -1,10 +1,10 @@
-# VoiceShield --- Project Context & Phase Status README
+# Dhwani AI --- Project Context & Phase Status README
 
 **Purpose:** This README is a handoff/context document for a new AI
-agent, teammate, or developer joining the VoiceShield project.\
+agent, teammate, or developer joining the Dhwani AI project.\
 **Project:** Smart India Hackathon 2026 --- Problem Statement
 **SIH26104**\
-**Product:** VoiceShield --- AI-Powered Real-Time Detection and
+**Product:** Dhwani AI --- AI-Powered Real-Time Detection and
 Prevention of Voice Cloning Impersonation Attacks
 
 > **Important:** This document describes the current engineering state
@@ -17,7 +17,7 @@ Prevention of Voice Cloning Impersonation Attacks
 
 # 1. Project in One Paragraph
 
-VoiceShield is intended to be a real-time voice-security layer for
+Dhwani AI is intended to be a real-time voice-security layer for
 detecting AI-generated/manipulated speech during consequential
 interactions and preventing fraud rather than merely flagging an audio
 file after the fact.
@@ -42,7 +42,7 @@ not automatically become "fake."
 The official SIH problem statement asks for real-time synthetic-voice
 detection, dynamic risk scoring, actionable alerts before sensitive
 actions, privacy preservation, scalability, and support for multilingual
-Indian accents/dialects. The VoiceShield design extends this with active
+Indian accents/dialects. The Dhwani AI design extends this with active
 challenge-response and an independent verification channel so that
 high-risk decisions can actually be protected rather than merely
 reported.
@@ -233,7 +233,7 @@ The master SIH document separately describes:
 
 ## Purpose
 
-Build the basic VoiceShield backend and application foundation.
+Build the basic Dhwani AI backend and application foundation.
 
 ## Main work
 
@@ -792,7 +792,7 @@ That is not a safe/accurate claim for the prototype.
 Authorized VoIP / Contact Center / Media API
                     |
                     v
-              VoiceShield
+                Dhwani AI
                     |
         +-----------+-----------+
         |           |           |
@@ -1151,7 +1151,7 @@ Scope:
 
 Scope:
 
-Connect VoiceShield with other security modalities so a voice-cloning
+Connect Dhwani AI with other security modalities so a voice-cloning
 event can correlate with:
 
 -   phishing messages
@@ -1235,7 +1235,7 @@ Important source areas:
 
 At the current project stage, the following are established:
 
--   [x] Core VoiceShield architecture
+-   [x] Core Dhwani AI architecture
 -   [x] FastAPI backend foundation
 -   [x] REST APIs
 -   [x] Authentication/session infrastructure
@@ -1423,7 +1423,7 @@ If a problem is suspected:
 
 Use this short explanation:
 
-> "VoiceShield is a real-time voice-security system for SIH26104. We
+> "Dhwani AI is a real-time voice-security system for SIH26104. We
 > have already built the backend, mobile app, WebSocket pipeline, Risk
 > Engine, challenge/verification workflow, and integrated real AASIST-L,
 > ECAPA-TDNN and Whisper. We also evaluated the detector across
@@ -1491,7 +1491,7 @@ ECOSYSTEM INTEGRATION
 
 # 33. Final Current-State Statement
 
-**VoiceShield is no longer just a UI prototype or mock concept.**
+**Dhwani AI is no longer just a UI prototype or mock concept.**
 
 The project has a functioning backend architecture, mobile application,
 real-time WebSocket pipeline, real AASIST/ECAPA/Whisper ML components,
@@ -1531,7 +1531,7 @@ The project context is grounded primarily in:
     guidance.
 -   `Conducting Internal Hackathon for Smart India Hackathon 2026.pdf`
     --- internal SIH/hackathon process context.
--   Current VoiceShield repository source, tests, evaluation results and
+-   Current Dhwani AI repository source, tests, evaluation results and
     implementation plans.
 -   Phase 1.5 and Phase 1.6 engineering validation reports.
 

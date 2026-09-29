@@ -1,1 +1,1 @@
-"""VoiceShield evaluation harness."""
+"""Dhwani AI evaluation harness."""

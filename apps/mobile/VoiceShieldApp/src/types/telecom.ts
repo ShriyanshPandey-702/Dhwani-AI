@@ -1,5 +1,5 @@
 /**
- * Telecom Call Screening types for VoiceShield.
+ * Telecom Call Screening types for Dhwani AI.
  * Represents metadata-only signals from Android Telecom CallScreeningService.
  */
 

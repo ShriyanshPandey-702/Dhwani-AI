@@ -252,15 +252,15 @@ def _make_context_result(score: int = 5, consequence: str = "low", transcript: s
 
 def test_self_consistency_protection_benign_capped_at_38():
     """
-    Mandatory Correction 1:
-    High AASIST + NO speaker_reference + benign context:
+    Single isolated window: High AASIST + NO speaker_reference + benign context:
     - enrollment_status = SELF_CONSISTENCY
     - identity_corroborated = False
     - benign context / context_risk < 0.25
-    - uncorroborated passive risk <= 38
+    - uncorroborated single-window risk <= 38
     - risk_state = LOW
     """
-    wav_bytes = _generate_wav_bytes(duration_s=8.0, freq=440.0)
+    # 4.2s @ 16kHz = 67,200 samples -> exactly 1 analysis window (WINDOW_SAMPLES = 64,608)
+    wav_bytes = _generate_wav_bytes(duration_s=4.2, freq=440.0)
     files = {"file": ("fake_audio.wav", wav_bytes, "audio/wav")}
 
     fake_auth = AuthenticityResult(
@@ -284,10 +284,45 @@ def test_self_consistency_protection_benign_capped_at_38():
     data = response.json()
 
     assert data["identity"]["enrollment_status"] == "SELF_CONSISTENCY"
-    # Uncorroborated total cap of 38.0 enforced!
+    # Uncorroborated total cap of 38.0 enforced for isolated single window!
     assert data["risk_score"] <= 38
     assert data["risk_state"] == "low"
     assert "total_risk_uncorroborated_cap_active" in data["reasons"]
+
+
+def test_self_consistency_persistent_authenticity_escalates_beyond_38():
+    """
+    Phase 1: Persistent Multi-Window High AASIST + NO speaker_reference + benign context:
+    - Multi-window temporal persistence (P >= 2) corroborates authenticity.
+    - Risk is allowed to escalate beyond the 38 cap to SUSPICIOUS/HIGH based on evidence.
+    """
+    wav_bytes = _generate_wav_bytes(duration_s=8.0, freq=440.0)
+    files = {"file": ("fake_audio_persistent.wav", wav_bytes, "audio/wav")}
+
+    fake_auth = AuthenticityResult(
+        score=95,
+        spoof_probability=0.95,
+        confidence=0.85,
+        acoustic_anomaly="HIGH",
+        spectral_anomaly="HIGH",
+        prosody_anomaly="HIGH",
+        model_version="AASIST-L@asvspoof2019la",
+        is_mock=False,
+    )
+
+    benign_ctx = _make_context_result(score=5, consequence="low", transcript="Good morning, thank you for calling customer service.")
+
+    with patch("app.api.analysis.authenticity_detector.analyze", return_value=fake_auth):
+        with patch("app.api.analysis.context_classifier.classify", return_value=benign_ctx):
+            response = client.post("/analysis/audio", files=files)
+
+    assert response.status_code == 200, response.text
+    data = response.json()
+
+    # Beyond the 38 cap because of multi-window persistence, safely bounded in SUSPICIOUS
+    assert data["risk_score"] > 38
+    assert 40 <= data["risk_score"] <= 50
+    assert data["risk_state"] == "suspicious"
 
 
 def test_self_consistency_with_malicious_context_uncapped():

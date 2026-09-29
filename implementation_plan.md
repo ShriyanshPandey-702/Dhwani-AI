@@ -1,4 +1,4 @@
-# VoiceShield — Implementation Plan
+# Dhwani AI — Implementation Plan
 
 **SIH 2026 · Problem Statement 26104 — AI-Powered Real-Time Detection and
 Prevention of Voice Cloning Impersonation Attacks**
@@ -7,7 +7,7 @@ This plan records what is built, what is stubbed, and what comes next. It is
 kept honest deliberately: a component is only marked complete when it works.
 
 **Resemble AI is not part of this plan.** Authenticity detection is
-VoiceShield's own pipeline. No third-party detection API is called.
+Dhwani AI's own pipeline. No third-party detection API is called.
 
 ---
 

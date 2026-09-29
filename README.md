@@ -1,10 +1,10 @@
-# VoiceShield 🛡
+# Dhwani AI 🛡
 
 **Real-time voice-impersonation defence — SIH 2026, Problem Statement 26104**
 
 > DETECT → SCORE → CHALLENGE → VERIFY → PROTECT
 
-VoiceShield is not a deepfake classifier. It is a security system for the moment
+Dhwani AI is not a deepfake classifier. It is a security system for the moment
 that actually matters: a human is on a live call and is about to make a
 consequential decision because they believe the caller is genuine.
 
@@ -13,11 +13,11 @@ identity and conversation context — fuses them in a Risk Engine, and lets a
 configurable Policy Engine decide whether the action may proceed, needs
 verification, or must be held.
 
-VoiceShield includes a **real-time in-app Security Dashboard** that visualises
+Dhwani AI includes a **real-time in-app Security Dashboard** that visualises
 continuously changing authenticity, identity, context, risk, events and security
 decisions during an active monitored call.
 
-**Resemble AI is not used.** Authenticity detection is VoiceShield's own
+**Resemble AI is not used.** Authenticity detection is Dhwani AI's own
 pipeline; no third-party detection API is called.
 
 ---
@@ -99,7 +99,7 @@ audio *source* (`mock`/`live`); each evidence object carries its own
 Set `PIPELINE_MODE=real_ml` and run `python scripts/fetch_models.py` to use the
 real models. The default stays `mock` so the demonstration is deterministic.
 
-**No accuracy claim is made.** VoiceShield has run no evaluation of these
+**No accuracy claim is made.** Dhwani AI has run no evaluation of these
 checkpoints on its own data. See `docs/models.md`.
 
 ---
@@ -291,7 +291,7 @@ evidence summary.
 
 ## Scope and limitations
 
-VoiceShield performs **multi-signal detection** and **risk-based decisioning**
+Dhwani AI performs **multi-signal detection** and **risk-based decisioning**
 with **continuous analysis**, **adaptive verification** and **defense in depth**.
 
 It does not claim perfect detection. Its authenticity detector has now been
@@ -305,7 +305,7 @@ summarised favourably:
 | WaveFake subset, unseen vocoders on LJSpeech | subset, single speaker | **0.5970** | **41.60%** |
 
 The out-of-domain rows are **subsets**, and the WaveFake row is single-speaker
-read speech — diagnostic, not a real-world performance claim. VoiceShield has
+read speech — diagnostic, not a real-world performance claim. Dhwani AI has
 measured **no** real-world or telephony performance.
 
 **The in-domain number is not the deployment number.** On both out-of-domain
@@ -330,10 +330,10 @@ analysis and the Risk Engine tuning decisions are in
 **[`docs/ml_evaluation.md`](docs/ml_evaluation.md)**, with raw scores and
 leakage audits under `evaluation/results/`.
 
-VoiceShield has not been measured on telephony codecs, Indian-English, or live
+Dhwani AI has not been measured on telephony codecs, Indian-English, or live
 call audio. The deterministic heuristic backends remain available and are always
 labelled; a fallback is never presented as real ML.
 
-VoiceShield also does not claim access to unrestricted Android cellular call
+Dhwani AI also does not claim access to unrestricted Android cellular call
 audio. The prototype uses a controlled streaming path, and real on-device
 capture is a later phase with its own consent and permission requirements.

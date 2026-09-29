@@ -1,7 +1,7 @@
 """
 Consequence-aware policy validation (Phase 11).
 
-These assert the property that makes VoiceShield a security system rather than
+These assert the property that makes Dhwani AI a security system rather than
 a classifier: **spoof probability alone does not determine the decision.**
 Identity and context are fused with it, and evidence confidence gates how much
 any of it is trusted.

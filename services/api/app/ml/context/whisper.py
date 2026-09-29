@@ -10,7 +10,7 @@ STATUS: REAL MODEL, PRETRAINED CHECKPOINT, NOT EVALUATED BY US.
   Output     transcript text, detected language, per-segment avg log-probability
 
 What this is NOT:
-  * Not fine-tuned by VoiceShield.
+  * Not fine-tuned by Dhwani AI.
   * Not evaluated for Indian-English, Hindi or code-mixed Hinglish accuracy.
     Whisper supports many languages; that is not the same as being production
     ready for them, and no such claim is made here.

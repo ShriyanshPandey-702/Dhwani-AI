@@ -41,7 +41,7 @@ class CallScreeningService {
   }
 
   /**
-   * Requests the user to designate VoiceShield as the Call Screening app.
+   * Requests the user to designate Dhwani AI as the Call Screening app.
    */
   async requestRole(): Promise<CallScreeningRoleResult> {
     const mod = getNativeModule();

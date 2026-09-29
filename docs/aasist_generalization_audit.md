@@ -1,4 +1,4 @@
-# VoiceShield — AASIST Domain-Generalization Audit
+# Dhwani AI — AASIST Domain-Generalization Audit
 
 **Status: AUDIT ONLY. Nothing in this document has been implemented.**
 No model was trained, no dataset downloaded, no source file modified, no
@@ -788,6 +788,6 @@ it as such — and the Risk Engine conclusion may well remain unchanged even the
 
 Until a model passes §13, the honest statement is the one already published:
 
-> VoiceShield's authenticity detector is strong in-domain and near chance
+> Dhwani AI's authenticity detector is strong in-domain and near chance
 > out of domain. It has not been measured on telephony, Indian-English, or live
 > call audio. A model output is evidence to be fused, not a verdict to trust.

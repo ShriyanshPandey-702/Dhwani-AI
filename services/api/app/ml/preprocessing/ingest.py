@@ -1,6 +1,6 @@
 """
 Canonical audio ingestion — the ONE place a file or foreign buffer becomes
-VoiceShield's internal representation.
+Dhwani AI's internal representation.
 
 Internal contract (unchanged from the validated pipeline; see docs/models.md):
 

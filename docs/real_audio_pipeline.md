@@ -1,4 +1,4 @@
-# VoiceShield — Real Audio Pipeline
+# Dhwani AI — Real Audio Pipeline
 
 How real audio reaches the production ML pipeline, what the backend guarantees
 about it, and what this prototype does **not** do.
@@ -220,7 +220,7 @@ The system supports three input paths, and only these:
 - **C. Consented mobile screening** — with explicit user consent and platform
   permissions; not implemented.
 
-**VoiceShield does not record every cellular call on Android, and it does not
+**Dhwani AI does not record every cellular call on Android, and it does not
 capture iOS cellular audio.** Neither platform exposes that to third-party apps
 without privileged or private APIs. Any claim otherwise would be false.
 

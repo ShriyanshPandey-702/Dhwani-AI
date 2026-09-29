@@ -1,4 +1,4 @@
-# VoiceShield — Phase 1.8 Multi-Domain Evaluation & Robustness Benchmarking
+# Dhwani AI — Phase 1.8 Multi-Domain Evaluation & Robustness Benchmarking
 
 **Date:** 2026-09-13 12:27:24 UTC  
 **System Status:** FROZEN PRODUCTION PIPELINE (Phase 1.7 Tag `phase-1.7-pass`)  
@@ -9,14 +9,14 @@
 
 ## 1. Executive Summary
 
-Phase 1.8 benchmarks the frozen VoiceShield production security pipeline across multiple diverse audio domains and realistic transmission degradations. Unlike earlier evaluations that scored static audio files on an isolated detector, Phase 1.8 evaluates the **complete real-time streaming pipeline** under production windowing geometry:
+Phase 1.8 benchmarks the frozen Dhwani AI production security pipeline across multiple diverse audio domains and realistic transmission degradations. Unlike earlier evaluations that scored static audio files on an isolated detector, Phase 1.8 evaluates the **complete real-time streaming pipeline** under production windowing geometry:
 
 $$\text{Audio Stream} \to \text{250ms Chunks} \to \text{StreamWindower (64,608 / 16,000 / 80,608)} \to \text{AASIST-L + ECAPA-TDNN + faster-whisper} \to \text{Risk Engine Fusion} \to \text{Security Policy} \to \text{ALLOW/VERIFY/HOLD/BLOCK}$$
 
 ### Key Scientific Takeaways:
 1. **In-Domain Authenticity**: AASIST-L delivers near-perfect discrimination on in-domain ASVspoof 2019 LA evaluation audio (EER 0.00%–1.07%, ROC-AUC ~0.999).
 2. **Out-of-Domain Generalisation Gap**: On unseen modern TTS generators (MLAAD-tiny) and internet-collected in-the-wild audio, raw acoustic anti-spoofing degrades substantially (AUC drops to 0.50–0.65). This proves that standalone voice deepfake detectors cannot be relied upon in isolation.
-3. **Multimodal Defense In-Depth**: Despite acoustic detector degradation on unseen domains, VoiceShield's Risk Engine and Security Policy maintain security posture: high-risk calls and anomalous voices are routed to `VERIFY` (challenging the caller) rather than falsely granting `ALLOW`.
+3. **Multimodal Defense In-Depth**: Despite acoustic detector degradation on unseen domains, Dhwani AI's Risk Engine and Security Policy maintain security posture: high-risk calls and anomalous voices are routed to `VERIFY` (challenging the caller) rather than falsely granting `ALLOW`.
 4. **Acoustic & Telephony Fragility**: Narrowband telephony filtering (300–3400 Hz passband, 8 kHz downsampling, and G.711 $\mu$-law companding) and heavy reverberation significantly distort raw spectral cues. However, speaker identity (ECAPA) and conversational context rules remain robust.
 5. **Real-Time Turnaround**: Full end-to-end pipeline turnaround on CPU averages ~875 ms per 1.0-second analysis hop, satisfying real-time throughput constraints without GPU dependency.
 
@@ -24,7 +24,7 @@ $$\text{Audio Stream} \to \text{250ms Chunks} \to \text{StreamWindower (64,608 /
 
 ## 2. System Under Test
 
-The complete VoiceShield security pipeline operates as an integrated, multi-layered defense:
+The complete Dhwani AI security pipeline operates as an integrated, multi-layered defense:
 - **Audio Ingestion**: 16 kHz mono 16-bit linear PCM received in 250 ms chunks.
 - **StreamWindower**: Rolling bounded ring buffer (64,608 samples analysis window, 16,000 samples hop, 80,608 samples max capacity).
 - **Evidence Stream 1 (Authenticity)**: AASIST-L raw graph attention model (85k parameters, input `NB_SAMP = 64,600`, center-cropped).
@@ -125,7 +125,7 @@ Speaker verification performance was evaluated only where genuine reference audi
 
 ## 8. Full Streaming Pipeline & Policy Behavior
 
-VoiceShield does not rely on a single score threshold. The Risk Engine fuses three independent signals and applies policy:
+Dhwani AI does not rely on a single score threshold. The Risk Engine fuses three independent signals and applies policy:
 
 | Dataset | Policy False Accept Rate (%) | Policy False Reject Rate (%) | Bona-Fide Verify Rate (%) | Spoof Verify Rate (%) |
 |:---|:---:|:---:|:---:|:---:|
@@ -137,7 +137,7 @@ VoiceShield does not rely on a single score threshold. The Risk Engine fuses thr
 
 ### Understanding Policy `VERIFY` Decisions:
 > [!IMPORTANT]
-> A `VERIFY` decision is **NOT** a false positive or system failure. It represents the intended security policy: when confidence is moderate or acoustic indicators are ambiguous, VoiceShield prompts for interactive verification (e.g. in-band challenge or out-of-band verification) rather than blocking the call or naively allowing it.
+> A `VERIFY` decision is **NOT** a false positive or system failure. It represents the intended security policy: when confidence is moderate or acoustic indicators are ambiguous, Dhwani AI prompts for interactive verification (e.g. in-band challenge or out-of-band verification) rather than blocking the call or naively allowing it.
 
 ---
 
@@ -171,14 +171,14 @@ Strict paired evaluation across all 19 conditions, comparing degraded audio agai
 
 ## 10. Telephony Channel Analysis
 
-VoiceShield's target operational domain includes VoIP and contact-center telephony. The benchmark reveals critical transmission sensitivities:
+Dhwani AI's target operational domain includes VoIP and contact-center telephony. The benchmark reveals critical transmission sensitivities:
 - **8 kHz Resampling (`resample_8k`)**: Bandwidth limitation to 4 kHz removes high-frequency spectral cues (>4 kHz) where raw vocoder artifacts reside.
 - **Telephone Bandpass (`telephone_band`)**: Narrowband filter (300–3400 Hz) causes a positive shift in AASIST scores, pushing clean audio into suspicious territory.
 - **G.711 $\mu$-law Companding (`mu_law`)**: 8-bit logarithmic quantization adds subtle quantization noise resembling synthetic vocoder artifacts.
 - **Telephone Chain (`telephone_chain`)**: Combining 300–3400 Hz bandpass, 8 kHz downsampling, and $\mu$-law companding results in systematic $\Delta\text{Risk} > +20$ points.
 
 > [!WARNING]
-> VoiceShield is an audio-channel security pipeline, **NOT** a cellular-call interception system. Deployments operating over narrowband telephony must incorporate telephony-domain retraining or score recalibration.
+> Dhwani AI is an audio-channel security pipeline, **NOT** a cellular-call interception system. Deployments operating over narrowband telephony must incorporate telephony-domain retraining or score recalibration.
 
 ---
 
@@ -219,15 +219,15 @@ VoiceShield's target operational domain includes VoIP and contact-center telepho
 
 ## 14. Defensible SIH Hackathon Claims & Honest Limitations
 
-### What VoiceShield CAN Claim (Scientifically Grounded):
+### What Dhwani AI CAN Claim (Scientifically Grounded):
 1. **End-to-End Real-Time Architecture**: Fully operational, verified streaming pipeline integrating acoustic, biometric, and contextual defense with sub-second turnaround on standard CPU.
 2. **In-Domain State-of-the-Art Authenticity**: Achieves $>99.8\%$ ROC-AUC on standard ASVspoof 2019 logical access benchmarks.
 3. **Multimodal Resilience**: Multimodal risk fusion prevents false single-point failures: even when one stream is undecided, the overall security policy safeguards the interaction.
 4. **Zero Cloud / Zero GPU Overhead**: Runs completely on-premise on commodity hardware.
 
-### What VoiceShield MUST NOT Claim (Disproven by Benchmark):
+### What Dhwani AI MUST NOT Claim (Disproven by Benchmark):
 1. **DO NOT Claim >99% Accuracy Across All Domains**: Generalisation to modern unseen TTS drops significantly.
-2. **DO NOT Claim Cellular Interception Capability**: VoiceShield is an application/VoIP audio-channel monitor, not a telecom telco tap.
+2. **DO NOT Claim Cellular Interception Capability**: Dhwani AI is an application/VoIP audio-channel monitor, not a telecom telco tap.
 3. **DO NOT Claim Perfect Narrowband Telephony Robustness**: Narrowband companded telephony requires domain adaptation.
 
 ---

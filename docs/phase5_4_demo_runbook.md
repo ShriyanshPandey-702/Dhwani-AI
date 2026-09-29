@@ -1,12 +1,12 @@
-# VoiceShield — Final SIH Demo Runbook (Phase 5.4 Freeze)
+# Dhwani AI — Final SIH Demo Runbook (Phase 5.4 Freeze)
 
-This is the definitive, authoritative runbook for the Smart India Hackathon (SIH) demonstration of **VoiceShield**. It details the exact system architecture, prerequisites, service startup commands, preflight checks, scenario sequences, judge presentation flows, recovery procedures, and scientific claim boundaries.
+This is the definitive, authoritative runbook for the Smart India Hackathon (SIH) demonstration of **Dhwani AI**. It details the exact system architecture, prerequisites, service startup commands, preflight checks, scenario sequences, judge presentation flows, recovery procedures, and scientific claim boundaries.
 
 ---
 
 ## 1. System Architecture
 
-VoiceShield is a real-time, hybrid telephony and mobile security platform designed to detect, score, challenge, and protect against synthetic voice attacks (deepfakes) and telephony fraud.
+Dhwani AI is a real-time, hybrid telephony and mobile security platform designed to detect, score, challenge, and protect against synthetic voice attacks (deepfakes) and telephony fraud.
 
 ```
                       ┌───────────────────────────────────────┐
@@ -51,10 +51,10 @@ Caller / VoIP UAC ───►│ SIP :5060 (Signaling)                 │
 
 ---
 
-## 2. What VoiceShield Can Demonstrate
+## 2. What Dhwani AI Can Demonstrate
 
 1. **Real-time Controlled VoIP Telephony**:
-   - VoiceShield receives live 20ms RTP packets, converts/accumulates them into the configured PCM analysis windows, and performs ML inference on those analysis windows.
+   - Dhwani AI receives live 20ms RTP packets, converts/accumulates them into the configured PCM analysis windows, and performs ML inference on those analysis windows.
    - Jitter-tolerant accumulation into 250 ms network chunks and 4.038-second analysis windows.
 2. **Deep Learning Inference in Real Time**:
    - **AASIST-L** (85k parameters, raw waveform graph attention) producing calibrated authenticity scores on 4.038s PCM windows.
@@ -74,7 +74,7 @@ Caller / VoIP UAC ───►│ SIP :5060 (Signaling)                 │
 6. **Watchdogs & Resilience**:
    - RTP inactivity watchdog terminating dead connections cleanly with normal hangup after configured 5.0s.
    - Backend WebSocket disconnect detection with fail-safe teardown.
-   - Selective startup reconciliation ensuring only VoiceShield-owned resources are reaped while foreign resources are preserved.
+   - Selective startup reconciliation ensuring only Dhwani AI-owned resources are reaped while foreign resources are preserved.
 7. **Android Call Screening**:
    - Instantaneous (< 5 ms) incoming call metadata evaluation (contacts, blocklist, STIR/SHAKEN).
 8. **Cryptographic Incident Persistence**:
@@ -82,12 +82,12 @@ Caller / VoIP UAC ───►│ SIP :5060 (Signaling)                 │
 
 ---
 
-## 3. What VoiceShield CANNOT Claim (Scientific Integrity Boundaries)
+## 3. What Dhwani AI CANNOT Claim (Scientific Integrity Boundaries)
 
-1. **No 100% Detection Claims**: VoiceShield does NOT claim 100% deepfake detection accuracy or zero false alarms. Scenario pass rate does not imply deepfake detection accuracy.
+1. **No 100% Detection Claims**: Dhwani AI does NOT claim 100% deepfake detection accuracy or zero false alarms. Scenario pass rate does not imply deepfake detection accuracy.
 2. **No EER/AUC Claims from VoIP Robustness Benchmark**: As established in Phase 5.3, the controlled VoIP network benchmark validates real-time pipeline execution and latency robustness under network degradation, but does NOT establish class-discriminative EER/AUC.
-3. **No Raw GSM/Cellular Audio Interception**: Android OS sandboxing strictly prohibits non-system applications from intercepting cellular audio streams. VoiceShield never claims unrestricted cellular call recording.
-4. **No Forced Block on Uncorroborated Spoof**: Under VoiceShield's defense-in-depth policy, an uncorroborated synthetic voice detection produces a maximum risk score of 38, resulting in `ALLOW` unless accompanied by identity mismatch or social engineering context.
+3. **No Raw GSM/Cellular Audio Interception**: Android OS sandboxing strictly prohibits non-system applications from intercepting cellular audio streams. Dhwani AI never claims unrestricted cellular call recording.
+4. **No Forced Block on Uncorroborated Spoof**: Under Dhwani AI's defense-in-depth policy, an uncorroborated synthetic voice detection produces a maximum risk score of 38, resulting in `ALLOW` unless accompanied by identity mismatch or social engineering context.
 
 ---
 
@@ -101,8 +101,8 @@ Caller / VoIP UAC ───►│ SIP :5060 (Signaling)                 │
   - `5060`: Asterisk SIP Signaling (TCP/UDP)
   - `8088`: Asterisk ARI REST & WebSocket
   - `10000-10020`: Asterisk RTP Media (UDP)
-  - `20000`: VoiceShield Gateway ExternalMedia RTP Listener (UDP)
-  - `8000`: VoiceShield FastAPI Backend
+  - `20000`: Dhwani AI Gateway ExternalMedia RTP Listener (UDP)
+  - `8000`: Dhwani AI FastAPI Backend
 
 ---
 
@@ -156,7 +156,7 @@ PYTHONPATH=. services/api/.venv/bin/python services/telephony/scripts/validate_p
 2. **Terminal / UI Observation**:
    - Real-time AASIST-L inference flags acoustic and spectral anomalies.
    - Uncorroborated single-signal cap engages (Risk strictly capped at 38 points).
-   - Demonstrates false-positive mitigation: VoiceShield avoids premature call termination without multi-factor corroboration.
+   - Demonstrates false-positive mitigation: Dhwani AI avoids premature call termination without multi-factor corroboration.
 3. **Execution**:
    ```bash
    PYTHONPATH=. services/api/.venv/bin/python services/telephony/scripts/validate_phase54_e2e.py --scenario E2E-02
@@ -216,11 +216,11 @@ PYTHONPATH=. services/api/.venv/bin/python services/telephony/scripts/validate_p
 
 ## 7. SIH Demonstration Capabilities & Presentation Guide
 
-1. **True Real-Time Processing**: VoiceShield receives live 20ms RTP packets, converts/accumulates them into the configured PCM analysis windows, and performs ML inference on those analysis windows with inference under 300 ms on standard CPU.
+1. **True Real-Time Processing**: Dhwani AI receives live 20ms RTP packets, converts/accumulates them into the configured PCM analysis windows, and performs ML inference on those analysis windows with inference under 300 ms on standard CPU.
 2. **Multi-Factor Defense-in-Depth**: No single ML model has the authority to block a call. Blocking requires corroborated signals (Authenticity + Identity + Threat Intent).
 3. **Interactive Active Defense**: When confidence is ambiguous, the system actively challenges the caller with unpredictable phrases rather than making passive guesses.
 4. **Telephony Hardening**: Asterisk integration handles RTP jitter, media isolation, channel hold/unhold, watchdog timeouts, and selective resource reconciliation.
-5. **Architectural Honesty**: VoiceShield respects operating system security boundaries (Android Telecom metadata screening for cellular; Asterisk VoIP gateway for deep audio inspection).
+5. **Architectural Honesty**: Dhwani AI respects operating system security boundaries (Android Telecom metadata screening for cellular; Asterisk VoIP gateway for deep audio inspection).
 
 ---
 
@@ -273,7 +273,7 @@ curl -s -u voiceshield:voiceshield_secret_pass http://localhost:8088/ari/bridges
 
 ## 10. Emergency Fallback Demo Path (Mock Pipeline Mode)
 
-If GPUs/CPUs are overloaded or external network conditions prevent real model execution, VoiceShield provides an instant deterministic mock fallback mode:
+If GPUs/CPUs are overloaded or external network conditions prevent real model execution, Dhwani AI provides an instant deterministic mock fallback mode:
 ```bash
 cd services/api
 PIPELINE_MODE=mock JWT_SECRET=local-dev-secret-not-for-production-1234567890abcdef .venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000

@@ -1,8 +1,8 @@
-# VoiceShield Mobile App — Test Plan
+# Dhwani AI Mobile App — Test Plan
 
 ## 1. Objective
 
-Verify that the VoiceShield Android application is functional, secure, real-time, privacy-conscious, accessible, and safe under normal and failure conditions.
+Verify that the Dhwani AI Android application is functional, secure, real-time, privacy-conscious, accessible, and safe under normal and failure conditions.
 
 **Release rule:** all Critical and High severity tests must pass before an SIH demo/release build.
 

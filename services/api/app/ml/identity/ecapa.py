@@ -11,7 +11,7 @@ STATUS: REAL MODEL, PRETRAINED CHECKPOINT, THRESHOLDS NOT CALIBRATED BY US.
   Output     192-d embedding; speakers compared by cosine similarity
 
 What this is NOT:
-  * Not trained or fine-tuned by VoiceShield.
+  * Not trained or fine-tuned by Dhwani AI.
   * Decision thresholds below are the model card's typical operating region,
     not a calibration against Indian telecom audio, codecs or our channel.
   * A similarity score is evidence about IDENTITY only. A low score means the

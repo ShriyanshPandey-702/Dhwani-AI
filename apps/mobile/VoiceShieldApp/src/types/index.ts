@@ -1,4 +1,4 @@
-// VoiceShield type definitions.
+// Dhwani AI type definitions.
 //
 // The WebSocket section mirrors services/api/app/websocket/events.py exactly.
 // Every server event carries type/event_id/seq/session_id/timestamp; the store

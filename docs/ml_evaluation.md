@@ -1,4 +1,4 @@
-# VoiceShield — ML Evaluation
+# Dhwani AI — ML Evaluation
 
 Status legend used throughout:
 
@@ -298,7 +298,7 @@ harder makes it worse, not better.
 
 > **Naming note.** `Resemble.ai (April 12th, 2025)` in the table above is the
 > name of a *generator in the MLAAD dataset* — audio that system produced, used
-> here as spoof test material. VoiceShield does not call, integrate or depend on
+> here as spoof test material. Dhwani AI does not call, integrate or depend on
 > Resemble AI or any other commercial detector; the constraint is unchanged.
 
 Older/simpler synthesis (griffin-lim-adjacent, `facebook-MMS`, `RVC`, `Maya1`)

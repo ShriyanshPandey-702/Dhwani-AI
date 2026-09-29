@@ -1,4 +1,4 @@
-# VoiceShield — Phase 1.5: Asynchronous Speech-to-Text
+# Dhwani AI — Phase 1.5: Asynchronous Speech-to-Text
 
 ## 1. Problem
 

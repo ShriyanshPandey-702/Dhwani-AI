@@ -427,3 +427,161 @@ def test_session_lifecycle_persistence_destruction():
 
     new_state = mgr.get_or_create_state("s_life", "u1", CFG)
     assert new_state.consecutive_identity_mismatches == 0
+
+
+# ── Phase 1 Regression & Scoring Validation Tests (A–L) ──────────────────────
+
+def test_phase1_single_authenticity_anomaly_not_critical():
+    """A: Single isolated high AASIST anomaly must not become CRITICAL (stays <= 38)."""
+    ev = EvidenceBundle(
+        authenticity=0.98,
+        authenticity_confidence=0.85,
+        authenticity_streak=1,
+        authenticity_corroborated=False,
+        authenticity_corroboration_pending=True,
+    )
+    res = compute_risk(ev, CFG)
+    assert res.score <= 38
+    assert res.state == LOW
+    assert "total_risk_uncorroborated_cap_active" in res.reasons
+
+
+def test_phase1_persistent_authenticity_anomaly_escalates_to_suspicious_not_high():
+    """
+    B: Multi-window persistent authenticity anomaly must increase risk beyond the 38 cap,
+    but CANNOT unilaterally breach HIGH (>= 65) without cross-stream corroboration.
+    """
+    # Streak 1: Isolated anomaly remains capped at <= 38 (LOW)
+    ev1 = EvidenceBundle(
+        authenticity=0.98,
+        authenticity_confidence=0.80,
+        authenticity_streak=1,
+    )
+    res1 = compute_risk(ev1, CFG)
+    assert res1.score <= 38
+    assert res1.state == LOW
+
+    # Streak 2: Persistence confirmed -> lifts cap to SUSPICIOUS (>= 40)
+    ev2 = EvidenceBundle(
+        authenticity=0.98,
+        authenticity_confidence=0.80,
+        authenticity_corroborated=True,
+        authenticity_streak=2,
+    )
+    res2 = compute_risk(ev2, CFG)
+    assert 40 <= res2.score <= 50
+    assert res2.state == SUSPICIOUS
+
+    # Streak 4: Higher persistence alone remains safely bounded in SUSPICIOUS (<= 50, < 65)
+    ev4 = EvidenceBundle(
+        authenticity=0.98,
+        authenticity_confidence=0.80,
+        authenticity_corroborated=True,
+        authenticity_streak=4,
+    )
+    res4 = compute_risk(ev4, CFG)
+    assert 40 <= res4.score <= 50
+    assert res4.state == SUSPICIOUS
+    assert res4.score < 65
+
+
+def test_phase1_corroborated_authenticity_escalates_to_high():
+    """
+    Persistent authenticity + independent cross-stream corroboration (identity mismatch
+    or malicious context) safely escalates to HIGH (>= 65) and CRITICAL (>= 85).
+    """
+    # Authenticity (49) + Identity mismatch (20) = 69 -> HIGH
+    ev_corrob = EvidenceBundle(
+        authenticity=0.98,
+        authenticity_confidence=0.80,
+        authenticity_corroborated=True,
+        authenticity_streak=2,
+        identity_similarity=0.20,
+        identity_confidence=0.80,
+        identity_corroborated=True,
+    )
+    res_corrob = compute_risk(ev_corrob, CFG)
+    assert res_corrob.score >= 65
+    assert res_corrob.state == HIGH
+
+
+def test_phase1_temporal_recovery_after_benign_window():
+    """C & K: Benign audio resets streak and temporal smoothing lowers score."""
+    from app.websocket.manager import SessionState
+    state = SessionState(session_id="test-rec", user_id="u1", policy_config=CFG)
+    state.pipeline_mode = "real_ml"
+
+    # Simulate 4 synthetic windows
+    for _ in range(4):
+        state.record_risk(75, HIGH)
+    assert state.temporal_risk_score > 60
+
+    # Benign window arrives: raw score drops to 5
+    smooth = state.record_risk(5, LOW)
+    assert smooth < 75
+    # Second benign window
+    smooth2 = state.record_risk(5, LOW)
+    assert smooth2 < smooth
+
+
+def test_phase1_identity_only_evidence():
+    """D: Identity mismatch contributes independently when available."""
+    ev = EvidenceBundle(
+        identity_similarity=0.10,
+        identity_confidence=0.80,
+        identity_corroborated=True,
+    )
+    res = compute_risk(ev, CFG)
+    # id_risk = (1.0 - 0.10) * 0.25 * 100 = 22.5
+    assert res.contributions["identity"] == pytest.approx(22.5, abs=0.5)
+    assert res.score in (22, 23)
+
+
+def test_phase1_context_only_evidence():
+    """E: Context evidence contributes independently when available."""
+    ev = EvidenceBundle(
+        context_risk=0.80,
+        context_confidence=0.80,
+    )
+    res = compute_risk(ev, CFG)
+    # ctx = 0.80 * 0.25 * 100 = 20.0
+    assert res.contributions["context"] == pytest.approx(20.0, abs=0.5)
+    assert res.score == 20
+
+
+def test_phase1_combined_evidence_fusion_weights():
+    """F: Combined evidence fusion strictly respects 0.50 / 0.25 / 0.25 weights."""
+    ev = EvidenceBundle(
+        authenticity=1.0, authenticity_confidence=1.0,
+        identity_similarity=0.0, identity_confidence=1.0,
+        context_risk=1.0, context_confidence=1.0,
+        authenticity_corroborated=True,
+        identity_corroborated=True,
+    )
+    res = compute_risk(ev, CFG)
+    assert res.contributions["authenticity"] == pytest.approx(50.0, abs=0.1)
+    assert res.contributions["identity"] == pytest.approx(25.0, abs=0.1)
+    assert res.contributions["context"] == pytest.approx(25.0, abs=0.1)
+    assert res.score == 100
+    assert res.state == CRITICAL
+
+
+def test_phase1_score_bounds_and_finite_numeric_values():
+    """I & J: Final risk score is bounded in [0, 100] and has no NaN or inf."""
+    import math
+    for auth in [-1.0, 0.0, 0.5, 1.0, 2.0]:
+        for ident in [0.0, 0.5, 1.0]:
+            for ctx in [0.0, 0.5, 1.0]:
+                ev = EvidenceBundle(
+                    authenticity=auth,
+                    identity_similarity=ident,
+                    context_risk=ctx,
+                    authenticity_corroborated=True,
+                )
+                res = compute_risk(ev, CFG)
+                assert 0 <= res.score <= 100
+                assert not math.isnan(res.score)
+                assert not math.isinf(res.score)
+                for k, v in res.contributions.items():
+                    assert not math.isnan(v)
+                    assert not math.isinf(v)
