@@ -349,10 +349,15 @@ def analyze_microvariation(
             f0_var = safe_float(std_val / mean_val, 3)
 
     return {
+        "status": "available",
         "energy_variability": safe_float(energy_var, 3),
+        "energy_variation": safe_float(energy_var, 3),
         "zcr_variability": safe_float(zcr_var, 3),
+        "zcr_variation": safe_float(zcr_var, 3),
         "spectral_variability": safe_float(spectral_var, 3),
+        "spectral_variation": safe_float(spectral_var, 3),
         "f0_variability": f0_var,
+        "f0_variation": f0_var,
         "jitter_shimmer_status": "not_implemented (frame-level microvariation computed)",
     }
 
@@ -455,17 +460,72 @@ def extract_dsp_evidence(
     micro = analyze_microvariation(audio, sample_rate, f0_stats=f0_stats)
     prosody = analyze_prosody(audio, sample_rate, f0_data=f0_stats, rhythm_data=rhythm_pauses, micro_data=micro)
     spectral = extract_spectral_details(audio, sample_rate)
+    zcr_val = safe_float(np.mean(np.abs(np.diff(np.sign(audio))) > 0), 4) if len(audio) > 1 else None
+    spectral_var = micro.get("spectral_variability") if micro else None
+
+    # Enhanced spectral details with explicit metric names
+    spectral_details = {
+        "centroid_hz": spectral.get("centroid_hz") if spectral else None,
+        "flatness": spectral.get("flatness") if spectral else None,
+        "spectral_centroid": spectral.get("centroid_hz") if spectral else None,
+        "spectral_flatness": spectral.get("flatness") if spectral else None,
+        "zcr": zcr_val,
+        "spectral_variation": spectral_var,
+        "spectral_anomaly": spectral.get("spectral_anomaly") if spectral else LOW,
+    }
+
+    # Structured prosody sub-blocks with explicit status
+    f0_block = {
+        "mean": f0_stats.get("mean_f0_hz") if f0_stats else None,
+        "min": f0_stats.get("f0_min_hz") if f0_stats else None,
+        "max": f0_stats.get("f0_max_hz") if f0_stats else None,
+        "std": f0_stats.get("f0_std_hz") if f0_stats else None,
+        "voiced_ratio": f0_stats.get("voiced_frame_ratio") if f0_stats else None,
+        "status": "available" if f0_stats else "unavailable",
+    }
+    if f0_stats:
+        f0_block.update(f0_stats)
+
+    speech_ms = rhythm_pauses.get("total_speech_duration_ms", 0) if rhythm_pauses else 0
+    seg_count = rhythm_pauses.get("speech_segment_count", 0) if rhythm_pauses else 0
+    speech_rate_proxy = safe_float(seg_count / (speech_ms / 1000.0 + 1e-6), 2) if speech_ms > 200 else None
+
+    rhythm_block = {
+        "segment_count": seg_count if rhythm_pauses else None,
+        "average_segment_duration_ms": rhythm_pauses.get("average_speech_duration_ms") if rhythm_pauses else None,
+        "average_pause_ms": rhythm_pauses.get("average_pause_duration_ms") if rhythm_pauses else None,
+        "speech_to_pause_ratio": rhythm_pauses.get("speech_to_pause_ratio") if rhythm_pauses else None,
+        "speech_rate_proxy": speech_rate_proxy,
+        "status": "available" if rhythm_pauses else "unavailable",
+    }
+    if rhythm_pauses:
+        rhythm_block.update({
+            "speech_segment_count": rhythm_pauses.get("speech_segment_count"),
+            "total_speech_duration_ms": rhythm_pauses.get("total_speech_duration_ms"),
+            "average_speech_duration_ms": rhythm_pauses.get("average_speech_duration_ms"),
+        })
+
+    behavioral_block = {
+        "energy_variability": micro.get("energy_variability") if micro else None,
+        "zcr_variability": micro.get("zcr_variability") if micro else None,
+        "status": "available" if micro else "unavailable",
+    }
+
+    if micro:
+        micro["status"] = "available"
+        micro["energy_variation"] = micro.get("energy_variability")
+        micro["zcr_variation"] = micro.get("zcr_variability")
+        micro["spectral_variation"] = micro.get("spectral_variability")
+        micro["f0_variation"] = micro.get("f0_variability")
 
     return {
         "bands": bands,
-        "pitch": f0_stats,
+        "pitch": f0_block if f0_stats else None,
         "prosody": prosody,
-        "rhythm": {
-            "speech_segment_count": rhythm_pauses.get("speech_segment_count") if rhythm_pauses else None,
-            "total_speech_duration_ms": rhythm_pauses.get("total_speech_duration_ms") if rhythm_pauses else None,
-            "average_speech_duration_ms": rhythm_pauses.get("average_speech_duration_ms") if rhythm_pauses else None,
-            "speech_to_pause_ratio": rhythm_pauses.get("speech_to_pause_ratio") if rhythm_pauses else None,
-        } if rhythm_pauses else None,
+        "f0": f0_block,
+        "speech_rhythm": rhythm_block,
+        "behavioral": behavioral_block,
+        "rhythm": rhythm_block if rhythm_pauses else None,
         "pause_analysis": {
             "pause_count": rhythm_pauses.get("pause_count") if rhythm_pauses else None,
             "total_pause_duration_ms": rhythm_pauses.get("total_pause_duration_ms") if rhythm_pauses else None,
@@ -474,5 +534,5 @@ def extract_dsp_evidence(
             "pause_to_speech_ratio": rhythm_pauses.get("pause_to_speech_ratio") if rhythm_pauses else None,
         } if rhythm_pauses else None,
         "microvariation": micro,
-        "spectral": spectral,
+        "spectral": spectral_details,
     }

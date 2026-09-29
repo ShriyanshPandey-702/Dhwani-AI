@@ -39,6 +39,10 @@ class SessionState:
     last_authenticity: Optional[dict] = None
     last_identity: Optional[dict] = None
     last_context: Optional[dict] = None
+    last_audio_quality: Optional[dict] = None
+    call_source: str = "DEVICE_MICROPHONE"
+    caller_id: Optional[str] = None
+    contact_name: Optional[str] = None
     last_decision: str = "ALLOW"
     last_action: str = "allow"
 

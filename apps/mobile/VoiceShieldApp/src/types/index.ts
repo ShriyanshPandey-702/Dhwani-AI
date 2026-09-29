@@ -133,6 +133,8 @@ export interface IdentityEvidence {
   /** Raw cosine similarity. The embedding itself is never sent to the client. */
   similarity?: number;
   inference_ms?: number;
+  reference_available?: boolean;
+  comparison_available?: boolean;
 }
 
 export interface ContextEvidence {
@@ -148,6 +150,9 @@ export interface ContextEvidence {
   consequence: ConsequenceLevel;
   transcript: string;
   detected_phrases: string[];
+  categories?: string[];
+  pre_transaction_warning?: boolean;
+  recommended_actions?: string[];
   model_version: string;
   is_mock: boolean;
   transcript_is_mock: boolean;
@@ -165,6 +170,42 @@ export interface AudioQualityEvidence {
   quality: 'GOOD' | 'FAIR' | 'POOR';
   sample_rate: number;
   duration_ms: number;
+  rms?: number;
+  energy_variance?: number;
+  zcr?: number;
+}
+
+export interface SystemCapabilities {
+  telephony: {
+    cellular_metadata: string;
+    cellular_audio: string;
+    voip_media: string;
+  };
+  api: {
+    rest: string;
+    websocket: string;
+  };
+  alerts: {
+    in_app: string;
+    push: string;
+    email: string;
+    sms: string;
+  };
+  language: {
+    transcription: string;
+    threat_semantics: string;
+  };
+  enterprise: {
+    api_ready: boolean;
+    multi_tenant: boolean;
+    sso: boolean;
+  };
+  privacy: {
+    raw_audio_retained: boolean;
+    features_logged_only: boolean;
+    embeddings_protected: boolean;
+    processing_location: string;
+  };
 }
 
 // ── WebSocket events ──────────────────────────────────────────────────────────
@@ -202,6 +243,10 @@ export interface RiskUpdateEvent extends EventEnvelope {
   consequence: ConsequenceLevel;
   contributions: Record<string, number>;
   pipeline_mode: PipelineMode;
+  evidence?: Record<string, any> | null;
+  pre_transaction_warning?: boolean;
+  recommended_actions?: string[];
+  call_source?: string;
 }
 
 export type EventStream =

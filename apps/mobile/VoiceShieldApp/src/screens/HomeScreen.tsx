@@ -6,8 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
-  Switch,
-  Platform,
 } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -17,7 +15,8 @@ import { useTheme } from "../utils/theme";
 import { useSessionStore } from "../store/sessionStore";
 import { useCallScreeningStore } from "../store/callScreeningStore";
 import { useRiskStore } from "../store/riskStore";
-import { useAuthStore } from "../store/authStore";
+
+
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { RiskState } from "../types";
 import { ScreenedCallEvent } from "../types/telecom";
@@ -99,7 +98,8 @@ export const HomeScreen: React.FC = () => {
   const { colors, riskColors, radius, isDark } = useTheme();
 
   // Stores
-  const user = useAuthStore((s) => s.user);
+  // user auth state no longer used in this screen (greeting removed)
+
   const overview = useSessionStore((s) => s.overview);
   const isRefreshing = useSessionStore((s) => s.isRefreshing);
   const refreshHome = useSessionStore((s) => s.refreshHome);
@@ -111,6 +111,7 @@ export const HomeScreen: React.FC = () => {
   const loadRecentCalls = useCallScreeningStore((s) => s.loadRecentCalls);
   const recentCalls = useCallScreeningStore((s) => s.recentCalls);
   const requestRole = useCallScreeningStore((s) => s.requestRole);
+  const openSettings = useCallScreeningStore((s) => s.openSettings);
 
   const sessionStatus = useRiskStore((s) => s.sessionStatus);
   const currentRiskScore = useRiskStore((s) => s.riskScore);
@@ -153,15 +154,8 @@ export const HomeScreen: React.FC = () => {
     [createSession, startSession, navigation]
   );
 
-  // Time-based greeting
-  const greeting = useMemo(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Good Morning";
-    if (hour < 17) return "Good Afternoon";
-    return "Good Evening";
-  }, []);
-
-  const userName = user?.full_name || "Shriyansh";
+  // ── Greeting removed per non-personalization requirement ──────────────────
+  // Do NOT add time-based greetings or user names here.
 
   // Reconciled metrics
   const startOfTodayMs = useMemo(() => {
@@ -297,13 +291,13 @@ export const HomeScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* ── Greeting ─────────────────────────────────────────────────────── */}
+        {/* ── Status Banner ────────────────────────────────────────────────── */}
         <View style={styles.greetingSection}>
           <Text style={[styles.greetingTitle, { color: colors.textPrimary }]}>
-            {greeting + ", " + userName + " 👋"}
+            Dhwani AI Voice Analysis
           </Text>
           <Text style={[styles.greetingSubtitle, { color: colors.textSecondary }]}>
-            Your calls are being protected in real time.
+            Real-time call screening and deepfake detection active.
           </Text>
         </View>
 
@@ -313,7 +307,7 @@ export const HomeScreen: React.FC = () => {
             styles.protectionCard,
             {
               backgroundColor: isDark ? colors.surface : colors.surface,
-              borderColor: colors.border,
+              borderColor: isRoleHeld ? `${colors.accent}44` : colors.border,
               borderRadius: radius.lg,
               shadowColor: colors.cardShadow,
             },
@@ -338,22 +332,45 @@ export const HomeScreen: React.FC = () => {
               </Text>
               <Text style={[styles.protectionSubtitle, { color: colors.textSecondary }]}>
                 {isRoleHeld
-                  ? "Monitoring incoming calls"
-                  : "Designate as Call Screening app"}
+                  ? "Call screening is active"
+                  : "Tap below to enable call screening"}
               </Text>
             </View>
           </View>
-          <Switch
-            value={isRoleHeld}
-            onValueChange={() => {
-              if (!isRoleHeld) {
-                requestRole();
-              }
-            }}
-            trackColor={{ false: colors.border, true: colors.accent }}
-            thumbColor={Platform.OS === "android" ? "#FFFFFF" : undefined}
-          />
+          {/* Protection cannot be toggled off programmatically on Android.
+              When active: show a status indicator only.
+              When inactive: show Enable button that requests the OS role. */}
+          {isRoleHeld ? (
+            <TouchableOpacity
+              onPress={() => openSettings()}
+              style={[
+                styles.protectionActionBtn,
+                { borderColor: colors.border, backgroundColor: "transparent" },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Manage call screening in system settings"
+            >
+              <Text style={[styles.protectionActionText, { color: colors.textSecondary }]}>
+                Manage
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              onPress={() => requestRole()}
+              style={[
+                styles.protectionActionBtn,
+                { borderColor: colors.accent, backgroundColor: `${colors.accent}18` },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Enable call screening protection"
+            >
+              <Text style={[styles.protectionActionText, { color: colors.accent }]}>
+                Enable
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
+
 
         {/* ── Summary Metrics (Section 17.2) ────────────────────────────────── */}
         <View style={styles.summaryRow}>
@@ -730,6 +747,20 @@ const styles = StyleSheet.create({
   protectionSubtitle: {
     fontSize: 12,
     marginTop: 2,
+  },
+  protectionActionBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    minWidth: 76,
+  },
+  protectionActionText: {
+    fontSize: 13,
+    fontWeight: "700",
+    letterSpacing: 0.3,
   },
   summaryRow: {
     flexDirection: "row",

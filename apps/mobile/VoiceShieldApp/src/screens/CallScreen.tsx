@@ -1,11 +1,11 @@
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -48,6 +48,10 @@ export const CallScreen: React.FC = () => {
   const { colors, riskColors, radius, isDark } = useTheme();
 
   const { sessionId, mode = "live" } = route.params;
+  const routeParams = route.params as any;
+  const source = routeParams?.source;
+  const callerNumber = routeParams?.callerNumber;
+  const callerName = routeParams?.callerName;
 
   const stopSession = useSessionStore((s) => s.stopSession);
 
@@ -74,6 +78,9 @@ export const CallScreen: React.FC = () => {
   const dismissAlert = useRiskStore((s) => s.dismissAlert);
   const reset = useRiskStore((s) => s.reset);
 
+  const [isEnding, setIsEnding] = useState(false);
+  const isEndingRef = useRef(false);
+
   const {
     isRecording: isMicRecording,
     permissionStatus: micPermission,
@@ -88,7 +95,7 @@ export const CallScreen: React.FC = () => {
 
   useEffect(() => {
     if (sessionStatus === "ended" && mode === "live") {
-      stopMicCapture();
+      stopMicCapture().catch(() => {});
     }
   }, [sessionStatus, mode, stopMicCapture]);
 
@@ -111,7 +118,7 @@ export const CallScreen: React.FC = () => {
     return () => {
       cancelled = true;
       if (mode === "live") {
-        stopMicCapture();
+        stopMicCapture().catch(() => {});
       }
       notificationService.reset();
       wsService.disconnect();
@@ -128,31 +135,166 @@ export const CallScreen: React.FC = () => {
     }
   }, [sessionStatus, riskState, riskScore, decision, recommendedAction]);
 
-  const handleEndSession = useCallback(() => {
-    Alert.alert("End Monitoring", "Stop monitoring this voice stream?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "End Session",
-        style: "destructive",
-        onPress: async () => {
-          if (mode === "live") {
-            await stopMicCapture();
-          }
-          notificationService.reset();
-          wsService.disconnect();
-          try {
-            await stopSession(sessionId);
-          } catch {}
-          if (navigation.canGoBack()) {
-            navigation.goBack();
-          } else {
-            navigation.navigate("Home");
-          }
-        },
-      },
-    ]);
+  const handleEndSession = useCallback(async () => {
+    // Single-click guard: if already ending or ended, strictly ignore all further taps
+    if (isEndingRef.current) return;
+    isEndingRef.current = true;
+    setIsEnding(true);
+
+    try {
+      if (mode === "live") {
+        await stopMicCapture().catch(() => {});
+      }
+      notificationService.reset();
+      wsService.disconnect();
+      try {
+        await stopSession(sessionId);
+      } catch {}
+    } finally {
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        navigation.navigate("Home");
+      }
+    }
   }, [sessionId, mode, stopMicCapture, stopSession, navigation]);
 
+  const resolveEvidenceStatus = () => {
+    if (sessionStatus !== "monitoring") {
+      return {
+        message: "Connecting audio stream...",
+        subMessage: "Initializing real-time analysis pipeline",
+        icon: "🎙",
+        bg: `${colors.accent}14`,
+        border: `${colors.accent}44`,
+        textColor: colors.accent,
+      };
+    }
+
+    const hasFinancial = Boolean(
+      context &&
+        (context.financial_request ||
+          context.otp_request ||
+          context.credential_request ||
+          context.sensitive_information_request)
+    );
+    const hasSocialEng = Boolean(
+      context &&
+        (context.urgency ||
+          context.social_engineering ||
+          context.authority_claim)
+    );
+    const hasAcousticThreat = Boolean(
+      authenticity &&
+        (authenticity.spoof_probability >= 0.50 ||
+          authenticity.acoustic_anomaly === "HIGH" ||
+          authenticity.score >= 50)
+    );
+    const hasIdentityMismatch = Boolean(
+      identity &&
+        (identity.enrollment_status === "MISMATCH" ||
+          (identity.match_score !== null && identity.match_score < 40))
+    );
+
+    if (riskState === "critical") {
+      return {
+        message:
+          hasFinancial && hasAcousticThreat
+            ? "Critical fraud & synthetic-voice risk detected"
+            : hasFinancial
+            ? "Critical fraud intent detected"
+            : hasAcousticThreat
+            ? "Critical synthetic-voice risk detected"
+            : "Critical fraud indicators detected — verify before proceeding",
+        subMessage: "Do not share credentials or authorize transactions",
+        icon: "🚨",
+        bg: `${colors.critical || colors.danger}18`,
+        border: `${colors.critical || colors.danger}55`,
+        textColor: colors.critical || colors.danger,
+      };
+    }
+
+    if (riskState === "high") {
+      let mainMsg = "High-risk indicators detected";
+      let subMsg = "Verify caller before sharing sensitive information";
+
+      if (hasAcousticThreat && hasFinancial) {
+        mainMsg = "High synthetic voice & financial risk detected";
+        subMsg = "Corroborated synthetic speech and transaction request";
+      } else if (hasAcousticThreat) {
+        mainMsg = "High synthetic-voice risk detected";
+        subMsg = "Acoustic patterns indicate artificial or cloned voice";
+      } else if (hasFinancial) {
+        mainMsg = "High-risk financial intent detected";
+        subMsg = "Sensitive credentials or transfer request identified";
+      } else if (hasSocialEng) {
+        mainMsg = "High-risk social-engineering intent detected";
+        subMsg = "Urgency, impersonation or pressure tactics observed";
+      } else if (hasIdentityMismatch) {
+        mainMsg = "Speaker identity could not be verified";
+        subMsg = "Voice profile does not match expected speaker";
+      }
+
+      return {
+        message: mainMsg,
+        subMessage: subMsg,
+        icon: "⚠️",
+        bg: `${colors.danger}14`,
+        border: `${colors.danger}44`,
+        textColor: colors.danger,
+      };
+    }
+
+    if (riskState === "suspicious") {
+      let mainMsg = "Suspicious voice or conversation signals detected";
+      let subMsg = "Additional verification recommended";
+
+      if (hasAcousticThreat) {
+        mainMsg = "Suspicious synthetic-voice indicators detected";
+        subMsg = "Acoustic anomaly detected — continue with caution";
+      } else if (hasFinancial || hasSocialEng) {
+        mainMsg = "Suspicious social-engineering context detected";
+        subMsg = "Sensitive conversation topic or pressure detected";
+      } else if (hasIdentityMismatch) {
+        mainMsg = "Speaker identity variance detected";
+        subMsg = "Confidence in speaker identity is reduced";
+      }
+
+      return {
+        message: mainMsg,
+        subMessage: subMsg,
+        icon: "⚡",
+        bg: `${colors.warning}18`,
+        border: `${colors.warning}55`,
+        textColor: colors.warning,
+      };
+    }
+
+    if (riskState === "low") {
+      return {
+        message: context?.transcript
+          ? "Voice appears low risk"
+          : "No significant threat indicators detected",
+        subMessage: "No significant fraud or credential intent detected",
+        icon: "🛡",
+        bg: `${colors.success}14`,
+        border: `${colors.success}44`,
+        textColor: colors.success,
+      };
+    }
+
+    // Default: insufficient_evidence
+    return {
+      message: "Insufficient voice evidence — continue speaking",
+      subMessage: "Real-time acoustic and semantic engines listening",
+      icon: "🎙",
+      bg: `${colors.accent}14`,
+      border: `${colors.accent}44`,
+      textColor: colors.accent,
+    };
+  };
+
+  const evidenceStatus = resolveEvidenceStatus();
   const latestAlert = alerts[0];
   const isElevated = riskState === "high" || riskState === "critical";
 
@@ -196,17 +338,23 @@ export const CallScreen: React.FC = () => {
 
         <TouchableOpacity
           onPress={handleEndSession}
+          disabled={isEnding}
           style={[
             styles.endBtn,
             {
-              backgroundColor: `${colors.danger}18`,
-              borderColor: `${colors.danger}44`,
+              backgroundColor: isEnding ? `${colors.textMuted}18` : `${colors.danger}18`,
+              borderColor: isEnding ? `${colors.textMuted}44` : `${colors.danger}44`,
+              opacity: isEnding ? 0.6 : 1.0,
             },
           ]}
           accessibilityRole="button"
           accessibilityLabel="End session"
         >
-          <Text style={[styles.endBtnText, { color: colors.danger }]}>End</Text>
+          {isEnding ? (
+            <ActivityIndicator size="small" color={colors.danger} />
+          ) : (
+            <Text style={[styles.endBtnText, { color: colors.danger }]}>End</Text>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -232,10 +380,18 @@ export const CallScreen: React.FC = () => {
           <View style={styles.callerRow}>
             <View>
               <Text style={[styles.callerPhone, { color: colors.textPrimary }]}>
-                {mode === "live" ? "Device Microphone Feed" : "+91 91234 56789"}
+                {source === "voip" || (mode as string) === "voip" || source === "asterisk"
+                  ? callerNumber || "SIP / Asterisk Trunk"
+                  : mode === "live"
+                  ? "Device Microphone Feed"
+                  : "+91 91234 56789"}
               </Text>
               <Text style={[styles.callerName, { color: colors.textSecondary }]}>
-                {mode === "live" ? "Acoustic Speech Stream" : "Unknown Caller"}
+                {source === "voip" || (mode as string) === "voip" || source === "asterisk"
+                  ? callerName || "Live VoIP Caller"
+                  : mode === "live"
+                  ? "Acoustic Speech Stream"
+                  : "Unknown Caller"}
               </Text>
             </View>
 
@@ -250,7 +406,11 @@ export const CallScreen: React.FC = () => {
               ]}
             >
               <Text style={[styles.sourceText, { color: colors.accent }]}>
-                {mode === "live" ? "Device Mic" : "Simulated Audio"}
+                {source === "voip" || (mode as string) === "voip" || source === "asterisk"
+                  ? "LIVE VOIP / ASTERISK"
+                  : mode === "live"
+                  ? "Device Mic"
+                  : "Simulated Audio"}
               </Text>
             </View>
           </View>
@@ -265,7 +425,7 @@ export const CallScreen: React.FC = () => {
           size={210}
         />
 
-        {/* ── Sub-scores Row: Authenticity, Identity, Context ─────────────── */}
+        {/* ── Sub-scores Row: Synthetic Risk, Identity Match, Context Threat ── */}
         <View
           style={[
             styles.subMetricsCard,
@@ -278,13 +438,32 @@ export const CallScreen: React.FC = () => {
         >
           <View style={styles.subMetricCol}>
             <Text style={[styles.subMetricLabel, { color: colors.textSecondary }]}>
-              Authenticity
+              Synthetic Risk
             </Text>
-            <Text style={[styles.subMetricScore, { color: colors.textPrimary }]}>
-              {authenticity ? authenticity.score : "--"}
+            <Text
+              style={[
+                styles.subMetricScore,
+                {
+                  color:
+                    authenticity && authenticity.confidence > 0
+                      ? authenticity.score >= 50
+                        ? colors.danger
+                        : authenticity.score >= 25
+                        ? colors.warning
+                        : colors.success
+                      : colors.textPrimary,
+                  fontSize: authenticity && authenticity.confidence > 0 ? 20 : 13,
+                },
+              ]}
+            >
+              {authenticity && authenticity.confidence > 0
+                ? `${authenticity.score}%`
+                : "Analyzing..."}
             </Text>
             <Text style={[styles.subMetricBand, { color: colors.textMuted }]}>
-              {authenticity ? authenticity.acoustic_anomaly : "Accumulating"}
+              {authenticity && authenticity.confidence > 0
+                ? authenticity.acoustic_anomaly
+                : "Accumulating"}
             </Text>
           </View>
 
@@ -292,16 +471,31 @@ export const CallScreen: React.FC = () => {
 
           <View style={styles.subMetricCol}>
             <Text style={[styles.subMetricLabel, { color: colors.textSecondary }]}>
-              Identity
+              Identity Match
             </Text>
-            <Text style={[styles.subMetricScore, { color: colors.textPrimary }]}>
-              {identity && identity.enrollment_status !== "NOT_ENROLLED"
+            <Text
+              style={[
+                styles.subMetricScore,
+                {
+                  color: colors.textPrimary,
+                  fontSize:
+                    identity &&
+                    identity.enrollment_status !== "NOT_ENROLLED" &&
+                    identity.match_score !== null
+                      ? 20
+                      : 12,
+                },
+              ]}
+            >
+              {identity?.enrollment_status === "NOT_ENROLLED"
+                ? "No Reference"
+                : identity && identity.match_score !== null
                 ? `${identity.match_score}%`
-                : "--"}
+                : "Analyzing..."}
             </Text>
             <Text style={[styles.subMetricBand, { color: colors.textMuted }]}>
               {identity?.enrollment_status === "NOT_ENROLLED"
-                ? "No Reference"
+                ? "Unenrolled"
                 : identity?.consistency || "Awaiting"}
             </Text>
           </View>
@@ -310,49 +504,56 @@ export const CallScreen: React.FC = () => {
 
           <View style={styles.subMetricCol}>
             <Text style={[styles.subMetricLabel, { color: colors.textSecondary }]}>
-              Context
+              Context Threat
             </Text>
-            <Text style={[styles.subMetricScore, { color: colors.textPrimary }]}>
-              {context ? context.score : "--"}
+            <Text
+              style={[
+                styles.subMetricScore,
+                {
+                  color:
+                    context && context.transcript
+                      ? context.score >= 50
+                        ? colors.danger
+                        : context.score >= 25
+                        ? colors.warning
+                        : colors.success
+                      : colors.textPrimary,
+                  fontSize: context && context.transcript ? 20 : 13,
+                },
+              ]}
+            >
+              {context && context.transcript ? `${context.score} / 100` : "Analyzing..."}
             </Text>
             <Text style={[styles.subMetricBand, { color: colors.textMuted }]}>
-              {context ? context.consequence.toUpperCase() : "Awaiting STT"}
+              {context && context.transcript
+                ? context.consequence.toUpperCase()
+                : "Awaiting STT"}
             </Text>
           </View>
         </View>
 
-        {/* ── Context Intent Banner ───────────────────────────────────────── */}
+        {/* ── Dynamic Live Evidence & Status Banner ────────────────────────── */}
         <View
           style={[
-            styles.intentBanner,
+            styles.evidenceBanner,
             {
-              backgroundColor:
-                context && (context.financial_request || context.otp_request || context.urgency)
-                  ? `${colors.danger}18`
-                  : `${colors.accent}14`,
-              borderColor:
-                context && (context.financial_request || context.otp_request || context.urgency)
-                  ? `${colors.danger}44`
-                  : `${colors.accent}44`,
-              borderRadius: radius.sm,
+              backgroundColor: evidenceStatus.bg,
+              borderColor: evidenceStatus.border,
+              borderRadius: radius.md,
             },
           ]}
         >
-          <Text
-            style={[
-              styles.intentText,
-              {
-                color:
-                  context && (context.financial_request || context.otp_request || context.urgency)
-                    ? colors.danger
-                    : colors.accent,
-              },
-            ]}
-          >
-            {context && (context.financial_request || context.otp_request || context.urgency)
-              ? "⚠️ Sensitive / high-consequence request detected"
-              : "🛡 No sensitive financial or credential intent detected"}
-          </Text>
+          <View style={styles.evidenceHeaderRow}>
+            <Text style={{ fontSize: 16 }}>{evidenceStatus.icon}</Text>
+            <Text style={[styles.evidenceTitleText, { color: evidenceStatus.textColor }]}>
+              {evidenceStatus.message}
+            </Text>
+          </View>
+          {evidenceStatus.subMessage ? (
+            <Text style={[styles.evidenceSubText, { color: colors.textSecondary }]}>
+              {evidenceStatus.subMessage}
+            </Text>
+          ) : null}
         </View>
 
         {/* ── Partial Live Transcript ─────────────────────────────────────── */}
@@ -597,14 +798,25 @@ const styles = StyleSheet.create({
     width: 1,
     height: 32,
   },
-  intentBanner: {
+  evidenceBanner: {
     borderWidth: 1,
-    padding: 10,
-    alignItems: "center",
+    padding: 12,
+    gap: 4,
   },
-  intentText: {
-    fontSize: 12,
-    fontWeight: "600",
+  evidenceHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  evidenceTitleText: {
+    fontSize: 13,
+    fontWeight: "700",
+    flex: 1,
+  },
+  evidenceSubText: {
+    fontSize: 11,
+    fontWeight: "500",
+    paddingLeft: 24,
   },
   transcriptCard: {
     borderWidth: 1,

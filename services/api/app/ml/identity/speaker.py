@@ -39,6 +39,10 @@ NOT_ENROLLED = "NOT_ENROLLED"
 ENROLLED = "ENROLLED"
 VERIFIED = "VERIFIED"
 MISMATCH = "MISMATCH"
+# Returned when a speaker reference exists but the current window provides
+# insufficient audio for a confident comparison (e.g. brief silence mid-call).
+# The UI should display the last known status, not "NOT_ENROLLED".
+INSUFFICIENT_EVIDENCE = "INSUFFICIENT_EVIDENCE"
 
 
 @dataclass
@@ -54,6 +58,8 @@ class IdentityResult:
     pipeline_mode: str = HEURISTIC_DEMO
     similarity: float = 0.0   # raw cosine; never the embedding itself
     inference_ms: float = 0.0
+    reference_available: bool = False
+    comparison_available: bool = False
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -69,6 +75,8 @@ def _unenrolled(model_name: str, model_version: str, mode: str) -> IdentityResul
         is_mock=mode != REAL_ML,
         model_name=model_name,
         pipeline_mode=mode,
+        reference_available=False,
+        comparison_available=False,
     )
 
 
@@ -175,6 +183,30 @@ class SpeakerIdentity:
 
     # ── Enrollment ───────────────────────────────────────────────────────────
 
+    # Cross-session persistent reference registry: reference_id -> embedding
+    _persistent_registry: Dict[str, np.ndarray] = {}
+
+    def enroll_reference(self, reference_id: str, audio: np.ndarray) -> bool:
+        """
+        Enroll a persistent speaker reference (e.g. for a user or contact).
+        Embeddings are kept in internal protected memory and never logged or exposed.
+        """
+        if audio is None or len(audio) < self.min_samples:
+            return False
+        try:
+            self._persistent_registry[reference_id] = self._embed(audio)
+            log.info("identity.reference_enrolled", reference_id=reference_id)
+            return True
+        except Exception as e:
+            log.warning("identity.reference_enroll_failed", reference_id=reference_id, error=str(e))
+            return False
+
+    def has_reference(self, reference_id: str) -> bool:
+        return reference_id in self._persistent_registry
+
+    def remove_reference(self, reference_id: str) -> bool:
+        return self._persistent_registry.pop(reference_id, None) is not None
+
     def enroll(self, session_id: str, audio: np.ndarray) -> bool:
         """
         Enrol a reference speaker.
@@ -204,16 +236,37 @@ class SpeakerIdentity:
 
     # ── Verification ─────────────────────────────────────────────────────────
 
-    def analyze(self, session_id: str, audio: Optional[np.ndarray]) -> IdentityResult:
+    def analyze(self, session_id: str, audio: Optional[np.ndarray], reference_id: Optional[str] = None) -> IdentityResult:
         """
-        Compare the current window to the enrolled reference.
+        Compare the current window to the enrolled reference (session-level or persistent).
 
         Returns NOT_ENROLLED when there is no reference — the system reports the
         gap rather than inventing a match score. Never raises.
         """
-        reference = self._enrolled.get(session_id)
-        if reference is None or audio is None or len(audio) < self.min_samples:
+        reference = None
+        if reference_id and reference_id in self._persistent_registry:
+            reference = self._persistent_registry[reference_id]
+        if reference is None:
+            reference = self._enrolled.get(session_id)
+
+        if reference is None:
             return _unenrolled(self.model_name, self.model_version, self._mode)
+        if audio is None or len(audio) < self.min_samples:
+            # Speaker IS enrolled, but this window does not have enough audio
+            # for a meaningful comparison. Return INSUFFICIENT_EVIDENCE so the
+            # UI preserves the enrolled state rather than showing NOT_ENROLLED.
+            return IdentityResult(
+                match_score=0,
+                confidence=0.0,
+                consistency="UNKNOWN",
+                enrollment_status=INSUFFICIENT_EVIDENCE,
+                model_version=self.model_version,
+                is_mock=self._mode != REAL_ML,
+                model_name=self.model_name,
+                pipeline_mode=self._mode,
+                reference_available=True,
+                comparison_available=False,
+            )
 
         mode = self._mode
         inference_ms = 0.0
@@ -260,6 +313,8 @@ class SpeakerIdentity:
             pipeline_mode=mode,
             similarity=round(float(similarity), 4),
             inference_ms=inference_ms,
+            reference_available=True,
+            comparison_available=True,
         )
 
     # ── Internals ────────────────────────────────────────────────────────────

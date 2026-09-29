@@ -34,22 +34,40 @@ import structlog
 
 log = structlog.get_logger()
 
+# Module-level VAD imports — optional; None when faster_whisper is not installed.
+# Defined at module level so tests can patch `app.ml.context.whisper.get_speech_timestamps`.
+try:
+    from faster_whisper.vad import get_speech_timestamps, VadOptions as VadOptions
+except Exception:
+    get_speech_timestamps = None  # type: ignore[assignment]
+    VadOptions = None  # type: ignore[assignment]
+
+
 SAMPLE_RATE = 16000
 MIN_SAMPLES = int(SAMPLE_RATE * 1.0)
 # Below this mean power a window carries no speech worth transcribing.
 MIN_SPEECH_ENERGY = 1e-5
 
-# Provisional no-speech probability ceiling (Phase 5.7).
-# faster-whisper exposes ``segment.no_speech_prob`` — the model's own estimate
-# that a decoded segment is noise rather than speech.  Segments above this
-# ceiling are discarded before the text reaches the context classifier.
+# ── Hallucination guard thresholds (Demo Stabilization) ──────────────────
 #
-# 0.6 was chosen conservatively: it suppresses clearly non-speech segments
-# while leaving room for legitimate low-confidence transcriptions.  Calibrate
-# from in-domain (Indian-English phone-mic) held-out data before tightening.
-# The check is attribute-safe; older faster-whisper versions that do not
-# expose the field are unaffected.
-_NO_SPEECH_PROB_CEIL = 0.6
+# 1. no_speech_prob: faster-whisper's model-internal estimate that a segment
+#    is noise rather than speech.  Values above the ceiling are discarded.
+#    Tightened from 0.6 → 0.40 for whisper-tiny on phone microphone audio;
+#    the tiny model is more prone to hallucination on near-threshold audio.
+#    Raise only with calibration data from in-domain (Indian-English mic).
+_NO_SPEECH_PROB_CEIL = 0.40
+
+# 2. avg_logprob floor: per-segment average decoder log-probability.
+#    Segments below this threshold are very-low-confidence; on whisper-tiny
+#    they almost always represent hallucinated text on ambient noise.
+#    -1.0 allows the model some room for foreign-language or accented speech.
+_MIN_AVG_LOGPROB = -1.0
+
+# 3. Minimum VAD-confirmed speech duration before decoding.
+#    If the faster_whisper VAD finds fewer than this many samples of confirmed
+#    speech in the window, we skip the decode entirely and return None.
+#    500 ms at 16 kHz = 8000 samples.
+_MIN_SPEECH_SAMPLES = int(SAMPLE_RATE * 0.50)
 
 
 class TranscriberUnavailable(RuntimeError):
@@ -139,17 +157,48 @@ class WhisperTranscriber:
         """
         Transcribe one analysis window.
 
-        Returns None when there is too little audio, or when the model produced
-        no speech — an empty transcript is not passed off as a real utterance.
+        Returns None when:
+        - Audio is too short
+        - Window energy is below the silence threshold
+        - VAD-confirmed speech is below the minimum required duration
+        - All decoded segments are classified as non-speech
+        - All decoded segments have avg_logprob below the quality floor
+        - No text remains after filtering
+
+        An empty or low-confidence transcript is never passed off as real speech.
+        This guards against Whisper-tiny hallucination on ambient mic noise.
         """
         if audio is None or len(audio) < MIN_SAMPLES:
+            log.debug("whisper.skip.too_short", samples=len(audio) if audio is not None else 0)
             return None
 
-        # Silence is not speech. Gate it here rather than letting the VAD find
-        # nothing and raise — and never let a silent window be reported as an
-        # utterance.
-        if float(np.mean(np.asarray(audio, dtype=np.float64) ** 2)) < MIN_SPEECH_ENERGY:
+        # Silence gate: below minimum energy, do not invoke the model.
+        rms_sq = float(np.mean(np.asarray(audio, dtype=np.float64) ** 2))
+        if rms_sq < MIN_SPEECH_ENERGY:
+            log.debug("whisper.skip.silence", rms_sq=rms_sq)
             return None
+
+        # ── Pre-decode VAD: require sufficient confirmed-speech duration ──────
+        # If the faster_whisper VAD finds fewer than _MIN_SPEECH_SAMPLES of
+        # confirmed speech, decoding would run on near-silence and almost
+        # certainly hallucinate. Skip it and report no transcript instead.
+        # get_speech_timestamps is the module-level import (patchable in tests).
+        if get_speech_timestamps is not None and VadOptions is not None:
+            try:
+                audio_f32 = np.ascontiguousarray(audio, dtype=np.float32)
+                timestamps = get_speech_timestamps(audio_f32, VadOptions())
+                confirmed_samples = sum(ts["end"] - ts["start"] for ts in timestamps)
+                if confirmed_samples < _MIN_SPEECH_SAMPLES:
+                    log.info(
+                        "whisper.skip.insufficient_speech",
+                        confirmed_ms=round(confirmed_samples / SAMPLE_RATE * 1000),
+                        required_ms=round(_MIN_SPEECH_SAMPLES / SAMPLE_RATE * 1000),
+                    )
+                    return None
+            except Exception as e:
+                # VAD error: fall through to energy-based gate that already passed.
+                log.debug("whisper.vad_error", error=str(e))
+
 
         model = self._load()
         started = time.perf_counter()
@@ -167,23 +216,51 @@ class WhisperTranscriber:
             return None
         elapsed = (time.perf_counter() - started) * 1000.0
 
-        # Phase 5.7: discard segments the model itself classifies as non-speech.
-        # no_speech_prob is the probability the segment is noise; segments above
-        # the ceiling are hallucinations on near-threshold audio and must not
-        # reach the context classifier (where keyword matches are sticky).
-        # The attribute check is safe against older faster-whisper releases.
+        # Guard 1: discard segments the model itself classifies as non-speech.
+        # no_speech_prob > ceiling = hallucination on near-threshold audio.
+        n_before = len(collected)
         collected = [
             s for s in collected
             if not (hasattr(s, "no_speech_prob") and s.no_speech_prob > _NO_SPEECH_PROB_CEIL)
         ]
+        if len(collected) < n_before:
+            log.info(
+                "whisper.dropped_no_speech",
+                dropped=n_before - len(collected),
+                kept=len(collected),
+            )
+
+        # Guard 2: discard very-low-confidence segments (logprob floor).
+        # These are most likely hallucinations on noise or very faint audio.
+        n_before = len(collected)
+        collected = [
+            s for s in collected
+            if not (s.avg_logprob is not None and s.avg_logprob < _MIN_AVG_LOGPROB)
+        ]
+        if len(collected) < n_before:
+            log.info(
+                "whisper.dropped_low_logprob",
+                dropped=n_before - len(collected),
+                kept=len(collected),
+                floor=_MIN_AVG_LOGPROB,
+            )
 
         text = " ".join(s.text.strip() for s in collected).strip()
         if not text:
+            log.info("whisper.empty_after_filtering", elapsed_ms=round(elapsed, 1))
             return None
 
         logprobs = [s.avg_logprob for s in collected if s.avg_logprob is not None]
         confidence = (
             _confidence_from_logprob(float(np.mean(logprobs))) if logprobs else 0.0
+        )
+
+        log.info(
+            "whisper.transcribed",
+            chars=len(text),
+            lang=getattr(info, "language", ""),
+            conf=round(confidence, 3),
+            elapsed_ms=round(elapsed, 1),
         )
 
         return Transcription(

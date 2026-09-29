@@ -497,7 +497,7 @@ async def _teardown(session_id: str, user_id: str) -> None:
         state.active_tasks.clear()
 
     incident_id: Optional[str] = None
-    if state and (state.peak_risk_score >= 20 or state.window_seq > 0 or len(state.risk_history) > 0):
+    if state:
         incident_id = await _save_incident(session_id, user_id, state)
 
     if state:

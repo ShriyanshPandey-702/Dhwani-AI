@@ -28,6 +28,25 @@ import numpy as np
 import time
 import structlog
 
+import json
+from pathlib import Path
+
+try:
+    from faster_whisper.vad import get_speech_timestamps, VadOptions
+except ImportError:
+    get_speech_timestamps = None
+    VadOptions = None
+
+_DIAG_PATH = Path("/Users/shriyansh/.gemini/antigravity-ide/brain/2a056e33-d84d-462f-94ec-785321ea5d35/scratch/aasist_diagnostic.jsonl")
+
+def _record_aasist_diag(data: dict) -> None:
+    try:
+        _DIAG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with open(_DIAG_PATH, "a") as f:
+            f.write(json.dumps(data) + "\n")
+    except Exception:
+        pass
+
 from app.core.database import AsyncSessionLocal
 from app.ml.authenticity.detector import AuthenticityDetector
 from app.ml.context.classifier import ContextClassifier
@@ -93,6 +112,35 @@ _EVENT_LABELS = {
 }
 
 
+def _get_vad_speech_duration_ms(
+    audio: Optional[np.ndarray],
+    quality=None,
+    is_real_ml: bool = False,
+) -> int:
+    """Return confirmed speech duration in milliseconds using Silero VAD (or estimated from length)."""
+    if audio is None or len(audio) == 0:
+        return 0
+    if quality is not None and quality.is_silent:
+        return 0
+    if is_real_ml:
+        if get_speech_timestamps is not None and VadOptions is not None:
+            try:
+                opts = VadOptions(min_speech_duration_ms=250)
+                audio_f32 = np.ascontiguousarray(audio, dtype=np.float32)
+                if audio_f32.ndim > 1:
+                    audio_f32 = audio_f32.mean(axis=1)
+                timestamps = get_speech_timestamps(audio_f32, opts)
+                if not timestamps:
+                    return 0
+                total_samples = sum(ts["end"] - ts["start"] for ts in timestamps)
+                return int(total_samples / SAMPLE_RATE * 1000)
+            except Exception as e:
+                log.warning("speech_credible.vad_error", error=str(e))
+                return 0
+        return 0
+    return int(len(audio) / SAMPLE_RATE * 1000)
+
+
 def _speech_credible(
     audio_or_quality,
     quality=None,
@@ -101,18 +149,15 @@ def _speech_credible(
     """
     Return True only when the audio window contains credible speech evidence.
 
-    Gating rules (Phase 5.7 correctness hardening):
+    Gating rules (Phase 5.7 correctness hardening & VAD-gate AASIST):
     - Silent windows are never credible (``quality.is_silent`` == True).
     - POOR quality (SNR < 8 dB, clipping > 2 %, or silent) is never credible.
     - In real_ml mode, actual voice activity is verified using the bundled
       Silero VAD (faster_whisper.vad) requiring at least 250 ms of speech.
       If VAD execution fails or is unavailable in real_ml mode, it fails closed
-      (returns False) to prevent non-speech contamination of speaker identity.
+      (returns False) to prevent non-speech contamination of speaker identity and AASIST.
     - In mock / heuristic-demo test modes, lightweight quality-only gating
       is preserved so deterministic unit tests do not require neural VAD.
-
-    AASIST and Whisper are NOT blocked by this predicate. This predicate
-    touches identity only (ECAPA auto-enrollment and mismatch streak updates).
     """
     if quality is None:
         if hasattr(audio_or_quality, "is_silent") and hasattr(audio_or_quality, "quality"):
@@ -133,22 +178,8 @@ def _speech_credible(
     if real_ml:
         if audio is None or len(audio) == 0:
             return False
-        try:
-            from faster_whisper.vad import get_speech_timestamps, VadOptions
-            opts = VadOptions(min_speech_duration_ms=250)
-            audio_f32 = np.ascontiguousarray(audio, dtype=np.float32)
-            if audio_f32.ndim > 1:
-                audio_f32 = audio_f32.mean(axis=1)
-            timestamps = get_speech_timestamps(audio_f32, opts)
-            if not timestamps:
-                return False
-            total_speech_samples = sum(ts["end"] - ts["start"] for ts in timestamps)
-            min_samples = int(SAMPLE_RATE * 0.250)  # 250 ms at 16000 Hz = 4000 samples
-            return total_speech_samples >= min_samples
-        except Exception as e:
-            log.warning("speech_credible.vad_error", error=str(e))
-            # Fail closed: never allow unverified audio to enroll
-            return False
+        vad_ms = _get_vad_speech_duration_ms(audio, quality=q, is_real_ml=True)
+        return vad_ms >= 250
 
     return True
 
@@ -175,7 +206,28 @@ def analyze_window(state: SessionState, pcm_bytes: bytes,
 
     raw = decode_pcm(pcm_bytes)
     quality = measure_quality(raw)
-    out.append(ev.audio_quality(session_id, quality.to_dict(), active=not quality.is_silent))
+    state.last_audio_quality = quality.to_dict()
+    out.append(ev.audio_quality(session_id, state.last_audio_quality, active=not quality.is_silent))
+
+    # ── Diagnostic logging (Demo Stabilization) ──────────────────────────────
+    # Logs PCM chunk signal metadata to diagnose whether real microphone audio
+    # is reaching the backend. Never logs raw audio bytes or transcript content.
+    if raw is not None:
+        _rms = float(np.sqrt(np.mean(raw ** 2) + 1e-12))
+        _peak = float(np.max(np.abs(raw))) if len(raw) > 0 else 0.0
+        log.info(
+            "pipeline.chunk_diagnostic",
+            session_id=session_id,
+            pcm_bytes=len(pcm_bytes),
+            samples=len(raw),
+            duration_ms=int(1000 * len(raw) / SAMPLE_RATE),
+            rms=round(_rms, 6),
+            peak=round(_peak, 4),
+            level_db=quality.level_db,
+            snr_db=quality.estimated_snr_db,
+            is_silent=quality.is_silent,
+            quality=quality.quality,
+        )
 
     if raw is None or quality.is_silent:
         # Silence is not evidence. The dashboard keeps its last risk picture
@@ -196,15 +248,83 @@ def analyze_window(state: SessionState, pcm_bytes: bytes,
     window = stream_windower.push(session_id, audio)
     model_audio = window if authenticity_detector.is_real_ml else audio
 
-    _t = time.perf_counter()
-    auth = authenticity_detector.analyze(model_audio)
-    stage_ms["authenticity"] = round((time.perf_counter() - _t) * 1000, 2)
-    if auth is not None:
-        state.last_authenticity = auth.to_dict()
-        if authenticity_detector.is_real_ml and auth.spoof_probability > 0.65 and auth.confidence >= 0.50:
-            state.consecutive_authenticity_anomalies += 1
+    auth = None
+    real_ml_auth = authenticity_detector.is_real_ml or (pipeline_mode == "real_ml")
+    if model_audio is not None:
+        if real_ml_auth:
+            vad_speech_ms = _get_vad_speech_duration_ms(
+                model_audio, quality=quality, is_real_ml=True
+            )
+            has_credible_speech = vad_speech_ms >= 250
         else:
+            vad_speech_ms = int(len(model_audio) / SAMPLE_RATE * 1000)
+            has_credible_speech = not quality.is_silent
+
+        if not has_credible_speech:
+            state.last_authenticity = {
+                "status": "insufficient_evidence",
+                "spoof_probability": None,
+                "confidence": 0.0,
+                "score": 0,
+                "model_name": authenticity_detector.model_name,
+                "model_version": authenticity_detector.model_version,
+                "pipeline_mode": authenticity_detector.pipeline_mode,
+                "is_mock": not authenticity_detector.is_real_ml,
+                "reason": "insufficient_speech",
+                "vad_speech_ms": vad_speech_ms,
+            }
             state.consecutive_authenticity_anomalies = 0
+            _diag_data = {
+                "session_id": session_id,
+                "aasist_executed": False,
+                "reason": "insufficient_speech",
+                "vad_speech_ms": vad_speech_ms,
+                "spoof_probability": None,
+                "confidence": 0.0,
+                "window_scored": window is not None,
+                "streak": 0,
+                "is_real_ml": authenticity_detector.is_real_ml,
+            }
+            log.info("pipeline.aasist_diagnostic", **_diag_data)
+            _record_aasist_diag({"event": "pipeline.aasist_diagnostic", **_diag_data})
+        else:
+            _t = time.perf_counter()
+            auth = authenticity_detector.analyze(model_audio)
+            stage_ms["authenticity"] = round((time.perf_counter() - _t) * 1000, 2)
+            if auth is not None:
+                state.last_authenticity = auth.to_dict()
+                if real_ml_auth and auth.spoof_probability > 0.65 and auth.confidence >= 0.50:
+                    state.consecutive_authenticity_anomalies += 1
+                else:
+                    state.consecutive_authenticity_anomalies = 0
+                _diag_data = {
+                    "session_id": session_id,
+                    "aasist_executed": True,
+                    "reason": None,
+                    "vad_speech_ms": vad_speech_ms,
+                    "spoof_probability": round(auth.spoof_probability, 4),
+                    "confidence": round(auth.confidence, 4),
+                    "window_scored": window is not None,
+                    "streak": state.consecutive_authenticity_anomalies,
+                    "is_real_ml": authenticity_detector.is_real_ml,
+                }
+                log.info("pipeline.aasist_diagnostic", **_diag_data)
+                _record_aasist_diag({"event": "pipeline.aasist_diagnostic", **_diag_data})
+            else:
+                state.consecutive_authenticity_anomalies = 0
+                _diag_data = {
+                    "session_id": session_id,
+                    "aasist_executed": False,
+                    "reason": "insufficient_speech",
+                    "vad_speech_ms": vad_speech_ms,
+                    "spoof_probability": None,
+                    "confidence": 0.0,
+                    "window_scored": window is not None,
+                    "streak": 0,
+                    "is_real_ml": authenticity_detector.is_real_ml,
+                }
+                log.info("pipeline.aasist_diagnostic", **_diag_data)
+                _record_aasist_diag({"event": "pipeline.aasist_diagnostic", **_diag_data})
 
     # ── Evidence stream 2: identity (independent) ────────────────────────────
     # Demo enrolment happens once, from the first analysable window, and is
@@ -223,6 +343,15 @@ def analyze_window(state: SessionState, pcm_bytes: bytes,
     ident = speaker_identity.analyze(session_id, identity_audio)
     stage_ms["identity"] = round((time.perf_counter() - _t) * 1000, 2)
     state.last_identity = ident.to_dict()
+    # Diagnostic: identity stream output
+    log.info(
+        "pipeline.identity_diagnostic",
+        session_id=session_id,
+        enrollment_status=ident.enrollment_status if ident else "N/A",
+        match_score=round(ident.match_score, 2) if ident and ident.match_score is not None else None,
+        mismatch_streak=state.consecutive_identity_mismatches,
+        is_real_ml=speaker_identity.is_real_ml,
+    )
 
     # Deterministic persistence update (P=2 consecutive ML analysis windows)
     # ML inference occurs when a window is scored: in real_ml, when `window is not None`;
@@ -234,8 +363,13 @@ def analyze_window(state: SessionState, pcm_bytes: bytes,
     # This ensures only real speaker evidence can establish P=2 corroboration.
     window_scored = (window is not None) if speaker_identity.is_real_ml else True
     if window_scored and _speech_credible(identity_audio, quality):
-        if ident is None or ident.enrollment_status == "NOT_ENROLLED":
-            state.consecutive_identity_mismatches = 0
+        if ident is None or ident.enrollment_status in ("NOT_ENROLLED", "INSUFFICIENT_EVIDENCE"):
+            # NOT_ENROLLED: no reference exists → reset streak.
+            # INSUFFICIENT_EVIDENCE: reference exists but audio too short → treat as
+            # no-evidence: neither increment nor reset so the streak is preserved.
+            if ident is None or ident.enrollment_status == "NOT_ENROLLED":
+                state.consecutive_identity_mismatches = 0
+            # else INSUFFICIENT_EVIDENCE: leave streak unchanged
         else:
             corroboration_sim_thresh = 1.0 - state.policy_config.get(
                 "identity_corroboration_threshold", 0.40
@@ -262,6 +396,15 @@ def analyze_window(state: SessionState, pcm_bytes: bytes,
             state.window_seq += 1
             if state.window_seq == 1 or state.window_seq % STT_EVERY_N_WINDOWS == 0:
                 stt_submit(state.window_seq, stt_audio)
+        elif window is None and state.window_seq == 0 and not quality.is_silent:
+            # Responsive initial transcription (1-3s target):
+            # If the full 4.038s window has not yet accumulated, but at least 1.0s
+            # of speech has accumulated in the windower buffer, submit the initial
+            # speech segment so transcript begins appearing within 1-3 seconds.
+            buf = stream_windower._buffers.get(session_id)
+            if buf is not None and len(buf.samples) >= 16000:
+                state.window_seq += 1
+                stt_submit(state.window_seq, buf.samples.copy())
         stage_ms["stt"] = 0.0          # off the critical path by construction
     else:
         _t = time.perf_counter()
@@ -286,6 +429,16 @@ def analyze_window(state: SessionState, pcm_bytes: bytes,
             ctx_dict["latest_segment"] = segment.text
             state.last_context = ctx_dict
             state.consequence = ctx.consequence
+            # Diagnostic: context result (no transcript text, only metadata)
+            log.info(
+                "pipeline.context_diagnostic",
+                session_id=session_id,
+                context_score=round(getattr(ctx, 'score', 0.0), 4),
+                consequence=ctx.consequence,
+                transcript_chars=len(segment.text),
+                transcript_is_mock=segment.is_mock,
+                pipeline_mode=segment.pipeline_mode,
+            )
 
     # ── Fusion, policy and the resulting events ──────────────────────────────
     _t = time.perf_counter()
@@ -360,6 +513,45 @@ def fuse_and_decide(state: SessionState, pipeline_mode: str) -> tuple:
     state.last_decision = decision.decision
     state.last_action = decision.action
 
+    pre_tx = bool((state.last_context or {}).get("pre_transaction_warning", False))
+    recommended_actions = (state.last_context or {}).get("recommended_actions", [])
+    call_src = getattr(state, "call_source", "DEVICE_MICROPHONE")
+
+    evidence_bundle = {
+        "risk": {
+            "score": final_score,
+            "state": final_state,
+            "confidence": result.evidence_confidence,
+        },
+        "voice_authenticity": state.last_authenticity,
+        "speaker_identity": state.last_identity,
+        "context": state.last_context,
+        "acoustic": state.last_audio_quality,
+        "liveness": {
+            "status": getattr(state, "challenge_state", "idle"),
+            "challenge": getattr(state, "last_challenge_text", None),
+            "result": state.challenge_outcome,
+        },
+        "consequence": {
+            "level": state.consequence,
+            "reason": (state.last_context or {}).get("detected_phrases", []),
+        },
+        "security": {
+            "decision": decision.decision,
+            "recommended_actions": recommended_actions,
+            "pre_transaction_warning": pre_tx,
+        },
+        "source": {
+            "type": call_src,
+            "metadata_only": call_src == "CELLULAR_METADATA",
+        },
+        "privacy": {
+            "raw_audio_retained": False,
+            "features_logged_only": True,
+            "embeddings_protected": True,
+        },
+    }
+
     update = ev.risk_update(
         session_id=state.session_id,
         risk_score=final_score,
@@ -374,6 +566,10 @@ def fuse_and_decide(state: SessionState, pipeline_mode: str) -> tuple:
         consequence=state.consequence,
         contributions={k: round(v, 2) for k, v in result.contributions.items()},
         pipeline_mode=pipeline_mode,
+        evidence=evidence_bundle,
+        pre_transaction_warning=pre_tx,
+        recommended_actions=recommended_actions,
+        call_source=call_src,
     )
 
     return update, (result, decision, previous_decision)

@@ -510,7 +510,11 @@ class TestWhisperNoSpeechProb:
         seg_clean = types.SimpleNamespace(text="hello there", avg_logprob=-0.2, no_speech_prob=0.1)
         fake_info = types.SimpleNamespace(language="en", language_probability=0.99)
         audio = np.ones(int(16000 * 1.5), dtype=np.float32) * 0.1
-        with patch.object(t, "_load") as m:
+        # Mock pre-decode VAD to report sufficient speech (8200 samples = 512 ms)
+        fake_timestamps = [{"start": 0, "end": 8200}]
+        with patch("app.ml.context.whisper.get_speech_timestamps", return_value=fake_timestamps, create=True), \
+             patch("app.ml.context.whisper.VadOptions", return_value=object(), create=True), \
+             patch.object(t, "_load") as m:
             m.return_value.transcribe.return_value = ([seg_high, seg_clean], fake_info)
             result = t.transcribe(audio)
         assert result is not None
@@ -523,7 +527,10 @@ class TestWhisperNoSpeechProb:
         seg = types.SimpleNamespace(text="please send the OTP", avg_logprob=-0.25, no_speech_prob=0.1)
         fake_info = types.SimpleNamespace(language="en", language_probability=0.95)
         audio = np.ones(int(16000 * 1.5), dtype=np.float32) * 0.1
-        with patch.object(t, "_load") as m:
+        fake_timestamps = [{"start": 0, "end": 8200}]
+        with patch("app.ml.context.whisper.get_speech_timestamps", return_value=fake_timestamps, create=True), \
+             patch("app.ml.context.whisper.VadOptions", return_value=object(), create=True), \
+             patch.object(t, "_load") as m:
             m.return_value.transcribe.return_value = ([seg], fake_info)
             result = t.transcribe(audio)
         assert result is not None
@@ -535,7 +542,10 @@ class TestWhisperNoSpeechProb:
         seg = types.SimpleNamespace(text="hello world", avg_logprob=-0.2)
         fake_info = types.SimpleNamespace(language="en", language_probability=0.9)
         audio = np.ones(int(16000 * 1.5), dtype=np.float32) * 0.1
-        with patch.object(t, "_load") as m:
+        fake_timestamps = [{"start": 0, "end": 8200}]
+        with patch("app.ml.context.whisper.get_speech_timestamps", return_value=fake_timestamps, create=True), \
+             patch("app.ml.context.whisper.VadOptions", return_value=object(), create=True), \
+             patch.object(t, "_load") as m:
             m.return_value.transcribe.return_value = ([seg], fake_info)
             result = t.transcribe(audio)
         assert result is not None

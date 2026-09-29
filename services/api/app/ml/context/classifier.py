@@ -99,6 +99,9 @@ class ContextResult:
     consequence: str                  # low | medium | high | critical
     transcript: str
     detected_phrases: List[str] = field(default_factory=list)
+    categories: List[str] = field(default_factory=list)
+    pre_transaction_warning: bool = False
+    recommended_actions: List[str] = field(default_factory=list)
     model_version: str = "rules-v0.2"
     is_mock: bool = False
     # Transcript provenance. The rules below are the same either way; what
@@ -158,21 +161,68 @@ class ContextClassifier:
         lowered = text.lower()
         matched: List[str] = []
 
+        def match_phrase(phrase: str) -> bool:
+            # Word-boundary check so 'bank' does not match 'banking' or 'embankment' loosely
+            pattern = r'\b' + re.escape(phrase.strip()) + r'\b'
+            return bool(re.search(pattern, lowered))
+
+        # Context combination guard: require financial intent or compound phrases
+        # rather than escalating on isolated benign words like "bank" or "account"
+        def check_financial() -> bool:
+            found = False
+            for phrase in FINANCIAL:
+                if phrase == "bank":
+                    # Require bank + transaction context or compound usage
+                    has_bank = match_phrase("bank")
+                    action_words = [
+                        "transfer", "account", "pay", "deposit", "details", "kyc",
+                        "block", "freeze", "manager", "official", "calling from",
+                        "branch", "officer", "money", "fund", "balance", "otp", "pin"
+                    ]
+                    has_action = any(match_phrase(w) for w in action_words)
+                    if has_bank and has_action:
+                        matched.append("bank (transaction context)")
+                        found = True
+                elif match_phrase(phrase):
+                    matched.append(phrase.strip())
+                    found = True
+            return found
+
+        def check_authority() -> bool:
+            found = False
+            for phrase in AUTHORITY:
+                if phrase == "police":
+                    # Require police + authority context or station
+                    has_police = match_phrase("police")
+                    action_words = [
+                        "station", "thana", "officer", "arrest", "warrant",
+                        "custody", "digital arrest", "calling from", "complaint", "cyber",
+                        "baat", "case", "investigation", "inspector", "court", "crime", "dept"
+                    ]
+                    has_action = any(match_phrase(w) for w in action_words)
+                    if has_police and has_action:
+                        matched.append("police (authority action)")
+                        found = True
+                elif match_phrase(phrase):
+                    matched.append(phrase.strip())
+                    found = True
+            return found
+
         def hit(lexicon: List[str]) -> bool:
             found = False
             for phrase in lexicon:
-                if phrase in lowered:
+                if match_phrase(phrase):
                     matched.append(phrase.strip())
                     found = True
             return found
 
         window = {
             "urgency": hit(URGENCY),
-            "financial_request": hit(FINANCIAL),
+            "financial_request": check_financial(),
             "otp_request": hit(OTP),
             "credential_request": hit(CREDENTIAL),
             "sensitive_information_request": hit(SENSITIVE),
-            "authority_claim": hit(AUTHORITY),
+            "authority_claim": check_authority(),
             "secrecy": hit(SECRECY),
         }
 
@@ -199,6 +249,30 @@ class ContextClassifier:
 
         consequence = self._consequence(sticky)
 
+        # Pre-transaction warning triggered when financial/credential threat is present
+        pre_tx_warning = bool(
+            sticky["otp_request"]
+            or sticky["credential_request"]
+            or (sticky["financial_request"] and (sticky["urgency"] or sticky["authority_claim"] or social_engineering))
+        )
+        recommended_actions = []
+        if pre_tx_warning:
+            recommended_actions = [
+                "VERIFY CALLER",
+                "CALL BACK",
+                "USE MFA",
+                "CONFIRM INDEPENDENTLY",
+                "ESCALATE",
+            ]
+        elif sticky["financial_request"] or sticky["sensitive_information_request"]:
+            recommended_actions = [
+                "VERIFY CALLER",
+                "CALL BACK",
+                "CONFIRM INDEPENDENTLY",
+            ]
+
+        categories = [k for k, v in sticky.items() if v]
+
         # Confidence rises as more of the conversation is observed.
         confidence = round(min(0.85, 0.35 + 0.06 * len(history)), 3)
 
@@ -215,6 +289,9 @@ class ContextClassifier:
             consequence=consequence,
             transcript=text,
             detected_phrases=sorted(set(matched)),
+            categories=categories,
+            pre_transaction_warning=pre_tx_warning,
+            recommended_actions=recommended_actions,
             model_version=self.MODEL_VERSION,
             is_mock=False,
             transcript_is_mock=transcript_is_mock,

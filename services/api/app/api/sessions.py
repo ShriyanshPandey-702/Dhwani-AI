@@ -84,7 +84,9 @@ async def stop_session(
     db: AsyncSession = Depends(get_db),
 ):
     session = await _get_owned_session(session_id, current_user.id, db)
-    if session.state not in ("active",):
+    if session.state == "ended":
+        return _to_response(session)
+    if session.state not in ("active", "created"):
         raise HTTPException(status_code=409, detail=f"Session is {session.state}, cannot stop")
     session.state = "ended"
     session.ended_at = datetime.now(timezone.utc)

@@ -47,7 +47,7 @@ log = structlog.get_logger()
 DEFAULT_MAX_QUEUE = 8
 DEFAULT_WORKERS = 1
 DEFAULT_TIMEOUT_S = 20.0
-STT_EVERY_N_WINDOWS = 4
+STT_EVERY_N_WINDOWS = 1
 
 
 @dataclass

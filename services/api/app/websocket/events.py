@@ -108,6 +108,10 @@ def risk_update(
     consequence: str,
     contributions: dict,
     pipeline_mode: str,
+    evidence: Optional[dict] = None,
+    pre_transaction_warning: bool = False,
+    recommended_actions: Optional[List[str]] = None,
+    call_source: str = "DEVICE_MICROPHONE",
 ) -> dict:
     """The primary dashboard event. Evidence streams stay in separate objects."""
     return _envelope(
@@ -125,6 +129,10 @@ def risk_update(
         consequence=consequence,
         contributions=contributions,
         pipeline_mode=pipeline_mode,
+        evidence=evidence,
+        pre_transaction_warning=pre_transaction_warning,
+        recommended_actions=recommended_actions or [],
+        call_source=call_source,
     )
 
 

@@ -63,6 +63,10 @@ export interface RiskStoreState {
 
   // ── Timeline & alerts ──────────────────────────────────────────────────────
   detectedEvents: TimelineEntry[];
+  preTransactionWarning: boolean;
+  recommendedActions: string[];
+  evidence: Record<string, any> | null;
+  callSource: string;
   alerts: DashboardAlert[];
 
   // ── Interactive verification ───────────────────────────────────────────────
@@ -112,6 +116,10 @@ const initialState = {
   consequence: 'low',
 
   detectedEvents: [] as TimelineEntry[],
+  preTransactionWarning: false,
+  recommendedActions: [] as string[],
+  evidence: null as Record<string, any> | null,
+  callSource: 'DEVICE_MICROPHONE',
   alerts: [] as DashboardAlert[],
 
   challengeState: 'idle' as ChallengeState,
@@ -260,6 +268,18 @@ export const useRiskStore = create<RiskStoreState>((set, get) => ({
         patch.consequence = str(event.consequence, state.consequence);
         if (event.pipeline_mode === 'live' || event.pipeline_mode === 'mock') {
           patch.pipelineMode = event.pipeline_mode;
+        }
+        if (event.pre_transaction_warning !== undefined) {
+          patch.preTransactionWarning = Boolean(event.pre_transaction_warning);
+        }
+        if (Array.isArray(event.recommended_actions)) {
+          patch.recommendedActions = event.recommended_actions;
+        }
+        if (event.evidence) {
+          patch.evidence = event.evidence;
+        }
+        if (event.call_source) {
+          patch.callSource = event.call_source;
         }
         break;
       }

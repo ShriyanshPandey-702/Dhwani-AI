@@ -37,6 +37,9 @@ class AudioQuality:
     quality: str             # GOOD | FAIR | POOR
     sample_rate: int
     duration_ms: int
+    rms: float = 0.0
+    energy_variance: float = 0.0
+    zcr: float = 0.0
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -78,13 +81,18 @@ def measure_quality(audio: Optional[np.ndarray], sr: int = TARGET_SR) -> AudioQu
     n = len(audio) // frame
     if n >= 10:
         frames = audio[: n * frame].reshape(n, frame)
-        energies = np.sort(np.mean(frames**2, axis=1))
+        frame_energies = np.mean(frames**2, axis=1)
+        energies = np.sort(frame_energies)
         noise = float(np.mean(energies[: max(1, n // 10)]) + 1e-12)
         speech = float(np.mean(energies[-max(1, n // 10):]) + 1e-12)
         snr_db = float(10.0 * np.log10(speech / noise))
+        energy_variance = float(np.var(frame_energies))
     else:
         snr_db = 0.0
+        energy_variance = 0.0
     snr_db = float(np.clip(snr_db, 0.0, 60.0))
+
+    zcr = float(np.mean(np.abs(np.diff(np.sign(audio))) > 0)) if len(audio) > 1 else 0.0
 
     if is_silent or snr_db < 8.0 or clipping_ratio > 0.02:
         quality = POOR
@@ -101,6 +109,9 @@ def measure_quality(audio: Optional[np.ndarray], sr: int = TARGET_SR) -> AudioQu
         quality=quality,
         sample_rate=sr,
         duration_ms=int(1000 * len(audio) / sr),
+        rms=round(rms, 4),
+        energy_variance=round(energy_variance, 6),
+        zcr=round(zcr, 4),
     )
 
 
