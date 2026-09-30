@@ -23,6 +23,51 @@ export interface AudioCaptureMetrics {
 
 type AudioErrorHandler = (error: AudioCaptureError) => void;
 type ChunkHandler = (chunk: AudioChunkPayload) => void;
+export type AudioLevelHandler = (level: number) => void;
+
+const B64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+const B64_LOOKUP = new Uint8Array(256);
+for (let i = 0; i < B64_CHARS.length; i++) {
+  B64_LOOKUP[B64_CHARS.charCodeAt(i)] = i;
+}
+
+/**
+ * Computes root-mean-square (RMS) energy directly from a base64-encoded int16 PCM chunk.
+ * Returns normalized level [0.0, 1.0] without any artificial random variation.
+ */
+export function calculatePcmRms(base64Data: string): number {
+  if (!base64Data || base64Data.length < 4) return 0;
+  try {
+    const len = base64Data.length;
+    let sumSquares = 0;
+    let sampleCount = 0;
+
+    const quadStep = Math.max(1, Math.floor(len / 512));
+
+    for (let i = 0; i < len - 3; i += quadStep * 4) {
+      const b0 = B64_LOOKUP[base64Data.charCodeAt(i)];
+      const b1 = B64_LOOKUP[base64Data.charCodeAt(i + 1)];
+      const b2 = B64_LOOKUP[base64Data.charCodeAt(i + 2)];
+
+      const byte0 = (b0 << 2) | (b1 >> 4);
+      const byte1 = ((b1 & 15) << 4) | (b2 >> 2);
+
+      let sample = (byte1 << 8) | byte0;
+      if (sample >= 0x8000) {
+        sample -= 0x10000;
+      }
+      const norm = sample / 32768.0;
+      sumSquares += norm * norm;
+      sampleCount++;
+    }
+
+    if (sampleCount === 0) return 0;
+    const rms = Math.sqrt(sumSquares / sampleCount);
+    return Math.min(1.0, Math.max(0.0, (rms - 0.003) * 5.0));
+  } catch {
+    return 0;
+  }
+}
 
 const LINKING_ERROR =
   "The package 'VoiceShieldAudioCapture' doesn't seem to be linked. Make sure: \n\n" +
@@ -61,6 +106,7 @@ class AudioCaptureService {
   private isRunning: boolean = false;
   private errorHandlers: Set<AudioErrorHandler> = new Set();
   private chunkHandlers: Set<ChunkHandler> = new Set();
+  private levelHandlers: Set<AudioLevelHandler> = new Set();
 
   private metrics: AudioCaptureMetrics = {
     chunksReceived: 0,
@@ -186,6 +232,9 @@ class AudioCaptureService {
    * Preserves native sequence number authoritative ownership.
    */
   private handleIncomingChunk(chunk: AudioChunkPayload) {
+    if (!this.isRunning) {
+      return;
+    }
     this.metrics.chunksReceived += 1;
     this.metrics.lastSeq = chunk.seq;
 
@@ -193,6 +242,14 @@ class AudioCaptureService {
     for (const handler of this.chunkHandlers) {
       try {
         handler(chunk);
+      } catch {}
+    }
+
+    // Compute real PCM RMS and notify level subscribers
+    const level = calculatePcmRms(chunk.data);
+    for (const handler of this.levelHandlers) {
+      try {
+        handler(level);
       } catch {}
     }
 
@@ -225,6 +282,13 @@ class AudioCaptureService {
     this.chunkHandlers.add(handler);
     return () => {
       this.chunkHandlers.delete(handler);
+    };
+  }
+
+  onAudioLevel(handler: AudioLevelHandler): () => void {
+    this.levelHandlers.add(handler);
+    return () => {
+      this.levelHandlers.delete(handler);
     };
   }
 

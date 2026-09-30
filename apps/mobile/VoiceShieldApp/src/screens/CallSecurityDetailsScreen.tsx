@@ -11,8 +11,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useTheme } from "../utils/theme";
 import { RiskBadge } from "../components/RiskBadge";
+import { BackgroundWave } from "../components/BackgroundWave";
 import { RootStackParamList } from "../navigation/AppNavigator";
-import { ScreenedCallEvent } from "../types/telecom";
 import { RiskState } from "../types";
 
 type Route = RouteProp<RootStackParamList, "CallSecurityDetails">;
@@ -46,6 +46,11 @@ export const CallSecurityDetailsScreen: React.FC = () => {
   const riskColor = riskColors[state];
   const score = callRecord.riskScore ?? 0;
 
+  const isKnownContact = callRecord.contactStatus === "IN_CONTACTS";
+  const sourceHeadline = isKnownContact
+    ? "Saved Contact · SIM Metadata"
+    : "Incoming SIM Call · Metadata Only";
+
   const displayCaller = callRecord.callerName
     ? `${callRecord.callerName} (${callRecord.callerMasked})`
     : callRecord.callerMasked;
@@ -56,15 +61,17 @@ export const CallSecurityDetailsScreen: React.FC = () => {
         styles.container,
         {
           backgroundColor: isDark ? colors.background : colors.background,
-          paddingTop: insets.top,
         },
       ]}
     >
+      <BackgroundWave />
+
       {/* Header */}
       <View
         style={[
           styles.header,
           {
+            paddingTop: insets.top + 8,
             borderBottomColor: colors.border,
             backgroundColor: isDark ? colors.surface : colors.surface,
           },
@@ -91,20 +98,21 @@ export const CallSecurityDetailsScreen: React.FC = () => {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Top Risk Headline (Section 27) */}
+        {/* Top Risk Headline (design.md Section 18) */}
         <View
           style={[
             styles.riskHeadlineCard,
             {
               backgroundColor: isDark ? colors.surface : colors.surface,
               borderColor: colors.border,
-              borderRadius: radius.md,
+              borderRadius: radius.xl,
+              shadowColor: isDark ? "#000000" : colors.cardShadow,
             },
           ]}
         >
           <View style={styles.headlineLeft}>
             <Text style={{ fontSize: 11, fontWeight: "700", color: colors.accent, marginBottom: 4, letterSpacing: 0.5 }}>
-              Incoming SIM Call — Metadata Only
+              {sourceHeadline}
             </Text>
             <Text style={[styles.headlineCaller, { color: colors.textPrimary }]}>
               {displayCaller}
@@ -113,7 +121,7 @@ export const CallSecurityDetailsScreen: React.FC = () => {
               {formatDateTime(callRecord.timestamp)}
             </Text>
             <View style={styles.badgeWrap}>
-              <RiskBadge state={state} size="md" />
+              <RiskBadge state={state} score={callRecord.riskScore} size="md" />
             </View>
           </View>
 
@@ -126,12 +134,16 @@ export const CallSecurityDetailsScreen: React.FC = () => {
               },
             ]}
           >
-            <Text style={[styles.scoreValue, { color: riskColor }]}>{score}</Text>
-            <Text style={[styles.scoreLabel, { color: colors.textMuted }]}>/ 100</Text>
+            <Text style={[styles.scoreValue, { color: riskColor }]}>
+              {callRecord.riskScore !== undefined && callRecord.riskScore !== null ? callRecord.riskScore : "--"}
+            </Text>
+            <Text style={[styles.scoreLabel, { color: colors.textMuted }]}>
+              {callRecord.riskScore !== undefined && callRecord.riskScore !== null ? "/ 100" : "NO SCORE"}
+            </Text>
           </View>
         </View>
 
-        {/* Persistent Evidence Streams (Section 27) */}
+        {/* Persistent Evidence Summary (design.md Section 18) */}
         <View style={styles.sectionTitleRow}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
             PERSISTENT EVIDENCE SUMMARY
@@ -145,7 +157,7 @@ export const CallSecurityDetailsScreen: React.FC = () => {
             {
               backgroundColor: isDark ? colors.surface : colors.surface,
               borderColor: colors.border,
-              borderRadius: radius.md,
+              borderRadius: radius.lg,
             },
           ]}
         >
@@ -179,7 +191,7 @@ export const CallSecurityDetailsScreen: React.FC = () => {
             {
               backgroundColor: isDark ? colors.surface : colors.surface,
               borderColor: colors.border,
-              borderRadius: radius.md,
+              borderRadius: radius.lg,
             },
           ]}
         >
@@ -214,7 +226,7 @@ export const CallSecurityDetailsScreen: React.FC = () => {
             {
               backgroundColor: isDark ? colors.surface : colors.surface,
               borderColor: colors.border,
-              borderRadius: radius.md,
+              borderRadius: radius.lg,
             },
           ]}
         >
@@ -238,7 +250,7 @@ export const CallSecurityDetailsScreen: React.FC = () => {
             {
               backgroundColor: isDark ? colors.surface : colors.surface,
               borderColor: colors.border,
-              borderRadius: radius.md,
+              borderRadius: radius.lg,
             },
           ]}
         >
@@ -267,7 +279,7 @@ export const CallSecurityDetailsScreen: React.FC = () => {
             {
               backgroundColor: isDark ? colors.surfaceElevated : colors.surfaceElevated,
               borderColor: colors.border,
-              borderRadius: radius.sm,
+              borderRadius: radius.md,
             },
           ]}
         >
@@ -295,7 +307,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingBottom: 12,
     borderBottomWidth: 1,
   },
   backBtn: {
@@ -324,6 +336,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     borderWidth: 1,
     padding: 16,
+    elevation: 3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
   },
   headlineLeft: {
     flex: 1,
@@ -362,7 +378,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 1,
   },
   evidenceBox: {
@@ -382,7 +398,7 @@ const styles = StyleSheet.create({
   },
   evidenceStatus: {
     fontSize: 10,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 0.8,
   },
   evidenceDesc: {

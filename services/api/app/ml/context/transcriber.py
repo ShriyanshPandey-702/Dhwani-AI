@@ -88,21 +88,10 @@ class Transcriber:
 
     def _init_real_ml(self) -> None:
         try:
-            from app.ml.context.whisper import WhisperTranscriber
-
-            transcriber = WhisperTranscriber(
-                model_size=settings.WHISPER_MODEL_SIZE,
-                compute_type=settings.WHISPER_COMPUTE_TYPE,
-                language=settings.WHISPER_LANGUAGE,
-                beam_size=settings.WHISPER_BEAM_SIZE,
-                download_root=f"{settings.MODEL_DIR}/whisper",
-            )
-            if not transcriber.is_available:
-                raise RuntimeError("faster-whisper not installed")
-            transcriber.warmup()
-            self._whisper = transcriber
+            from app.ml.stt.factory import get_stt_provider
+            self._stt_provider = get_stt_provider()
             self._mode = REAL_ML
-            log.info("stt.backend", mode=REAL_ML, size=settings.WHISPER_MODEL_SIZE)
+            log.info("stt.backend", mode=REAL_ML, provider=self._stt_provider.provider_name)
         except Exception as e:
             self._mode = HEURISTIC_FALLBACK
             self._fallback_reason = str(e)
@@ -118,11 +107,15 @@ class Transcriber:
 
     @property
     def model_name(self) -> str:
-        return "faster-whisper" if self.is_real_ml else "scripted-stt"
+        if self.is_real_ml and hasattr(self, "_stt_provider") and self._stt_provider:
+            return self._stt_provider.provider_name
+        return "scripted-stt"
 
     @property
     def model_version(self) -> str:
-        return self._whisper.model_version if self.is_real_ml else self.MODEL_VERSION
+        if self.is_real_ml and hasattr(self, "_stt_provider") and self._stt_provider:
+            return f"{self._stt_provider.provider_name}-v1"
+        return self.MODEL_VERSION
 
     @property
     def fallback_reason(self) -> Optional[str]:
@@ -134,32 +127,29 @@ class Transcriber:
         audio: Optional[np.ndarray],
     ) -> Optional[TranscriptSegment]:
         """
-        Return the next scripted utterance for the session.
-
-        Returns None when there is not enough audio, so silence never
-        fabricates conversation context.
+        Transcribe the audio segment using the configured provider (Deepgram or faster-whisper),
+        or return scripted utterances if in demo/mock mode.
         """
         if audio is None or len(audio) < self.MIN_SAMPLES:
             return None
 
-        if self._whisper is not None:
+        if self.is_real_ml and hasattr(self, "_stt_provider") and self._stt_provider is not None:
             try:
-                spoken = self._whisper.transcribe(audio)
-                if spoken is None:
-                    return None      # no speech in this window
+                res = self._stt_provider.transcribe_chunk_sync(audio)
+                if res is None or not res.text.strip():
+                    return None
                 return TranscriptSegment(
-                    text=spoken.text,
+                    text=res.text,
                     is_mock=False,
-                    model_version=spoken.model_version,
-                    model_name=spoken.model_name,
+                    model_version=res.model_version,
+                    model_name=res.model_name,
                     pipeline_mode=REAL_ML,
-                    language=spoken.language,
-                    language_probability=spoken.language_probability,
-                    confidence=spoken.confidence,
-                    inference_ms=spoken.inference_ms,
+                    language=res.language,
+                    language_probability=res.language_probability,
+                    confidence=res.confidence,
+                    inference_ms=res.inference_ms,
                 )
             except Exception as e:
-                # One failed window must not end the call; fall back and say so.
                 log.warning("stt.inference_failed", error=str(e))
                 return self._scripted(session_id, mode=HEURISTIC_FALLBACK)
 

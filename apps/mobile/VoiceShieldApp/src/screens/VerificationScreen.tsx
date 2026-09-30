@@ -15,6 +15,8 @@ import { useTheme } from "../utils/theme";
 import client from "../services/api/client";
 import { VerificationData } from "../types";
 import { RootStackParamList } from "../navigation/AppNavigator";
+import { BackgroundWave } from "../components/BackgroundWave";
+import { PhoneIcon } from "../components/Icons";
 
 type Route = RouteProp<RootStackParamList, "Verification">;
 
@@ -108,16 +110,43 @@ export const VerificationScreen: React.FC = () => {
         },
       ]}
     >
+      <BackgroundWave />
+
+      {/* Header */}
+      <View
+        style={[
+          styles.topBar,
+          {
+            paddingTop: insets.top + 8,
+            borderBottomColor: colors.border,
+            backgroundColor: isDark ? colors.surface : colors.surface,
+          },
+        ]}
+      >
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backBtn}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+        >
+          <Text style={[styles.backText, { color: colors.textSecondary }]}>‹ Back</Text>
+        </TouchableOpacity>
+        <Text style={[styles.topBarTitle, { color: colors.textPrimary }]}>
+          Independent Verification
+        </Text>
+        <View style={{ width: 40 }} />
+      </View>
+
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
           {
-            paddingTop: insets.top + 16,
+            paddingTop: 16,
             paddingBottom: Math.max(insets.bottom, 24) + 16,
           },
         ]}
+        showsVerticalScrollIndicator={false}
       >
-        {/* Header (design.md Section 25) */}
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.textPrimary }]}>
             Verify Through Trusted Channel
@@ -134,7 +163,8 @@ export const VerificationScreen: React.FC = () => {
               {
                 backgroundColor: isDark ? colors.surface : colors.surface,
                 borderColor: result === "approved" ? colors.success : colors.danger,
-                borderRadius: radius.lg,
+                borderRadius: radius.xl,
+                shadowColor: isDark ? "#000000" : colors.cardShadow,
               },
             ]}
           >
@@ -163,20 +193,20 @@ export const VerificationScreen: React.FC = () => {
           </View>
         ) : (
           <>
-            {/* 3 Trusted Channel Actions (Section 25) */}
+            {/* 3 Trusted Channel Actions */}
             <View style={styles.channelsSection}>
               <Text style={[styles.channelsHeader, { color: colors.textSecondary }]}>
                 INDEPENDENT CHANNELS
               </Text>
 
-              {/* 1. Call Back (Connected to backend callback verification) */}
+              {/* 1. Call Back */}
               <TouchableOpacity
                 style={[
                   styles.channelCard,
                   {
                     backgroundColor: isDark ? colors.surface : colors.surface,
                     borderColor: colors.border,
-                    borderRadius: radius.md,
+                    borderRadius: radius.lg,
                   },
                 ]}
                 onPress={handleCallBack}
@@ -184,7 +214,7 @@ export const VerificationScreen: React.FC = () => {
                 accessibilityLabel="Call Back"
               >
                 <View style={styles.channelIconBox}>
-                  <Text style={{ fontSize: 20 }}>📞</Text>
+                  <PhoneIcon size={20} color={colors.accent} />
                 </View>
                 <View style={styles.channelTextBox}>
                   <Text style={[styles.channelTitle, { color: colors.textPrimary }]}>
@@ -204,7 +234,7 @@ export const VerificationScreen: React.FC = () => {
                   {
                     backgroundColor: isDark ? colors.surface : colors.surface,
                     borderColor: colors.border,
-                    borderRadius: radius.md,
+                    borderRadius: radius.lg,
                     opacity: 0.55,
                   },
                 ]}
@@ -230,7 +260,7 @@ export const VerificationScreen: React.FC = () => {
                   {
                     backgroundColor: isDark ? colors.surface : colors.surface,
                     borderColor: colors.border,
-                    borderRadius: radius.md,
+                    borderRadius: radius.lg,
                     opacity: 0.55,
                   },
                 ]}
@@ -257,7 +287,8 @@ export const VerificationScreen: React.FC = () => {
                 {
                   backgroundColor: isDark ? colors.surface : colors.surface,
                   borderColor: colors.border,
-                  borderRadius: radius.md,
+                  borderRadius: radius.xl,
+                  shadowColor: isDark ? "#000000" : colors.cardShadow,
                 },
               ]}
             >
@@ -340,17 +371,39 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  topBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+  },
+  backBtn: {
+    paddingVertical: 4,
+    paddingRight: 10,
+  },
+  backText: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  topBarTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+  },
   scroll: {
     paddingHorizontal: 20,
     gap: 16,
   },
   header: {
     gap: 6,
+    marginTop: 4,
   },
   title: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: "800",
-    letterSpacing: -0.4,
+    letterSpacing: -0.3,
+    lineHeight: 28,
   },
   explanation: {
     fontSize: 13,
@@ -361,7 +414,7 @@ const styles = StyleSheet.create({
   },
   channelsHeader: {
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 0.8,
     marginBottom: 2,
   },
@@ -398,6 +451,10 @@ const styles = StyleSheet.create({
     padding: 18,
     alignItems: "center",
     gap: 14,
+    elevation: 3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
   },
   timerWrap: {
     alignItems: "center",
@@ -417,8 +474,8 @@ const styles = StyleSheet.create({
   },
   timerSub: {
     fontSize: 10,
-    fontWeight: "600",
-    textTransform: "uppercase",
+    fontWeight: "700",
+    letterSpacing: 0.5,
   },
   nonceContainer: {
     alignItems: "center",
@@ -426,7 +483,7 @@ const styles = StyleSheet.create({
   },
   nonceHeader: {
     fontSize: 10,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 1,
   },
   nonceCode: {
@@ -466,6 +523,10 @@ const styles = StyleSheet.create({
     padding: 24,
     alignItems: "center",
     gap: 8,
+    elevation: 3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
   },
   resultTitle: {
     fontSize: 18,

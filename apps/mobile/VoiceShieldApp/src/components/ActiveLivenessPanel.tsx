@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { PanelCard } from './PanelCard';
 import { MetricRow } from './MetricRow';
-import { colors } from '../utils/theme';
+import { useTheme } from '../utils/theme';
 import { ChallengeState, VerificationState } from '../types';
 
 interface Props {
@@ -13,7 +13,7 @@ interface Props {
 }
 
 /**
- * Evidence stream 4 — Active Liveness & Challenge Response.
+ * Evidence stream — Active Liveness & Challenge Response.
  * Displays real active liveness challenge verification or "Not performed".
  * Never fabricates 100% or synthetic percentages when no challenge has run.
  */
@@ -23,26 +23,28 @@ export const ActiveLivenessPanel: React.FC<Props> = ({
   verificationState = 'idle',
   audioActive = false,
 }) => {
+  const { colors } = useTheme();
   const isChallengeActive = challengeState !== 'idle';
   const isVerificationActive = verificationState !== 'idle';
   const hasInteractiveActivity = isChallengeActive || isVerificationActive;
 
   if (!hasInteractiveActivity) {
     return (
-      <PanelCard title="ACTIVE LIVENESS" meta="on-demand">
+      <PanelCard title="ACTIVE LIVENESS" icon="🧩" meta="on-demand">
         <MetricRow
           label="Liveness Challenge"
           value="Not performed"
           tone="muted"
+          pill
         />
         <MetricRow
-          label="Speech Activity Evidence"
-          value={audioActive ? 'Acoustic signal detected' : 'Insufficient Evidence'}
+          label="Speech Activity"
+          value={audioActive ? 'Acoustic signal' : 'Insufficient Evidence'}
           tone={audioActive ? 'good' : 'muted'}
+          pill
         />
-        <Text style={styles.note}>
-          Active liveness verification has not been performed for this session.
-          Use the 'Challenge Caller' action to initiate a synchronous cryptographic or voice phrase verification test.
+        <Text style={[styles.note, { color: colors.textMuted }]}>
+          Use "Challenge Caller" to initiate a synchronous voice phrase test.
         </Text>
       </PanelCard>
     );
@@ -50,41 +52,88 @@ export const ActiveLivenessPanel: React.FC<Props> = ({
 
   const challengeTone =
     challengeState === 'passed' ? 'good' : challengeState === 'failed' ? 'bad' : 'warn';
+  const verificationTone =
+    verificationState === 'approved'
+      ? 'good'
+      : verificationState === 'rejected'
+      ? 'bad'
+      : 'muted';
+
+  const accentColor =
+    challengeState === 'failed' || verificationState === 'rejected'
+      ? colors.danger
+      : challengeState === 'passed' || verificationState === 'approved'
+      ? colors.success
+      : colors.warning;
 
   return (
     <PanelCard
       title="ACTIVE LIVENESS"
+      icon="🧩"
       meta={challengeState.toUpperCase()}
-      accent={challengeState === 'failed' ? colors.high : undefined}>
+      accent={accentColor}
+    >
       <MetricRow
         label="Challenge Status"
         value={challengeState.toUpperCase()}
         tone={challengeTone}
+        pill
       />
       {challengeText && (
-        <MetricRow
-          label="Challenge Phrase"
-          value={challengeText}
-          tone="muted"
-        />
+        <View
+          style={[
+            styles.phraseBlock,
+            {
+              backgroundColor: `${colors.accent}0D`,
+              borderLeftColor: colors.accent,
+            },
+          ]}
+        >
+          <Text style={[styles.phraseLabel, { color: colors.textMuted }]}>
+            CHALLENGE PHRASE
+          </Text>
+          <Text style={[styles.phraseText, { color: colors.textPrimary }]}>
+            "{challengeText}"
+          </Text>
+        </View>
       )}
       <MetricRow
         label="Independent Verification"
-        value={verificationState === 'idle' ? 'Not performed' : verificationState.toUpperCase()}
-        tone={verificationState === 'approved' ? 'good' : verificationState === 'rejected' ? 'bad' : 'muted'}
+        value={isVerificationActive ? verificationState.toUpperCase() : 'Not performed'}
+        tone={verificationTone}
+        pill
       />
       <MetricRow
         label="Activity State"
         value={audioActive ? 'Active speech energy' : 'No active speech'}
         tone={audioActive ? 'good' : 'muted'}
+        pill
       />
-      <Text style={styles.note}>
-        Liveness challenge results reflect real-time acoustic response timing and semantic match against issued verification prompt.
+      <Text style={[styles.note, { color: colors.textMuted }]}>
+        Liveness challenge results reflect real-time acoustic response timing
+        and semantic match against the issued verification prompt.
       </Text>
     </PanelCard>
   );
 };
 
 const styles = StyleSheet.create({
-  note: { color: colors.textMuted, fontSize: 11, lineHeight: 16, marginTop: 4 },
+  note: { fontSize: 11, lineHeight: 16, marginTop: 2 },
+  phraseBlock: {
+    borderLeftWidth: 3,
+    paddingLeft: 10,
+    paddingVertical: 6,
+    borderRadius: 4,
+    gap: 2,
+  },
+  phraseLabel: {
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+  },
+  phraseText: {
+    fontSize: 13,
+    fontStyle: 'italic',
+    fontWeight: '500',
+  },
 });

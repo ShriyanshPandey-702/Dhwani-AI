@@ -15,6 +15,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../utils/theme";
 import { useAuthStore } from "../store/authStore";
+import { BackgroundWave } from "../components/BackgroundWave";
 
 export const LoginScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -49,31 +50,125 @@ export const LoginScreen: React.FC = () => {
       ]}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
+      <BackgroundWave />
+
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
           {
-            paddingTop: insets.top + 24,
+            paddingTop: insets.top + 20,
             paddingBottom: Math.max(insets.bottom, 24),
           },
         ]}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        {/* Brand Header */}
+        {/* Brand Header (design.md Section 10) */}
         <View style={styles.brandSection}>
-          <Image
-            source={require("../assets/logo.png")}
-            style={styles.logoImage}
-            resizeMode="contain"
-            accessibilityRole="image"
-            accessibilityLabel="Dhwani AI Logo"
-          />
+          <View
+            style={[
+              styles.logoBox,
+              {
+                backgroundColor: isDark ? `${colors.accent}14` : `${colors.accent}10`,
+                borderColor: `${colors.accent}33`,
+              },
+            ]}
+          >
+            <Image
+              source={require("../assets/logo.png")}
+              style={styles.logoImage}
+              resizeMode="contain"
+              accessibilityRole="image"
+              accessibilityLabel="Dhwani AI Logo"
+            />
+          </View>
           <Text style={[styles.brandTitle, { color: colors.textPrimary }]}>
             Dhwani AI
           </Text>
-          <Text style={[styles.brandTagline, { color: colors.textSecondary }]}>
-            Secure Calls. Trusted People.
+          <Text style={[styles.brandTagline, { color: colors.accent }]}>
+            Real-Time Voice Protection
           </Text>
+          <Text style={[styles.brandSub, { color: colors.textSecondary }]}>
+            Detect. Verify. Prevent.
+          </Text>
+        </View>
+
+        {/* Segmented Mode Selector: Sign In vs Create Account */}
+        <View
+          style={[
+            styles.segmentContainer,
+            {
+              backgroundColor: isDark ? colors.surfaceElevated : colors.surfaceElevated,
+              borderColor: colors.border,
+              borderRadius: radius.md,
+            },
+          ]}
+        >
+          <TouchableOpacity
+            style={[
+              styles.segmentBtn,
+              !isRegister && {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.1,
+                shadowRadius: 2,
+                elevation: 2,
+              },
+            ]}
+            onPress={() => {
+              clearError();
+              setIsRegister(false);
+            }}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: !isRegister }}
+          >
+            <Text
+              style={[
+                styles.segmentText,
+                {
+                  color: !isRegister ? colors.textPrimary : colors.textSecondary,
+                  fontWeight: !isRegister ? "700" : "500",
+                },
+              ]}
+            >
+              Sign In
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.segmentBtn,
+              isRegister && {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.1,
+                shadowRadius: 2,
+                elevation: 2,
+              },
+            ]}
+            onPress={() => {
+              clearError();
+              setIsRegister(true);
+            }}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: isRegister }}
+          >
+            <Text
+              style={[
+                styles.segmentText,
+                {
+                  color: isRegister ? colors.textPrimary : colors.textSecondary,
+                  fontWeight: isRegister ? "700" : "500",
+                },
+              ]}
+            >
+              Create Account
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Input Card Container */}
@@ -83,8 +178,8 @@ export const LoginScreen: React.FC = () => {
             {
               backgroundColor: isDark ? colors.surface : colors.surface,
               borderColor: colors.border,
-              borderRadius: radius.lg,
-              shadowColor: colors.cardShadow,
+              borderRadius: radius.xl,
+              shadowColor: isDark ? "#000000" : colors.cardShadow,
             },
           ]}
         >
@@ -311,23 +406,6 @@ export const LoginScreen: React.FC = () => {
               🏛 Institution / Enterprise
             </Text>
           </TouchableOpacity>
-
-          {/* Toggle Create / Sign in */}
-          <TouchableOpacity
-            onPress={() => {
-              clearError();
-              setIsRegister(!isRegister);
-            }}
-            style={styles.toggleRow}
-            accessibilityRole="button"
-          >
-            <Text style={[styles.toggleText, { color: colors.textSecondary }]}>
-              {isRegister ? "Already have an account? " : "New to Dhwani AI? "}
-              <Text style={[styles.toggleLink, { color: colors.accent }]}>
-                {isRegister ? "Sign In" : "Create an account"}
-              </Text>
-            </Text>
-          </TouchableOpacity>
         </View>
 
         {/* Backend Settings Link */}
@@ -357,30 +435,60 @@ const styles = StyleSheet.create({
   },
   brandSection: {
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 20,
   },
-  logoImage: {
-    width: 68,
-    height: 68,
+  logoBox: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 10,
   },
+  logoImage: {
+    width: 44,
+    height: 44,
+  },
   brandTitle: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: "800",
-    letterSpacing: -0.4,
+    letterSpacing: -0.5,
   },
   brandTagline: {
     fontSize: 13,
+    fontWeight: "700",
+    marginTop: 3,
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+  },
+  brandSub: {
+    fontSize: 12,
     fontWeight: "500",
-    marginTop: 4,
-    letterSpacing: 0.2,
+    marginTop: 2,
+  },
+  segmentContainer: {
+    flexDirection: "row",
+    padding: 3,
+    borderWidth: 1,
+    marginBottom: 14,
+  },
+  segmentBtn: {
+    flex: 1,
+    paddingVertical: 9,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 8,
+  },
+  segmentText: {
+    fontSize: 13,
   },
   card: {
     borderWidth: 1,
     padding: 20,
     gap: 14,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 3,
   },
@@ -495,16 +603,6 @@ const styles = StyleSheet.create({
   enterpriseText: {
     fontSize: 13,
     fontWeight: "600",
-  },
-  toggleRow: {
-    alignItems: "center",
-    marginTop: 6,
-  },
-  toggleText: {
-    fontSize: 13,
-  },
-  toggleLink: {
-    fontWeight: "700",
   },
   settingsLink: {
     marginTop: 20,

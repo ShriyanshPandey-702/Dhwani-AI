@@ -125,7 +125,7 @@ export interface IdentityEvidence {
   match_score: number;           // 0–100
   confidence: number;
   consistency: 'GOOD' | 'VARIABLE' | 'POOR' | 'UNKNOWN';
-  enrollment_status: 'NOT_ENROLLED' | 'ENROLLED' | 'VERIFIED' | 'MISMATCH';
+  enrollment_status: 'NOT_ENROLLED' | 'ENROLLED' | 'VERIFIED' | 'MISMATCH' | 'SELF_CONSISTENCY';
   model_version: string;
   is_mock: boolean;
   model_name?: string;
@@ -136,6 +136,7 @@ export interface IdentityEvidence {
   reference_available?: boolean;
   comparison_available?: boolean;
 }
+
 
 export interface ContextEvidence {
   score: number;                 // 0–100
@@ -326,6 +327,17 @@ export interface ErrorEvent extends EventEnvelope {
   code: string;
 }
 
+export interface TranscriptUpdateEvent extends EventEnvelope {
+  type: 'transcript_update';
+  transcript: string;
+  is_final: boolean;
+  speech_final?: boolean;
+  confidence?: number;
+  provider?: string;
+  transcript_model?: string;
+  language?: string;
+}
+
 export interface PongEvent {
   type: 'pong';
   timestamp: number;
@@ -343,6 +355,7 @@ export type WSEvent =
   | VerificationResultEvent
   | PolicyDecisionEvent
   | SessionEndedEvent
+  | TranscriptUpdateEvent
   | ErrorEvent
   | PongEvent;
 
@@ -425,6 +438,11 @@ export interface IncidentSummary {
   peak_risk_state: string | null;
   action_taken: string | null;
   created_at: string;
+  source?: string | null;
+  caller_name?: string | null;
+  caller_number?: string | null;
+  contact_status?: string | null;
+  filename?: string | null;
 }
 
 export interface IncidentDetail extends IncidentSummary {
@@ -440,6 +458,7 @@ export interface OverviewStats {
   safe_calls: number;
   suspicious_calls: number;
   high_critical_calls: number;
+  hold_calls?: number;
   active_alerts: number;
   average_risk: number;
   recent: IncidentSummary[];

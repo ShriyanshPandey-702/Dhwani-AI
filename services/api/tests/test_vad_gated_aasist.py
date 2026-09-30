@@ -67,7 +67,7 @@ class TestVADGatedAASIST:
         state = _make_state("test-room-noise")
         # Generates low-amplitude acoustic noise (RMS ~0.005, level ~ -46 dBFS > 1e-5)
         rng = np.random.default_rng(123)
-        noise = (rng.normal(0, 0.005, TARGET_SR * 4)).astype(np.float32)
+        noise = (rng.normal(0, 0.005, 64608)).astype(np.float32)
         noise_pcm = _make_pcm16(noise)
 
         # Mock VAD returning 0 timestamps (non-speech)
@@ -86,7 +86,7 @@ class TestVADGatedAASIST:
     def test_c_insufficient_vad_speech_aasist_not_called(self):
         """C. Insufficient VAD speech (< 250 ms) → AASIST not called."""
         state = _make_state("test-short-vad")
-        audio = np.random.normal(0, 0.02, TARGET_SR * 2).astype(np.float32)
+        audio = np.random.normal(0, 0.02, 64608).astype(np.float32)
         pcm = _make_pcm16(audio)
 
         # 100 ms speech timestamps: [start: 0, end: 1600] = 1600 samples = 100 ms < 250 ms
@@ -106,7 +106,7 @@ class TestVADGatedAASIST:
     def test_d_sufficient_vad_speech_aasist_called(self):
         """D. Sufficient VAD speech (>= 250 ms) → AASIST called."""
         state = _make_state("test-sufficient-vad")
-        audio = np.random.normal(0, 0.05, TARGET_SR * 2).astype(np.float32)
+        audio = np.random.normal(0, 0.05, 64608).astype(np.float32)
         pcm = _make_pcm16(audio)
 
         # 500 ms speech timestamps: 8000 samples at 16 kHz = 500 ms >= 250 ms
@@ -135,7 +135,7 @@ class TestVADGatedAASIST:
     def test_e_skipped_aasist_window_streak_stays_zero(self):
         """E. Skipped AASIST window does not increment authenticity anomaly streak."""
         state = _make_state("test-streak-stays-zero")
-        audio = np.random.normal(0, 0.01, TARGET_SR * 2).astype(np.float32)
+        audio = np.random.normal(0, 0.01, 64608).astype(np.float32)
         pcm = _make_pcm16(audio)
 
         with patch("app.websocket.pipeline.get_speech_timestamps", return_value=[]), \
@@ -149,7 +149,7 @@ class TestVADGatedAASIST:
     def test_f_existing_aasist_result_preserved_when_speech_sufficient(self):
         """F. Existing AASIST result is preserved unchanged when speech is sufficient."""
         state = _make_state("test-real-preserved")
-        audio = np.random.normal(0, 0.05, TARGET_SR * 2).astype(np.float32)
+        audio = np.random.normal(0, 0.05, 64608).astype(np.float32)
         pcm = _make_pcm16(audio)
 
         sufficient_ts = [{"start": 0, "end": 16000}]  # 1000 ms

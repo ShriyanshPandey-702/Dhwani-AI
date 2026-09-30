@@ -1,0 +1,186 @@
+syntax = "proto3";
+
+package dhwani.v1;
+
+option go_package = "dhwani/v1;dhwaniv1";
+option java_multiple_files = true;
+option java_package = "ai.dhwani.v1";
+
+// Dhwani AI Security Service
+// Real-Time Voice Cloning Impersonation Detection & Prevention (SIH 2026 PS26104)
+service DhwaniSecurityService {
+  // Bi-directional streaming for real-time live call/audio inspection
+  rpc StreamAudio(stream AudioChunkRequest) returns (stream RiskEventResponse);
+
+  // Unary forensic analysis for pre-recorded audio files
+  rpc AnalyzeAudioFile(AnalyzeAudioFileRequest) returns (ManualAnalysisReportResponse);
+
+  // Query current session risk score & evidence snapshot
+  rpc GetRiskScore(RiskQueryRequest) returns (RiskSnapshotResponse);
+
+  // Evaluate security policy on transaction/call context
+  rpc EvaluatePolicy(PolicyEvaluationRequest) returns (PolicyDecisionResponse);
+
+  // Retrieve security incident audit record
+  rpc GetIncident(IncidentQueryRequest) returns (IncidentDetailResponse);
+}
+
+// ── Audio Streaming Messages ──────────────────────────────────────────────────
+
+message AudioChunkRequest {
+  string session_id = 1;
+  // 16 kHz, 16-bit Signed Linear PCM mono audio bytes
+  bytes pcm_data = 2;
+  int64 sequence_number = 3;
+  int64 timestamp_ms = 4;
+  CallContext context = 5;
+}
+
+message CallContext {
+  string caller_id = 1;
+  string caller_name = 2;
+  string call_source = 3; // "DEVICE_MICROPHONE" | "VOIP_SIP" | "CELLULAR_METADATA"
+  TransactionContext transaction = 4;
+}
+
+message TransactionContext {
+  string transaction_id = 1;
+  double amount = 2;
+  string currency = 3; // e.g. "INR"
+  string transaction_type = 4; // e.g. "WIRE_TRANSFER", "BENEFICIARY_ADD", "HIGH_VALUE_APPROVAL"
+  string risk_sensitivity = 5; // "STANDARD" | "ELEVATED" | "CRITICAL"
+}
+
+// ── Risk & Decision Responses ─────────────────────────────────────────────────
+
+message RiskEventResponse {
+  string event_type = 1; // "session_started" | "audio_quality" | "transcript_update" | "risk_update" | "policy_decision"
+  string event_id = 2;
+  int64 seq = 3;
+  string session_id = 4;
+  string timestamp = 5;
+  
+  int32 risk_score = 6; // 0 to 100
+  string risk_state = 7; // "INSUFFICIENT_EVIDENCE" | "LOW" | "SUSPICIOUS" | "HIGH" | "CRITICAL"
+  string risk_trend = 8; // "STABLE" | "INCREASING" | "DECREASING"
+  
+  AuthenticityEvidence authenticity = 9;
+  IdentityEvidence identity = 10;
+  ContextEvidence context = 11;
+  
+  string decision = 12; // "ALLOW" | "VERIFY" | "CHALLENGE" | "HOLD" | "BLOCK" | "ESCALATE"
+  repeated string reasons = 13;
+  repeated string recommended_actions = 14;
+  bool pre_transaction_warning = 15;
+}
+
+message AuthenticityEvidence {
+  double spoof_probability = 1; // 0.0 (genuine) to 1.0 (cloned/synthetic)
+  string model_name = 2; // "AASIST-L"
+  string model_version = 3;
+  double confidence = 4;
+  bool vad_active = 5;
+}
+
+message IdentityEvidence {
+  double similarity_score = 1; // Cosine similarity against enrolled voiceprint
+  string speaker_state = 2; // "ENROLLED" | "NOT_ENROLLED" | "MATCH" | "MISMATCH"
+  string model_name = 3; // "ECAPA-TDNN"
+  double confidence = 4;
+}
+
+message ContextEvidence {
+  string transcript = 1;
+  string detected_language = 2; // "en" | "hi" | ...
+  double threat_score = 3;
+  repeated string detected_intent_categories = 4; // "FINANCIAL_URGENCY", "IMPERSONATION", ...
+  string stt_model = 5; // "Deepgram Nova-2" | "faster-whisper"
+}
+
+// ── Unary Request & Response Messages ─────────────────────────────────────────
+
+message AnalyzeAudioFileRequest {
+  bytes audio_bytes = 1;
+  string filename = 2;
+  bytes reference_speaker_audio = 3; // Optional enrollment audio
+  TransactionContext transaction_context = 4;
+}
+
+message ManualAnalysisReportResponse {
+  string status = 1;
+  bool analysis_completed = 2;
+  int32 overall_risk_score = 3;
+  string overall_risk_state = 4;
+  string overall_decision = 5;
+  
+  double authenticity_spoof_prob = 6;
+  string authenticity_verdict = 7;
+  
+  double identity_similarity = 8;
+  string identity_verdict = 9;
+  
+  string transcript = 10;
+  string detected_language = 11;
+  repeated string context_threats = 12;
+  
+  int32 total_windows_analyzed = 13;
+  repeated WindowAnalysis window_breakdowns = 14;
+}
+
+message WindowAnalysis {
+  int32 window_index = 1;
+  int32 offset_ms = 2;
+  int32 duration_ms = 3;
+  double authenticity_spoof_prob = 4;
+  double identity_similarity = 5;
+  int32 window_risk_score = 6;
+  string window_risk_state = 7;
+}
+
+message RiskQueryRequest {
+  string session_id = 1;
+}
+
+message RiskSnapshotResponse {
+  string session_id = 1;
+  int32 risk_score = 2;
+  string risk_state = 3;
+  double authenticity = 4;
+  double identity = 5;
+  double context = 6;
+  string consequence = 7;
+  repeated string reasons = 8;
+}
+
+message PolicyEvaluationRequest {
+  int32 risk_score = 1;
+  string risk_state = 2;
+  double authenticity_spoof_prob = 3;
+  double identity_similarity = 4;
+  string consequence_tier = 5; // "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"
+  TransactionContext transaction = 6;
+}
+
+message PolicyDecisionResponse {
+  string decision = 1; // "ALLOW" | "VERIFY" | "CHALLENGE" | "HOLD" | "BLOCK" | "ESCALATE"
+  string action = 2;
+  repeated string reasons = 3;
+  string recommended_action = 4;
+  bool requires_step_up_auth = 5;
+}
+
+message IncidentQueryRequest {
+  string incident_id = 1;
+}
+
+message IncidentDetailResponse {
+  string id = 1;
+  string session_id = 2;
+  string final_state = 3;
+  int32 peak_risk_score = 4;
+  string peak_risk_state = 5;
+  string action_taken = 6;
+  string created_at = 7;
+  string integrity_hash = 8;
+  string policy_version = 9;
+}

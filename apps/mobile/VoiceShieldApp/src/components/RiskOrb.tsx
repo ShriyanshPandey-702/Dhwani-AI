@@ -10,6 +10,7 @@ interface RiskOrbProps {
   trend?: RiskTrend;
   size?: number;
   sublabel?: string;
+  audioLevel?: number;
 }
 
 const DISPLAY_LABELS: Record<RiskState, string> = {
@@ -27,6 +28,7 @@ export const RiskOrb: React.FC<RiskOrbProps> = ({
   trend = "stable",
   size = 200,
   sublabel,
+  audioLevel = 0.0,
 }) => {
   const { colors, riskColors, isDark } = useTheme();
   const themeRiskColor = riskColors[state] || riskColors.insufficient_evidence;
@@ -37,7 +39,8 @@ export const RiskOrb: React.FC<RiskOrbProps> = ({
   const pulseScale = useRef(new Animated.Value(1)).current;
   const pulseOpacity = useRef(new Animated.Value(0.25)).current;
   const waveScale = useRef(new Animated.Value(1)).current;
-  const orbFloat = useRef(new Animated.Value(1)).current;
+  const spinValue = useRef(new Animated.Value(0)).current;
+  const audioRingScale = useRef(new Animated.Value(1)).current;
 
   // Track score transitions
   useEffect(() => {
@@ -49,15 +52,41 @@ export const RiskOrb: React.FC<RiskOrbProps> = ({
     }).start();
   }, [score, animatedScore]);
 
-  // Active Siri-like pulse animation when session is live
+  // Audio level reactive scale (without changing score calculation)
+  useEffect(() => {
+    const clamped = Math.max(0, Math.min(1, audioLevel));
+    Animated.timing(audioRingScale, {
+      toValue: isActive ? 1 + clamped * 0.18 : 1,
+      duration: 120,
+      useNativeDriver: true,
+    }).start();
+  }, [audioLevel, isActive, audioRingScale]);
+
+  // Orbital continuous rotation
   useEffect(() => {
     if (!isActive) {
-      // Settle smoothly to resting state when idle
+      spinValue.setValue(0);
+      return;
+    }
+    const spinAnim = Animated.loop(
+      Animated.timing(spinValue, {
+        toValue: 1,
+        duration: 8000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    );
+    spinAnim.start();
+    return () => spinAnim.stop();
+  }, [isActive, spinValue]);
+
+  // Active pulse animation when session is live
+  useEffect(() => {
+    if (!isActive) {
       Animated.parallel([
         Animated.timing(pulseScale, { toValue: 1, duration: 400, useNativeDriver: true }),
         Animated.timing(pulseOpacity, { toValue: 0.15, duration: 400, useNativeDriver: true }),
         Animated.timing(waveScale, { toValue: 1, duration: 400, useNativeDriver: true }),
-        Animated.timing(orbFloat, { toValue: 1, duration: 400, useNativeDriver: true }),
       ]).start();
       return;
     }
@@ -115,21 +144,26 @@ export const RiskOrb: React.FC<RiskOrbProps> = ({
 
     pulseAnimation.start();
     return () => pulseAnimation.stop();
-  }, [isActive, state, pulseScale, pulseOpacity, waveScale, orbFloat]);
+  }, [isActive, state, pulseScale, pulseOpacity, waveScale]);
 
   const clampedScore = Math.round(Math.min(100, Math.max(0, score)));
 
+  const spin = spinValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "360deg"],
+  });
+
   return (
-    <View style={[styles.outerContainer, { width: size + 36, height: size + 36 }]}>
+    <View style={[styles.outerContainer, { width: size + 44, height: size + 44 }]}>
       {/* 1. Outermost Glowing Ambient Halo */}
       <Animated.View
         style={[
           styles.ambientGlow,
           {
-            width: size + 28,
-            height: size + 28,
-            borderRadius: (size + 28) / 2,
-            backgroundColor: `${themeRiskColor}12`,
+            width: size + 36,
+            height: size + 36,
+            borderRadius: (size + 36) / 2,
+            backgroundColor: `${themeRiskColor}10`,
             borderColor: `${themeRiskColor}22`,
             opacity: pulseOpacity,
             transform: [{ scale: pulseScale }],
@@ -137,22 +171,36 @@ export const RiskOrb: React.FC<RiskOrbProps> = ({
         ]}
       />
 
-      {/* 2. Secondary Animated Wave Ring (Visible during active analysis) */}
+      {/* 2. Audio-reactive resonance ring */}
       <Animated.View
         style={[
-          styles.waveRing,
+          styles.audioRing,
           {
-            width: size + 12,
-            height: size + 12,
-            borderRadius: (size + 12) / 2,
-            borderColor: `${themeRiskColor}44`,
-            opacity: isActive ? pulseOpacity : 0.2,
-            transform: [{ scale: waveScale }],
+            width: size + 20,
+            height: size + 20,
+            borderRadius: (size + 20) / 2,
+            borderColor: `${themeRiskColor}33`,
+            transform: [{ scale: audioRingScale }],
           },
         ]}
       />
 
-      {/* 3. Base Outer Geometric Circle */}
+      {/* 3. Secondary Animated Orbital Ring */}
+      <Animated.View
+        style={[
+          styles.waveRing,
+          {
+            width: size + 8,
+            height: size + 8,
+            borderRadius: (size + 8) / 2,
+            borderColor: `${themeRiskColor}55`,
+            opacity: isActive ? 0.75 : 0.25,
+            transform: [{ rotate: spin }],
+          },
+        ]}
+      />
+
+      {/* 4. Base Outer Geometric Circle */}
       <View
         style={[
           styles.baseCircle,
@@ -161,7 +209,7 @@ export const RiskOrb: React.FC<RiskOrbProps> = ({
             height: size,
             borderRadius: size / 2,
             backgroundColor: isDark ? colors.surface : colors.surface,
-            borderColor: `${themeRiskColor}55`,
+            borderColor: `${themeRiskColor}66`,
             shadowColor: themeRiskColor,
           },
         ]}
@@ -174,7 +222,7 @@ export const RiskOrb: React.FC<RiskOrbProps> = ({
               width: size - 16,
               height: size - 16,
               borderRadius: (size - 16) / 2,
-              backgroundColor: isDark ? colors.surfaceElevated : "#FDFBFA",
+              backgroundColor: isDark ? colors.surfaceElevated : "#FFFFFF",
               borderColor: `${themeRiskColor}33`,
             },
           ]}
@@ -182,31 +230,16 @@ export const RiskOrb: React.FC<RiskOrbProps> = ({
           {/* Core Content */}
           <View style={styles.contentColumn}>
             {sublabel ? (
-              <Text
-                style={[
-                  styles.sublabel,
-                  { color: colors.textSecondary },
-                ]}
-              >
+              <Text style={[styles.sublabel, { color: colors.textSecondary }]}>
                 {sublabel.toUpperCase()}
               </Text>
             ) : null}
 
-            <Text
-              style={[
-                styles.scoreText,
-                { color: themeRiskColor },
-              ]}
-            >
+            <Text style={[styles.scoreText, { color: themeRiskColor }]}>
               {clampedScore}
             </Text>
 
-            <Text
-              style={[
-                styles.stateLabel,
-                { color: themeRiskColor },
-              ]}
-            >
+            <Text style={[styles.stateLabel, { color: themeRiskColor }]}>
               {label}
             </Text>
 
@@ -233,6 +266,11 @@ const styles = StyleSheet.create({
     position: "absolute",
     borderWidth: 1,
   },
+  audioRing: {
+    position: "absolute",
+    borderWidth: 1.5,
+    borderStyle: "solid",
+  },
   waveRing: {
     position: "absolute",
     borderWidth: 1.5,
@@ -243,10 +281,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 18,
+    elevation: 5,
   },
   innerRing: {
     alignItems: "center",

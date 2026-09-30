@@ -14,6 +14,7 @@ import { DeviceTrustScreen } from "../screens/DeviceTrustScreen";
 import { SettingsScreen } from "../screens/SettingsScreen";
 import { ManualAnalysisScreen } from "../screens/ManualAnalysisScreen";
 import { CallSecurityDetailsScreen } from "../screens/CallSecurityDetailsScreen";
+import { IntegrationHubScreen } from "../screens/IntegrationHubScreen";
 import { ScreenedCallEvent } from "../types/telecom";
 
 export type RootStackParamList = {
@@ -28,6 +29,7 @@ export type RootStackParamList = {
   Settings: undefined;
   ManualAnalysis: undefined;
   CallSecurityDetails: { callRecord: ScreenedCallEvent };
+  IntegrationHub: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -57,6 +59,7 @@ export const AppNavigator: React.FC = () => {
         <Stack.Screen name="Settings" component={SettingsScreen} />
         <Stack.Screen name="ManualAnalysis" component={ManualAnalysisScreen} />
         <Stack.Screen name="CallSecurityDetails" component={CallSecurityDetailsScreen} />
+        <Stack.Screen name="IntegrationHub" component={IntegrationHubScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -5,6 +5,7 @@ import { RiskState } from "../types";
 
 interface Props {
   state: RiskState | string | undefined | null;
+  score?: number | null;
   size?: "sm" | "md" | "lg";
   showDot?: boolean;
   variant?: "pill" | "subtle" | "outline";
@@ -21,14 +22,15 @@ const normalizeState = (raw: string | undefined | null): RiskState => {
 
 const DISPLAY_LABELS: Record<RiskState, string> = {
   insufficient_evidence: "INSUFFICIENT EVIDENCE",
-  low: "LOW RISK",
+  low: "LOW",
   suspicious: "SUSPICIOUS",
-  high: "HIGH RISK",
+  high: "HIGH",
   critical: "CRITICAL",
 };
 
 export const RiskBadge: React.FC<Props> = ({
   state,
+  score,
   size = "md",
   showDot = true,
   variant = "pill",
@@ -36,7 +38,11 @@ export const RiskBadge: React.FC<Props> = ({
   const { riskColors, radius } = useTheme();
   const normalized = normalizeState(state);
   const color = riskColors[normalized];
-  const label = DISPLAY_LABELS[normalized];
+  const baseLabel = DISPLAY_LABELS[normalized];
+  const label =
+    score !== undefined && score !== null && normalized !== "insufficient_evidence"
+      ? `${baseLabel} ${score}`
+      : baseLabel;
 
   const sizeMetrics = {
     sm: { px: 8, py: 3, font: 10, dot: 5 },

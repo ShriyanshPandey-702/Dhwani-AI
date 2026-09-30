@@ -3,14 +3,17 @@ import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { useTheme } from "../utils/theme";
 import { RiskBadge } from "./RiskBadge";
 import { RiskState } from "../types";
+import { PhoneIcon, MicIcon, FolderIcon } from "./Icons";
 
-interface CallRowProps {
+export interface CallRowProps {
   callerName?: string | null;
   callerMasked: string;
   timestamp: string | number;
   riskState: RiskState | string;
+  riskScore?: number | null;
   decision?: string;
   category?: string;
+  source?: "screened" | "incident" | "file" | "mic" | string;
   onPress: () => void;
 }
 
@@ -30,11 +33,16 @@ export const CallRow: React.FC<CallRowProps> = ({
   callerMasked,
   timestamp,
   riskState,
+  riskScore,
   decision,
   category = "Incoming SIM Call — Metadata Only",
+  source,
   onPress,
 }) => {
   const { colors, radius, isDark } = useTheme();
+
+  const isFile = source === "file" || category.toLowerCase().includes("file");
+  const isMic = source === "mic" || category.toLowerCase().includes("mic");
 
   return (
     <TouchableOpacity
@@ -49,7 +57,7 @@ export const CallRow: React.FC<CallRowProps> = ({
         },
       ]}
       accessibilityRole="button"
-      accessibilityLabel={`Call from ${callerName || callerMasked}, risk ${riskState}`}
+      accessibilityLabel={`Activity ${callerName || callerMasked}, risk ${riskState}`}
     >
       {/* Left Icon */}
       <View
@@ -61,7 +69,13 @@ export const CallRow: React.FC<CallRowProps> = ({
           },
         ]}
       >
-        <Text style={{ fontSize: 16 }}>📞</Text>
+        {isFile ? (
+          <FolderIcon size={16} color={colors.accent} />
+        ) : isMic ? (
+          <MicIcon size={16} color={colors.accent} />
+        ) : (
+          <PhoneIcon size={16} color={colors.accent} />
+        )}
       </View>
 
       {/* Center Details */}
@@ -76,14 +90,14 @@ export const CallRow: React.FC<CallRowProps> = ({
           style={[styles.subText, { color: colors.textSecondary }]}
           numberOfLines={1}
         >
-          {callerName ? callerMasked : category}
+          {callerName ? `${callerMasked} · ${category}` : category}
           {decision ? ` · ${decision.toUpperCase()}` : ""}
         </Text>
       </View>
 
       {/* Right Column: Badge & Time */}
       <View style={styles.rightCol}>
-        <RiskBadge state={riskState} size="sm" />
+        <RiskBadge state={riskState} score={riskScore} size="sm" />
         <Text style={[styles.timeText, { color: colors.textMuted }]}>
           {formatDisplayTime(timestamp)}
         </Text>

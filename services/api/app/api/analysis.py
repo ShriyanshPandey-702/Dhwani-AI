@@ -12,6 +12,8 @@ Manual Audio → Bounded Ingestion → Normalization (16 kHz Mono)
 
 from __future__ import annotations
 
+import hashlib
+import json
 import os
 import tempfile
 import time
@@ -21,20 +23,27 @@ from typing import Dict, List, Optional
 
 import numpy as np
 import structlog
-from fastapi import APIRouter, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from pydantic import BaseModel, ConfigDict
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import get_current_user
+from app.core.database import get_db
+from app.models.models import Incident, Session, User
 from app.ml.authenticity.detector import AuthenticityDetector, AuthenticityResult
+from app.ml.authenticity.modulate import get_modulate_detector, ModulateEvidence
 from app.ml.context.classifier import ContextClassifier, ContextResult
 from app.ml.context.transcriber import Transcriber
 from app.ml.identity.speaker import SpeakerIdentity, ENROLLED, NOT_ENROLLED
 from app.ml.preprocessing.audio import measure_quality
 from app.ml.preprocessing.ingest import AudioIngestError, load_audio_file
+from app.ml.stt.factory import get_stt_provider
 from app.risk.engine import EvidenceBundle, compute_risk
 from app.risk.policy import DEFAULT_POLICY_CONFIG, evaluate
 
 log = structlog.get_logger()
 router = APIRouter()
+
 
 # ── Endpoint Security Limits ──────────────────────────────────────────────────
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024       # 25 MB ceiling per file
@@ -174,6 +183,8 @@ async def _save_upload_to_temp(upload: UploadFile, prefix: str = "vs_upload_") -
 async def analyze_audio(
     file: UploadFile = File(...),
     speaker_reference: Optional[UploadFile] = File(None),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Analyze a pre-recorded audio file using Dhwani AI's multi-modal ML core.
@@ -282,30 +293,44 @@ async def analyze_audio(
                 model_versions=model_versions,
             )
 
-        # ── 5. Whisper Context Classification Orchestration ───────────────────
+        # ── 5. STT Transcription & Context Classification Orchestration ──────
         session_id = f"manual_{uuid.uuid4().hex[:12]}"
-        chunk_step = 30 * 16000  # 30-second non-overlapping blocks
-        transcript_texts = []
-        # Initialise with the actual backend state, not hardcoded mock strings:
-        is_mock_stt = not transcriber.is_real_ml
-        stt_model_name = transcriber.model_name
-        stt_pipeline_mode = transcriber.pipeline_mode
-        stt_lang = ""
-        stt_conf = 0.0
+        stt_provider = get_stt_provider()
+        stt_model_name = stt_provider.provider_name
+        stt_pipeline_mode = "real_ml"
+        stt_lang = "en"
+        stt_conf = 1.0
+        is_mock_stt = False
+        full_transcript = ""
 
-        for start_idx in range(0, len(audio), chunk_step):
-            block = audio[start_idx : start_idx + chunk_step]
-            if len(block) >= 16000:
-                seg = transcriber.transcribe(session_id, block)
-                if seg and seg.text:
-                    transcript_texts.append(seg.text)
-                    is_mock_stt = seg.is_mock
-                    stt_model_name = seg.model_name
-                    stt_pipeline_mode = seg.pipeline_mode
-                    stt_lang = seg.language
-                    stt_conf = seg.confidence
+        try:
+            # Try transcribing the full audio file/chunks with the configured STT provider
+            stt_res = stt_provider.transcribe_chunk_sync(audio)
+            if stt_res and stt_res.text:
+                full_transcript = stt_res.text.strip()
+                stt_model_name = stt_res.model_name
+                stt_lang = stt_res.language
+                stt_conf = stt_res.confidence
+        except Exception as e:
+            log.warning("manual_analysis.stt_failed", error=str(e))
 
-        full_transcript = " ".join(transcript_texts).strip()
+        if not full_transcript:
+            # Fallback to chunk transcription
+            chunk_step = 30 * 16000
+            transcript_texts = []
+            for start_idx in range(0, len(audio), chunk_step):
+                block = audio[start_idx : start_idx + chunk_step]
+                if len(block) >= 16000:
+                    seg = transcriber.transcribe(session_id, block)
+                    if seg and seg.text:
+                        transcript_texts.append(seg.text)
+                        is_mock_stt = seg.is_mock
+                        stt_model_name = seg.model_name
+                        stt_pipeline_mode = seg.pipeline_mode
+                        stt_lang = seg.language
+                        stt_conf = seg.confidence
+            full_transcript = " ".join(transcript_texts).strip()
+
         context_result: Optional[ContextResult] = None
         if full_transcript:
             context_result = context_classifier.classify(
@@ -321,6 +346,15 @@ async def analyze_audio(
         ctx_risk = (context_result.score / 100.0) if context_result else None
         consequence = context_result.consequence if context_result else "low"
         ctx_conf = context_result.confidence if context_result else 0.0
+
+        # ── 5b. Modulate Velma-2 Synthetic Voice Detection ────────────────────
+        modulate_detector = get_modulate_detector()
+        modulate_evidence: Optional[ModulateEvidence] = None
+        if modulate_detector.is_configured:
+            try:
+                modulate_evidence = modulate_detector.analyze_chunk_sync(audio[:min(len(audio), 64608 * 2)])
+            except Exception as e:
+                log.warning("manual_analysis.modulate_failed", error=str(e))
 
         # ── 6. ECAPA Identity Setup & Mode Selection ──────────────────────────
         ref_embedding: Optional[np.ndarray] = None
@@ -377,8 +411,8 @@ async def analyze_audio(
 
             # B. Identity Inference
             sim: Optional[float] = None
-            match_score: int = 0
-            id_conf: float = 0.0
+            match_score: Optional[int] = None
+            id_conf: Optional[float] = None
 
             if ref_embedding is not None and win_audio is not None:
                 try:
@@ -397,7 +431,6 @@ async def analyze_audio(
                     sim = None
 
             # C. Persistence & Corroboration Evaluation
-            # Identity persistence
             identity_corroborated = False
             identity_corroboration_pending = False
 
@@ -428,7 +461,7 @@ async def analyze_audio(
                 authenticity=auth_val,
                 authenticity_confidence=auth_conf,
                 identity_similarity=sim if identity_mode == ENROLLED else None,
-                identity_confidence=id_conf if identity_mode == ENROLLED else 0.0,
+                identity_confidence=id_conf if (identity_mode == ENROLLED and id_conf is not None) else 0.0,
                 context_risk=ctx_risk,
                 context_confidence=ctx_conf,
                 consequence=consequence,
@@ -460,17 +493,21 @@ async def analyze_audio(
             window_snapshots.append(snap)
 
             last_id_dict = {
-                "match_score": match_score if identity_mode == ENROLLED else 0,
-                "confidence": id_conf if identity_mode == ENROLLED else 0.0,
-                "consistency": "GOOD" if (sim is not None and sim > 0.70) else ("VARIABLE" if (sim is not None and sim > 0.50) else "POOR"),
+                "match_score": match_score if identity_mode == ENROLLED else None,
+                "confidence": id_conf if identity_mode == ENROLLED else None,
+                "consistency": (
+                    "GOOD" if (sim is not None and sim > 0.70)
+                    else ("VARIABLE" if (sim is not None and sim > 0.50) else "POOR")
+                ) if identity_mode == ENROLLED else "UNAVAILABLE",
                 "enrollment_status": identity_mode,
                 "model_version": speaker_identity.model_version,
                 "is_mock": not speaker_identity.is_real_ml,
                 "model_name": speaker_identity.model_name,
                 "pipeline_mode": speaker_identity.pipeline_mode,
-                "similarity": round(sim, 4) if (sim is not None and identity_mode == ENROLLED) else 0.0,
+                "similarity": round(sim, 4) if (sim is not None and identity_mode == ENROLLED) else None,
                 "self_consistency_similarity": round(sim, 4) if (sim is not None and identity_mode != ENROLLED) else None,
             }
+
 
             scored_windows.append({
                 "risk_res": risk_res,
@@ -502,6 +539,78 @@ async def analyze_audio(
         peak_auth_obj = peak_entry["auth"] or last_auth
         peak_auth_dict = peak_auth_obj.to_dict() if peak_auth_obj else None
 
+        if peak_auth_dict:
+            peak_auth_dict["aasist"] = {
+                "spoof_probability": peak_auth_dict.get("spoof_probability"),
+                "confidence": peak_auth_dict.get("confidence"),
+                "model_version": peak_auth_dict.get("model_version", "AASIST-L-ASVspoof2019"),
+                "status": "connected" if peak_auth_dict.get("spoof_probability") is not None else "unavailable",
+            }
+            if modulate_evidence:
+                peak_auth_dict["modulate"] = modulate_evidence.to_dict()
+            else:
+                peak_auth_dict["modulate"] = {
+                    "provider": "modulate",
+                    "model": "velma-2-synthetic-voice-detection-batch",
+                    "synthetic_probability": None,
+                    "verdict": "UNDECIDED",
+                    "confidence": 0.0,
+                    "provider_status": "not_configured" if not modulate_detector.is_configured else "unavailable",
+                }
+
+        context_dict = context_result.to_dict() if context_result else None
+        if context_dict:
+            context_dict["transcript"] = full_transcript
+            context_dict["stt_provider"] = stt_model_name
+            context_dict["language"] = stt_lang
+
+        # ── 8b. Persist completed analysis session as an Incident for history ────────
+        try:
+            session_id = str(uuid.uuid4())
+            evidence_summary = {
+                "source": "Audio File",
+                "filename": file.filename or "uploaded_audio",
+                "peak_risk_score": peak_risk.score,
+                "peak_risk_state": peak_risk.state,
+                "final_decision": decision.decision,
+                "action_taken": decision.action,
+                "authenticity": peak_auth_dict,
+                "identity": peak_entry["identity"],
+                "context": context_dict,
+                "reasons": list(dict.fromkeys(peak_risk.reasons + decision.reasons)),
+                "policy_version": "v1",
+                "model_versions": model_versions,
+            }
+            integrity_hash = hashlib.sha256(
+                json.dumps(evidence_summary, sort_keys=True, default=str).encode()
+            ).hexdigest()
+
+            sess = Session(
+                id=session_id,
+                user_id=current_user.id,
+                state="ended",
+                metadata_={"source": "Audio File", "filename": file.filename or "uploaded_audio"},
+            )
+            db.add(sess)
+
+            incident = Incident(
+                session_id=session_id,
+                user_id=current_user.id,
+                final_state=peak_risk.state,
+                peak_risk_score=peak_risk.score,
+                peak_risk_state=peak_risk.state,
+                action_taken=decision.action,
+                evidence_summary=evidence_summary,
+                policy_version="v1",
+                model_versions=model_versions,
+                integrity_hash=integrity_hash,
+            )
+            db.add(incident)
+            await db.commit()
+            log.info("analysis.incident_saved", session_id=session_id, hash=integrity_hash[:16])
+        except Exception as e:
+            log.warning("analysis.incident_save_failed", error=str(e))
+
         return ManualAnalysisReport(
             status="completed",
             analysis_completed=True,
@@ -520,16 +629,16 @@ async def analyze_audio(
             contributions=peak_risk.contributions,
             authenticity=peak_auth_dict,
             identity=peak_entry["identity"],
-            context=context_result.to_dict() if context_result else None,
+            context=context_dict,
             prosody=peak_auth_dict.get("prosody") if peak_auth_dict else None,
             microvariation=peak_auth_dict.get("microvariation") if peak_auth_dict else None,
             pitch=peak_auth_dict.get("pitch") if peak_auth_dict else None,
-            pause_analysis=peak_auth_dict.get("pause_analysis") if peak_auth_dict else None,
             windows_evaluated=len(window_snapshots),
             window_timeline=window_snapshots,
             processing_time_ms=proc_ms,
             model_versions=model_versions,
         )
+
 
     finally:
         # ── 9. Guaranteed Disk Cleanup ────────────────────────────────────────

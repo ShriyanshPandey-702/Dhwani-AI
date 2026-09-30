@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     # "real_ml" — load real checkpoints (AASIST / ECAPA-TDNN / faster-whisper).
     #             Each stream falls back independently and says so if its
     #             checkpoint is missing; a fallback is never labelled real.
-    PIPELINE_MODE: str = "mock"
+    PIPELINE_MODE: str = "real_ml"
 
     # Directory holding downloaded checkpoints (see scripts/fetch_models.py).
     MODEL_DIR: str = "models"
@@ -90,6 +90,12 @@ class Settings(BaseSettings):
     # requiring <= 2 pending tasks. Setting to 4 gives 1.0 s of jitter buffer
     # without dropping nominal audio, while strictly bounding burst/flood backpressure.
     MAX_PENDING_AUDIO_CHUNKS: int = 4
+
+    # ─── Third-Party Live Audio & AI Providers ────────────────────────────
+    DEEPGRAM_API_KEY: str = ""
+    MODULATE_API_KEY: str = ""
+    STT_PROVIDER: str = "deepgram"        # "deepgram" | "faster_whisper"
+    SYNTHETIC_PROVIDER: str = "modulate"  # "modulate" | "none"
 
     # Push (stubbed)
     FCM_PROJECT_ID: str = ""

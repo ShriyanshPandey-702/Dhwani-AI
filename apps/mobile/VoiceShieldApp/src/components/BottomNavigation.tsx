@@ -6,6 +6,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../utils/theme";
 import { RootStackParamList } from "../navigation/AppNavigator";
 
+import { HomeIcon, PhoneIcon, MicIcon, DeviceIcon, SettingsIcon } from "./Icons";
+
 export type BottomTabKey = "home" | "calls" | "analyze" | "device" | "settings";
 
 interface BottomNavigationProps {
@@ -40,14 +42,6 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ activeTab })
     }
   };
 
-  const tabs: { key: BottomTabKey; label: string; icon: string }[] = [
-    { key: "home", label: "Home", icon: "⌂" },
-    { key: "calls", label: "Calls", icon: "☎" },
-    { key: "analyze", label: "Analyze", icon: "⚡" },
-    { key: "device", label: "Device", icon: "📱" },
-    { key: "settings", label: "Settings", icon: "⚙" },
-  ];
-
   return (
     <View
       style={[
@@ -55,49 +49,146 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ activeTab })
         {
           backgroundColor: isDark ? colors.surface : colors.surface,
           borderTopColor: colors.border,
-          paddingBottom: Math.max(insets.bottom, 12),
+          paddingBottom: Math.max(insets.bottom, 10),
         },
       ]}
     >
-      {tabs.map((tab) => {
-        const isActive = activeTab === tab.key;
-        const color = isActive ? colors.accent : colors.textMuted;
+      {/* 1. Home Tab */}
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={() => handleTabPress("home")}
+        style={styles.tabButton}
+        accessibilityRole="tab"
+        accessibilityState={{ selected: activeTab === "home" }}
+        accessibilityLabel="Home tab"
+      >
+        <HomeIcon
+          size={20}
+          color={activeTab === "home" ? colors.accent : colors.textMuted}
+        />
+        <Text
+          style={[
+            styles.tabLabel,
+            {
+              color: activeTab === "home" ? colors.accent : colors.textMuted,
+              fontWeight: activeTab === "home" ? "700" : "500",
+            },
+          ]}
+        >
+          Home
+        </Text>
+      </TouchableOpacity>
 
-        return (
-          <TouchableOpacity
-            key={tab.key}
-            activeOpacity={0.7}
-            onPress={() => handleTabPress(tab.key)}
-            style={styles.tabButton}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: isActive }}
-            accessibilityLabel={`${tab.label} tab`}
-          >
-            <View style={styles.iconWrapper}>
-              <Text style={[styles.iconText, { color }]}>{tab.icon}</Text>
-            </View>
-            <Text
-              style={[
-                styles.tabLabel,
-                {
-                  color,
-                  fontWeight: isActive ? "700" : "500",
-                },
-              ]}
-            >
-              {tab.label}
-            </Text>
-            {isActive && (
-              <View
-                style={[
-                  styles.activeIndicator,
-                  { backgroundColor: colors.accent },
-                ]}
-              />
-            )}
-          </TouchableOpacity>
-        );
-      })}
+      {/* 2. Calls Tab */}
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={() => handleTabPress("calls")}
+        style={styles.tabButton}
+        accessibilityRole="tab"
+        accessibilityState={{ selected: activeTab === "calls" }}
+        accessibilityLabel="Calls tab"
+      >
+        <PhoneIcon
+          size={20}
+          color={activeTab === "calls" ? colors.accent : colors.textMuted}
+        />
+        <Text
+          style={[
+            styles.tabLabel,
+            {
+              color: activeTab === "calls" ? colors.accent : colors.textMuted,
+              fontWeight: activeTab === "calls" ? "700" : "500",
+            },
+          ]}
+        >
+          Calls
+        </Text>
+      </TouchableOpacity>
+
+      {/* 3. Central Live Analysis Tab (Prominent Raised Button per design.md Section 11) */}
+      <TouchableOpacity
+        activeOpacity={0.85}
+        onPress={() => handleTabPress("analyze")}
+        style={styles.centerTabButton}
+        accessibilityRole="tab"
+        accessibilityState={{ selected: activeTab === "analyze" }}
+        accessibilityLabel="Live Voice Analysis tab"
+      >
+        <View
+          style={[
+            styles.centerOrb,
+            {
+              backgroundColor: colors.accent,
+              shadowColor: colors.accent,
+            },
+          ]}
+        >
+          <MicIcon size={22} color="#FFFFFF" strokeWidth={2.2} />
+        </View>
+        <Text
+          style={[
+            styles.centerLabel,
+            {
+              color: activeTab === "analyze" ? colors.accent : colors.textMuted,
+              fontWeight: activeTab === "analyze" ? "700" : "600",
+            },
+          ]}
+        >
+          Analyze
+        </Text>
+      </TouchableOpacity>
+
+      {/* 4. Device Tab */}
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={() => handleTabPress("device")}
+        style={styles.tabButton}
+        accessibilityRole="tab"
+        accessibilityState={{ selected: activeTab === "device" }}
+        accessibilityLabel="Device tab"
+      >
+        <DeviceIcon
+          size={20}
+          color={activeTab === "device" ? colors.accent : colors.textMuted}
+        />
+        <Text
+          style={[
+            styles.tabLabel,
+            {
+              color: activeTab === "device" ? colors.accent : colors.textMuted,
+              fontWeight: activeTab === "device" ? "700" : "500",
+            },
+          ]}
+        >
+          Device
+        </Text>
+      </TouchableOpacity>
+
+      {/* 5. Settings Tab */}
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={() => handleTabPress("settings")}
+        style={styles.tabButton}
+        accessibilityRole="tab"
+        accessibilityState={{ selected: activeTab === "settings" }}
+        accessibilityLabel="Settings tab"
+      >
+        <SettingsIcon
+          size={20}
+          color={activeTab === "settings" ? colors.accent : colors.textMuted}
+        />
+        <Text
+          style={[
+            styles.tabLabel,
+            {
+              color: activeTab === "settings" ? colors.accent : colors.textMuted,
+              fontWeight: activeTab === "settings" ? "700" : "500",
+            },
+          ]}
+        >
+          Settings
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -106,24 +197,19 @@ const styles = StyleSheet.create({
   bar: {
     flexDirection: "row",
     borderTopWidth: 1,
-    paddingTop: 8,
-    elevation: 8,
+    paddingTop: 6,
+    elevation: 10,
     shadowColor: "#000000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    alignItems: "flex-end",
   },
   tabButton: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    position: "relative",
     paddingVertical: 4,
-  },
-  iconWrapper: {
-    height: 22,
-    alignItems: "center",
-    justifyContent: "center",
   },
   iconText: {
     fontSize: 18,
@@ -134,11 +220,29 @@ const styles = StyleSheet.create({
     marginTop: 2,
     letterSpacing: 0.2,
   },
-  activeIndicator: {
-    position: "absolute",
-    top: -8,
-    width: 20,
-    height: 2.5,
-    borderRadius: 2,
+  centerTabButton: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    top: -12,
+  },
+  centerOrb: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  centerIcon: {
+    fontSize: 22,
+  },
+  centerLabel: {
+    fontSize: 11,
+    marginTop: 3,
+    letterSpacing: 0.2,
   },
 });

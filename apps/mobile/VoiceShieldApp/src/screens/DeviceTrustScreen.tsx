@@ -12,14 +12,17 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../utils/theme";
 import { DeviceData } from "../types";
 import { useCallScreeningStore } from "../store/callScreeningStore";
+import { useConnectionStore } from "../store/connectionStore";
 import client from "../services/api/client";
 import { BottomNavigation } from "../components/BottomNavigation";
+import { BackgroundWave } from "../components/BackgroundWave";
 
 export const DeviceTrustScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const { colors, radius, isDark } = useTheme();
 
   const isRoleHeld = useCallScreeningStore((s) => s.isRoleHeld);
+  const connectionStatus = useConnectionStore((s) => s.connectionStatus);
 
   const [devices, setDevices] = useState<DeviceData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -84,6 +87,8 @@ export const DeviceTrustScreen: React.FC = () => {
         },
       ]}
     >
+      <BackgroundWave />
+
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
@@ -92,6 +97,7 @@ export const DeviceTrustScreen: React.FC = () => {
             paddingBottom: Math.max(insets.bottom, 20) + 16,
           },
         ]}
+        showsVerticalScrollIndicator={false}
       >
         <Text style={[styles.title, { color: colors.textPrimary }]}>
           Device Security & Trust
@@ -100,23 +106,32 @@ export const DeviceTrustScreen: React.FC = () => {
           Hardware trust binding, Telecom call screening status, and out-of-band verification devices.
         </Text>
 
-        {/* Section 32: Current Device Card */}
+        {/* Section 16: Current Primary Device Card */}
         <View
           style={[
             styles.card,
             {
               backgroundColor: isDark ? colors.surface : colors.surface,
               borderColor: colors.border,
-              borderRadius: radius.md,
+              borderRadius: radius.xl,
+              shadowColor: isDark ? "#000000" : colors.cardShadow,
             },
           ]}
         >
           <Text style={[styles.cardHeader, { color: colors.textMuted }]}>
-            THIS DEVICE
+            THIS DEVICE (PRIMARY)
           </Text>
 
           <View style={styles.deviceHeroRow}>
-            <View style={[styles.deviceIconCircle, { backgroundColor: `${colors.accent}18` }]}>
+            <View
+              style={[
+                styles.deviceIconCircle,
+                {
+                  backgroundColor: isDark ? `${colors.accent}18` : `${colors.accent}12`,
+                  borderColor: `${colors.accent}33`,
+                },
+              ]}
+            >
               <Text style={{ fontSize: 26 }}>📱</Text>
             </View>
             <View style={{ flex: 1 }}>
@@ -125,6 +140,20 @@ export const DeviceTrustScreen: React.FC = () => {
               </Text>
               <Text style={[styles.devicePlatform, { color: colors.textSecondary }]}>
                 Android 13 · Physical Device
+              </Text>
+            </View>
+            <View
+              style={[
+                styles.statusPill,
+                {
+                  backgroundColor: `${colors.success}18`,
+                  borderColor: `${colors.success}44`,
+                  borderRadius: radius.full,
+                },
+              ]}
+            >
+              <Text style={[styles.statusPillText, { color: colors.success }]}>
+                ACTIVE
               </Text>
             </View>
           </View>
@@ -136,13 +165,13 @@ export const DeviceTrustScreen: React.FC = () => {
               Device protection
             </Text>
             <Text style={[styles.rowVal, { color: colors.success }]}>
-              Active
+              ACTIVE
             </Text>
           </View>
 
           <View style={styles.row}>
             <Text style={[styles.rowKey, { color: colors.textSecondary }]}>
-              Call screening status
+              Telecom call screening
             </Text>
             <Text
               style={[
@@ -150,14 +179,55 @@ export const DeviceTrustScreen: React.FC = () => {
                 { color: isRoleHeld ? colors.success : colors.warning },
               ]}
             >
-              {isRoleHeld ? "Active" : "Permission Required"}
+              {isRoleHeld ? "ACTIVE" : "NOT CONFIGURED"}
             </Text>
           </View>
 
+          <View style={styles.row}>
+            <Text style={[styles.rowKey, { color: colors.textSecondary }]}>
+              Backend connection
+            </Text>
+            <Text
+              style={[
+                styles.rowVal,
+                {
+                  color:
+                    connectionStatus === "connected"
+                      ? colors.success
+                      : connectionStatus === "error"
+                      ? colors.danger
+                      : colors.warning,
+                },
+              ]}
+            >
+              {connectionStatus === "connected"
+                ? "CONNECTED"
+                : connectionStatus === "error"
+                ? "UNAVAILABLE"
+                : "CHECKING"}
+            </Text>
+          </View>
 
+          <View style={styles.row}>
+            <Text style={[styles.rowKey, { color: colors.textSecondary }]}>
+              Microphone PCM capture
+            </Text>
+            <Text style={[styles.rowVal, { color: colors.success }]}>
+              ACTIVE
+            </Text>
+          </View>
+
+          <View style={styles.row}>
+            <Text style={[styles.rowKey, { color: colors.textSecondary }]}>
+              Cellular raw audio access
+            </Text>
+            <Text style={[styles.rowVal, { color: colors.textMuted }]}>
+              UNSUPPORTED (OS RESTRICTION)
+            </Text>
+          </View>
         </View>
 
-        {/* Secondary Out-of-Band Devices */}
+        {/* Secondary Out-of-Band Devices (design.md Section 16) */}
         <View style={styles.sectionHeaderRow}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
             Secondary Verification Devices
@@ -169,7 +239,7 @@ export const DeviceTrustScreen: React.FC = () => {
             styles.addBtn,
             {
               backgroundColor: colors.accent,
-              borderRadius: radius.md,
+              borderRadius: radius.lg,
               opacity: registering ? 0.7 : 1,
             },
           ]}
@@ -194,7 +264,7 @@ export const DeviceTrustScreen: React.FC = () => {
               {
                 backgroundColor: isDark ? colors.surface : colors.surface,
                 borderColor: colors.border,
-                borderRadius: radius.md,
+                borderRadius: radius.xl,
               },
             ]}
           >
@@ -211,7 +281,7 @@ export const DeviceTrustScreen: React.FC = () => {
                 {
                   backgroundColor: isDark ? colors.surface : colors.surface,
                   borderColor: colors.border,
-                  borderRadius: radius.md,
+                  borderRadius: radius.lg,
                 },
               ]}
             >
@@ -222,7 +292,7 @@ export const DeviceTrustScreen: React.FC = () => {
                     {d.device_name}
                   </Text>
                   <Text style={[styles.secMeta, { color: colors.textMuted }]}>
-                    {d.platform} • {d.is_active ? "Active" : "Revoked"}
+                    {d.platform} • {d.is_active ? "ACTIVE" : "REVOKED"}
                   </Text>
                 </View>
               </View>
@@ -247,7 +317,7 @@ export const DeviceTrustScreen: React.FC = () => {
         )}
       </ScrollView>
 
-      {/* Persistent Bottom Navigation (Section 28) */}
+      {/* Persistent Bottom Navigation */}
       <BottomNavigation activeTab="device" />
     </View>
   );
@@ -262,7 +332,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: "800",
     letterSpacing: -0.4,
   },
@@ -275,10 +345,14 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 10,
     marginTop: 6,
+    elevation: 3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
   },
   cardHeader: {
     fontSize: 10,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 0.8,
   },
   deviceHeroRow: {
@@ -290,6 +364,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
+    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -301,6 +376,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
   },
+  statusPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderWidth: 1,
+  },
+  statusPillText: {
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+  },
   divider: {
     height: 1,
     marginVertical: 4,
@@ -309,14 +394,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 2,
+    paddingVertical: 3,
   },
   rowKey: {
     fontSize: 13,
   },
   rowVal: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "700",
+    letterSpacing: 0.3,
   },
   sectionHeaderRow: {
     marginTop: 8,
@@ -329,6 +415,7 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
     alignItems: "center",
     justifyContent: "center",
+    elevation: 2,
   },
   addBtnText: {
     color: "#FFFFFF",

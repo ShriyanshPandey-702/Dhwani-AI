@@ -14,6 +14,7 @@ import { IncidentDetail } from "../types";
 import client from "../services/api/client";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { RiskBadge } from "../components/RiskBadge";
+import { BackgroundWave } from "../components/BackgroundWave";
 
 type Route = RouteProp<RootStackParamList, "IncidentDetail">;
 
@@ -72,14 +73,17 @@ export const IncidentDetailScreen: React.FC = () => {
         styles.container,
         {
           backgroundColor: isDark ? colors.background : colors.background,
-          paddingTop: insets.top,
         },
       ]}
     >
+      <BackgroundWave />
+
+      {/* Header */}
       <View
         style={[
           styles.header,
           {
+            paddingTop: insets.top + 8,
             borderBottomColor: colors.border,
             backgroundColor: isDark ? colors.surface : colors.surface,
           },
@@ -103,6 +107,7 @@ export const IncidentDetailScreen: React.FC = () => {
           styles.scroll,
           { paddingBottom: insets.bottom + 32 },
         ]}
+        showsVerticalScrollIndicator={false}
       >
         <View
           style={[
@@ -110,7 +115,8 @@ export const IncidentDetailScreen: React.FC = () => {
             {
               backgroundColor: isDark ? colors.surface : colors.surface,
               borderColor: colors.border,
-              borderRadius: radius.md,
+              borderRadius: radius.xl,
+              shadowColor: isDark ? "#000000" : colors.cardShadow,
             },
           ]}
         >
@@ -129,14 +135,14 @@ export const IncidentDetailScreen: React.FC = () => {
           <Row label="Timestamp" value={new Date(incident.created_at).toLocaleString()} />
         </View>
 
-        {/* SHA-256 Integrity Hash */}
+        {/* SHA-256 Tamper-Proof Integrity Hash */}
         <View
           style={[
             styles.hashBox,
             {
               backgroundColor: `${colors.success}10`,
               borderColor: `${colors.success}40`,
-              borderRadius: radius.md,
+              borderRadius: radius.lg,
             },
           ]}
         >
@@ -151,7 +157,7 @@ export const IncidentDetailScreen: React.FC = () => {
           </Text>
         </View>
 
-        {/* Model Versions */}
+        {/* Active AI Models */}
         {incident.model_versions && (
           <View
             style={[
@@ -159,7 +165,7 @@ export const IncidentDetailScreen: React.FC = () => {
               {
                 backgroundColor: isDark ? colors.surface : colors.surface,
                 borderColor: colors.border,
-                borderRadius: radius.md,
+                borderRadius: radius.xl,
               },
             ]}
           >
@@ -194,14 +200,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingBottom: 12,
     borderBottomWidth: 1,
   },
   backBtn: { paddingVertical: 4, paddingRight: 10 },
   backText: { fontSize: 16, fontWeight: "600" },
   headerTitle: { fontSize: 16, fontWeight: "700" },
   scroll: { padding: 18, gap: 12 },
-  card: { borderWidth: 1, padding: 16, gap: 4 },
+  card: {
+    borderWidth: 1,
+    padding: 16,
+    gap: 4,
+    elevation: 3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+  },
   topRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -220,13 +234,13 @@ const styles = StyleSheet.create({
   rowValue: { fontSize: 13, fontWeight: "600", flex: 1, textAlign: "right" },
   sectionTitle: {
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 0.8,
     textTransform: "uppercase",
     marginBottom: 4,
   },
   hashBox: { borderWidth: 1, padding: 14, gap: 6 },
-  hashLabel: { fontSize: 11, fontWeight: "700", letterSpacing: 0.8 },
+  hashLabel: { fontSize: 11, fontWeight: "800", letterSpacing: 0.8 },
   hashValue: { fontFamily: "monospace", fontSize: 11 },
   hashNote: { fontSize: 11, fontStyle: "italic", marginTop: 2 },
   error: { fontSize: 14 },

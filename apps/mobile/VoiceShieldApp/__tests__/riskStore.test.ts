@@ -333,4 +333,18 @@ describe('reset', () => {
 
     expect(state().riskHistory).toHaveLength(1);
   });
+
+  it('updates live transcript from transcript_update event', () => {
+    apply({
+      type: 'transcript_update',
+      event_id: 'tr-1',
+      seq: 1,
+      session_id: 's-1',
+      timestamp: new Date().toISOString(),
+      transcript: 'Hello, I am calling from your bank',
+      is_final: false,
+    });
+
+    expect(state().context?.transcript).toBe('Hello, I am calling from your bank');
+  });
 });

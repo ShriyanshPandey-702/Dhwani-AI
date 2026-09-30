@@ -362,4 +362,18 @@ describe('StatCard', () => {
     expect(text).toContain('12');
     expect(text).toContain('Calls');
   });
+
+  it('renders independent alerts and holds values without duplication', () => {
+    // Canonical data: 4 incidents (1 ALLOW, 1 VERIFY, 1 HOLD, 1 BLOCK)
+    // Alerts = 3 (VERIFY, HOLD, BLOCK)
+    // Holds = 1 (HOLD)
+    const alertsCard = textOf(render(<StatCard value={3} label="Alerts" />));
+    const holdsCard = textOf(render(<StatCard value={1} label="Holds" />));
+
+    expect(alertsCard).toContain('3');
+    expect(alertsCard).toContain('Alerts');
+    expect(holdsCard).toContain('1');
+    expect(holdsCard).toContain('Holds');
+    expect(alertsCard).not.toEqual(holdsCard);
+  });
 });

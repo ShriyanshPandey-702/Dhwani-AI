@@ -16,20 +16,28 @@ import { useSessionStore } from "../store/sessionStore";
 import { useCallScreeningStore } from "../store/callScreeningStore";
 import { useRiskStore } from "../store/riskStore";
 
-
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { RiskState } from "../types";
 import { ScreenedCallEvent } from "../types/telecom";
 
 import { DhwaniLogo } from "../components/DhwaniLogo";
 import { RiskOrb } from "../components/RiskOrb";
-import { RiskBadge } from "../components/RiskBadge";
 import { CallRow } from "../components/CallRow";
 import { BottomNavigation } from "../components/BottomNavigation";
 import { AuthenticityPanel } from "../components/AuthenticityPanel";
 import { IdentityPanel } from "../components/IdentityPanel";
 import { ActiveLivenessPanel } from "../components/ActiveLivenessPanel";
 import { ConsequencesPanel } from "../components/ConsequencesPanel";
+import { BackgroundWave } from "../components/BackgroundWave";
+import {
+  BellIcon,
+  UserIcon,
+  ShieldIcon,
+  AlertTriangleIcon,
+  MicIcon,
+  FolderIcon,
+  CodeIcon,
+} from "../components/Icons";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -72,9 +80,13 @@ type FeedItem =
       timeMs: number;
       timeIso: string;
       sessionId: string;
-      riskScore: number;
+      riskScore: number | null;
       action?: string;
       state: RiskState;
+      callerMasked: string;
+      callerName: string | null;
+      category: string;
+      sourceType: "phone" | "mic" | "file";
     }
   | {
       kind: "screened";
@@ -86,19 +98,19 @@ type FeedItem =
       decision: string;
       riskLevel: string;
       riskState: string;
+      riskScore: number | null;
       warningType: string;
       explanation: string;
+      category: string;
       state: RiskState;
       record: ScreenedCallEvent;
+      sourceType: "phone";
     };
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
-  const { colors, riskColors, radius, isDark } = useTheme();
-
-  // Stores
-  // user auth state no longer used in this screen (greeting removed)
+  const { colors, radius, isDark } = useTheme();
 
   const overview = useSessionStore((s) => s.overview);
   const isRefreshing = useSessionStore((s) => s.isRefreshing);
@@ -146,7 +158,7 @@ export const HomeScreen: React.FC = () => {
           navigation.navigate("Call", { sessionId: session.id, mode });
         }
       } catch {
-        // createSession handles error surfacing
+        // Handled in store
       } finally {
         setStarting(false);
       }
@@ -154,10 +166,7 @@ export const HomeScreen: React.FC = () => {
     [createSession, startSession, navigation]
   );
 
-  // ── Greeting removed per non-personalization requirement ──────────────────
-  // Do NOT add time-based greetings or user names here.
-
-  // Reconciled metrics
+  // Reconciled real-time metrics
   const startOfTodayMs = useMemo(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
@@ -188,39 +197,60 @@ export const HomeScreen: React.FC = () => {
 
   const totalCallsToday = (overview?.total_calls_today ?? 0) + screenedToday.length;
   const totalAlerts = (overview?.active_alerts ?? 0) + screenedAlertsCount;
-  const totalHolds = (overview?.high_critical_calls ?? 0) + screenedHoldCount;
+  const totalHolds = (overview?.hold_calls ?? 0) + screenedHoldCount;
 
-  // Unified recent calls feed
+  // Unified real-time feed
   const feedItems: FeedItem[] = useMemo(() => {
     const items: FeedItem[] = [];
 
     (overview?.recent ?? []).forEach((inc) => {
       const ms = new Date(inc.created_at).getTime();
+      const isAudioFile =
+        inc.source?.toLowerCase().includes("file") || Boolean(inc.filename);
+      const callerTitle = isAudioFile
+        ? inc.filename || `Audio File ${inc.id.slice(0, 6)}`
+        : inc.caller_name || `Session ${inc.session_id?.slice(0, 8) || inc.id.slice(0, 8)}`;
+      const categoryText = isAudioFile
+        ? "Forensic Audio File Analysis"
+        : inc.caller_number
+        ? `${inc.caller_number} · Live Audio Stream`
+        : "Device Microphone · Live Audio";
+
       items.push({
         kind: "incident",
         id: inc.id,
         timeMs: isNaN(ms) ? 0 : ms,
         timeIso: inc.created_at,
         sessionId: inc.session_id,
-        riskScore: inc.peak_risk_score ?? 0,
+        callerMasked: callerTitle,
+        callerName: isAudioFile ? null : inc.caller_name || null,
+        category: categoryText,
+        sourceType: isAudioFile ? "file" : "mic",
+        riskScore: inc.peak_risk_score !== undefined ? inc.peak_risk_score : null,
         action: inc.action_taken ?? undefined,
         state: asRiskState(inc.peak_risk_state ?? inc.final_state),
       });
     });
 
     recentCalls.forEach((sc) => {
+      const isKnownContact = sc.contactStatus === "IN_CONTACTS";
       items.push({
         kind: "screened",
         id: sc.eventId,
         timeMs: sc.timestamp,
         timeIso: new Date(sc.timestamp).toISOString(),
         callerMasked: sc.callerMasked,
-        callerName: sc.callerName,
+        callerName: sc.callerName || (isKnownContact ? null : "Unknown Caller"),
         decision: sc.decision,
         riskLevel: sc.riskLevel,
         riskState: sc.riskState,
+        riskScore: sc.riskScore !== undefined ? sc.riskScore : null,
         warningType: sc.warningType,
         explanation: sc.explanation,
+        category: isKnownContact
+          ? "Saved Contact · SIM Metadata"
+          : "Incoming SIM Call · Metadata Only",
+        sourceType: "phone",
         state: asCallRiskState(sc.riskState),
         record: sc,
       });
@@ -239,6 +269,8 @@ export const HomeScreen: React.FC = () => {
         { backgroundColor: isDark ? colors.background : colors.background },
       ]}
     >
+      <BackgroundWave />
+
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
@@ -247,6 +279,7 @@ export const HomeScreen: React.FC = () => {
             paddingBottom: 24,
           },
         ]}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
@@ -255,10 +288,25 @@ export const HomeScreen: React.FC = () => {
           />
         }
       >
-        {/* ── Top Bar Header (design.md Section 17) ────────────────────────── */}
+        {/* ── Top Bar Header (design.md Section 11) ────────────────────────── */}
         <View style={styles.topBar}>
           <DhwaniLogo size="md" showText tagline={false} />
           <View style={styles.topActions}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate("IntegrationHub")}
+              style={[
+                styles.iconBtn,
+                {
+                  backgroundColor: isDark ? colors.surfaceElevated : colors.surfaceElevated,
+                  borderColor: colors.border,
+                },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Integration Hub & APIs"
+            >
+              <CodeIcon size={18} color={colors.accent} strokeWidth={2.2} />
+            </TouchableOpacity>
+
             <TouchableOpacity
               onPress={() => navigation.navigate("Incidents")}
               style={[
@@ -271,7 +319,7 @@ export const HomeScreen: React.FC = () => {
               accessibilityRole="button"
               accessibilityLabel="Notifications"
             >
-              <Text style={{ fontSize: 16 }}>🔔</Text>
+              <BellIcon size={18} color={colors.textPrimary} />
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -286,30 +334,30 @@ export const HomeScreen: React.FC = () => {
               accessibilityRole="button"
               accessibilityLabel="Profile and Settings"
             >
-              <Text style={{ fontSize: 16 }}>👤</Text>
+              <UserIcon size={18} color={colors.textPrimary} />
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* ── Status Banner ────────────────────────────────────────────────── */}
+        {/* ── Status Banner (design.md Section 11) ────────────────────────── */}
         <View style={styles.greetingSection}>
           <Text style={[styles.greetingTitle, { color: colors.textPrimary }]}>
             Dhwani AI Voice Analysis
           </Text>
           <Text style={[styles.greetingSubtitle, { color: colors.textSecondary }]}>
-            Real-time call screening and deepfake detection active.
+            Your calls are being protected in real time.
           </Text>
         </View>
 
-        {/* ── Protection Status Card (Section 17.1) ─────────────────────────── */}
+        {/* ── Protection Status Card (design.md Section 11) ───────────────── */}
         <View
           style={[
             styles.protectionCard,
             {
               backgroundColor: isDark ? colors.surface : colors.surface,
               borderColor: isRoleHeld ? `${colors.accent}44` : colors.border,
-              borderRadius: radius.lg,
-              shadowColor: colors.cardShadow,
+              borderRadius: radius.xl,
+              shadowColor: isDark ? "#000000" : colors.cardShadow,
             },
           ]}
         >
@@ -324,7 +372,11 @@ export const HomeScreen: React.FC = () => {
                 },
               ]}
             >
-              <Text style={{ fontSize: 22 }}>{isRoleHeld ? "🛡" : "⚠️"}</Text>
+              {isRoleHeld ? (
+                <ShieldIcon size={22} color={colors.accent} />
+              ) : (
+                <AlertTriangleIcon size={22} color={colors.warning} />
+              )}
             </View>
             <View style={styles.protectionTextCol}>
               <Text style={[styles.protectionTitle, { color: colors.textPrimary }]}>
@@ -332,14 +384,12 @@ export const HomeScreen: React.FC = () => {
               </Text>
               <Text style={[styles.protectionSubtitle, { color: colors.textSecondary }]}>
                 {isRoleHeld
-                  ? "Call screening is active"
+                  ? "Monitoring incoming calls"
                   : "Tap below to enable call screening"}
               </Text>
             </View>
           </View>
-          {/* Protection cannot be toggled off programmatically on Android.
-              When active: show a status indicator only.
-              When inactive: show Enable button that requests the OS role. */}
+
           {isRoleHeld ? (
             <TouchableOpacity
               onPress={() => openSettings()}
@@ -371,8 +421,7 @@ export const HomeScreen: React.FC = () => {
           )}
         </View>
 
-
-        {/* ── Summary Metrics (Section 17.2) ────────────────────────────────── */}
+        {/* ── Summary Metrics (design.md Section 11) ──────────────────────── */}
         <View style={styles.summaryRow}>
           <View
             style={[
@@ -380,8 +429,8 @@ export const HomeScreen: React.FC = () => {
               {
                 backgroundColor: isDark ? colors.surface : colors.surface,
                 borderColor: colors.border,
-                borderRadius: radius.md,
-                shadowColor: colors.cardShadow,
+                borderRadius: radius.lg,
+                shadowColor: isDark ? "#000000" : colors.cardShadow,
               },
             ]}
           >
@@ -399,8 +448,8 @@ export const HomeScreen: React.FC = () => {
               {
                 backgroundColor: isDark ? colors.surface : colors.surface,
                 borderColor: colors.border,
-                borderRadius: radius.md,
-                shadowColor: colors.cardShadow,
+                borderRadius: radius.lg,
+                shadowColor: isDark ? "#000000" : colors.cardShadow,
               },
             ]}
           >
@@ -423,8 +472,8 @@ export const HomeScreen: React.FC = () => {
               {
                 backgroundColor: isDark ? colors.surface : colors.surface,
                 borderColor: colors.border,
-                borderRadius: radius.md,
-                shadowColor: colors.cardShadow,
+                borderRadius: radius.lg,
+                shadowColor: isDark ? "#000000" : colors.cardShadow,
               },
             ]}
           >
@@ -442,7 +491,7 @@ export const HomeScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* ── Section: Current Analysis (Section 18) ────────────────────────── */}
+        {/* ── Section: Current Analysis (design.md Section 11) ────────────── */}
         <View style={styles.sectionHeaderRow}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
             Current Analysis
@@ -468,8 +517,8 @@ export const HomeScreen: React.FC = () => {
               {
                 backgroundColor: isDark ? colors.surface : colors.surface,
                 borderColor: colors.border,
-                borderRadius: radius.lg,
-                shadowColor: colors.cardShadow,
+                borderRadius: radius.xl,
+                shadowColor: isDark ? "#000000" : colors.cardShadow,
               },
             ]}
           >
@@ -497,29 +546,33 @@ export const HomeScreen: React.FC = () => {
                   Authenticity
                 </Text>
                 <Text style={[styles.subScoreValue, { color: colors.textPrimary }]}>
-                  {currentAuthenticity ? currentAuthenticity.score : "--"}
+                  {currentAuthenticity ? `${currentAuthenticity.score}%` : "UNAVAILABLE"}
                 </Text>
               </View>
 
-              <View style={styles.subScoreDivider} />
+              <View style={[styles.subScoreDivider, { backgroundColor: colors.border }]} />
 
               <View style={styles.subScoreItem}>
                 <Text style={[styles.subScoreLabel, { color: colors.textSecondary }]}>
                   Identity
                 </Text>
                 <Text style={[styles.subScoreValue, { color: colors.textPrimary }]}>
-                  {currentIdentity ? `${currentIdentity.match_score}%` : "--"}
+                  {currentIdentity?.enrollment_status === "NOT_ENROLLED"
+                    ? "NOT ENROLLED"
+                    : currentIdentity?.match_score !== null && currentIdentity?.match_score !== undefined
+                    ? `${currentIdentity.match_score}%`
+                    : "UNAVAILABLE"}
                 </Text>
               </View>
 
-              <View style={styles.subScoreDivider} />
+              <View style={[styles.subScoreDivider, { backgroundColor: colors.border }]} />
 
               <View style={styles.subScoreItem}>
                 <Text style={[styles.subScoreLabel, { color: colors.textSecondary }]}>
                   Context
                 </Text>
                 <Text style={[styles.subScoreValue, { color: colors.textPrimary }]}>
-                  {currentContext ? currentContext.score : "--"}
+                  {currentContext?.transcript ? `${currentContext.score}` : "NO SPEECH"}
                 </Text>
               </View>
             </View>
@@ -531,12 +584,15 @@ export const HomeScreen: React.FC = () => {
               {
                 backgroundColor: isDark ? colors.surface : colors.surface,
                 borderColor: colors.border,
-                borderRadius: radius.lg,
-                shadowColor: colors.cardShadow,
+                borderRadius: radius.xl,
+                shadowColor: isDark ? "#000000" : colors.cardShadow,
               },
             ]}
           >
-            <Text style={{ fontSize: 32, marginBottom: 8 }}>🎙</Text>
+            {/* The shield logo sits naturally directly on the card background with NO green/teal circle */}
+            <View style={styles.idleLogoContainer}>
+              <DhwaniLogo size={68} showText={false} />
+            </View>
             <Text style={[styles.idleTitle, { color: colors.textPrimary }]}>
               No active call analysis
             </Text>
@@ -555,9 +611,12 @@ export const HomeScreen: React.FC = () => {
                 accessibilityRole="button"
                 accessibilityLabel="Start live microphone analysis"
               >
-                <Text style={styles.idleBtnText}>
-                  {starting ? "Starting..." : "🎙 Start Live Analysis"}
-                </Text>
+                <View style={styles.btnContentRow}>
+                  <MicIcon size={16} color="#FFFFFF" />
+                  <Text style={styles.idleBtnText}>
+                    {starting ? "Starting..." : "Start Live Analysis"}
+                  </Text>
+                </View>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -573,21 +632,66 @@ export const HomeScreen: React.FC = () => {
                 accessibilityRole="button"
                 accessibilityLabel="Analyze audio file"
               >
-                <Text style={[styles.idleBtnSecondaryText, { color: colors.textPrimary }]}>
-                  📁 Analyze File
-                </Text>
+                <View style={styles.btnContentRow}>
+                  <FolderIcon size={16} color={colors.textPrimary} />
+                  <Text style={[styles.idleBtnSecondaryText, { color: colors.textPrimary }]}>
+                    Analyze File
+                  </Text>
+                </View>
               </TouchableOpacity>
             </View>
           </View>
         )}
 
-        {/* ── Section: Evidence Cards (Section 19) ─────────────────────────── */}
+        {/* ── Section: Integration Hub Banner ────────────────────────────── */}
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => navigation.navigate("IntegrationHub")}
+          style={[
+            styles.hubCard,
+            {
+              backgroundColor: isDark ? colors.surface : colors.surface,
+              borderColor: colors.border,
+              borderRadius: radius.xl,
+            },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel="Open Platform and Integration APIs Hub"
+        >
+          <View style={styles.hubHeader}>
+            <View style={[styles.hubIconBox, { backgroundColor: `${colors.accent}18` }]}>
+              <CodeIcon size={18} color={colors.accent} strokeWidth={2.2} />
+            </View>
+            <View style={styles.hubTextCol}>
+              <View style={styles.hubTitleRow}>
+                <Text style={[styles.hubTitle, { color: colors.textPrimary }]}>
+                  Platform & Integration APIs
+                </Text>
+                <View style={[styles.hubLiveBadge, { backgroundColor: "rgba(16,185,129,0.12)" }]}>
+                  <View style={[styles.hubDot, { backgroundColor: "#10B981" }]} />
+                  <Text style={[styles.hubLiveText, { color: "#10B981" }]}>READY</Text>
+                </View>
+              </View>
+              <Text style={[styles.hubSubtitle, { color: colors.textSecondary }]}>
+                REST · WebSocket · SDK · SIP · Core Banking · Contact Center
+              </Text>
+            </View>
+          </View>
+          <View style={[styles.hubDivider, { backgroundColor: colors.border }]} />
+          <View style={styles.hubBottomRow}>
+            <Text style={[styles.hubActionText, { color: colors.accent }]}>
+              Explore APIs & Integration Connectors →
+            </Text>
+          </View>
+        </TouchableOpacity>
+
+        {/* ── Section: Evidence Cards (design.md Section 11 & 22) ─────────── */}
         <View style={styles.sectionHeaderRow}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
             Security Evidence
           </Text>
           <Text style={[styles.evidenceNote, { color: colors.textMuted }]}>
-            Persistent multi-modal telemetry
+            Multi-modal telemetry
           </Text>
         </View>
 
@@ -601,7 +705,7 @@ export const HomeScreen: React.FC = () => {
         />
         <ConsequencesPanel context={currentContext} />
 
-        {/* ── Section: Recent Calls (Section 20) ───────────────────────────── */}
+        {/* ── Section: Recent Calls (design.md Section 11 & 12) ───────────── */}
         <View style={styles.sectionHeaderRow}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
             Recent Calls
@@ -638,8 +742,10 @@ export const HomeScreen: React.FC = () => {
                   callerMasked={item.callerMasked}
                   timestamp={item.timeMs}
                   riskState={item.state}
+                  riskScore={item.riskScore}
+                  source={item.sourceType}
                   decision={item.decision}
-                  category="Incoming SIM Call — Metadata Only"
+                  category={item.category}
                   onPress={() =>
                     navigation.navigate("CallSecurityDetails", {
                       callRecord: item.record,
@@ -651,11 +757,14 @@ export const HomeScreen: React.FC = () => {
               return (
                 <CallRow
                   key={item.id}
-                  callerMasked={`Session ${item.sessionId.slice(0, 8)}`}
+                  callerName={item.callerName}
+                  callerMasked={item.callerMasked}
                   timestamp={item.timeMs}
                   riskState={item.state}
+                  riskScore={item.riskScore}
+                  source={item.sourceType}
                   decision={item.action}
-                  category="Device Microphone — Live Audio"
+                  category={item.category}
                   onPress={() =>
                     navigation.navigate("IncidentDetail", { incidentId: item.id })
                   }
@@ -666,7 +775,7 @@ export const HomeScreen: React.FC = () => {
         )}
       </ScrollView>
 
-      {/* ── Section 28: Bottom Navigation ──────────────────────────────────── */}
+      {/* ── Bottom Navigation ──────────────────────────────────────────────── */}
       <BottomNavigation activeTab="home" />
     </View>
   );
@@ -698,7 +807,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   greetingSection: {
-    marginBottom: 18,
+    marginBottom: 16,
   },
   greetingTitle: {
     fontSize: 26,
@@ -709,6 +818,7 @@ const styles = StyleSheet.create({
   greetingSubtitle: {
     fontSize: 14,
     marginTop: 4,
+    lineHeight: 19,
   },
   protectionCard: {
     flexDirection: "row",
@@ -717,9 +827,9 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     marginBottom: 16,
-    elevation: 2,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    elevation: 3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
     shadowRadius: 8,
   },
   protectionLeft: {
@@ -765,17 +875,17 @@ const styles = StyleSheet.create({
   summaryRow: {
     flexDirection: "row",
     gap: 10,
-    marginBottom: 22,
+    marginBottom: 20,
   },
   metricCard: {
     flex: 1,
     borderWidth: 1,
     paddingVertical: 14,
     paddingHorizontal: 12,
-    elevation: 1,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
+    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 5,
   },
   metricLabel: {
     fontSize: 11,
@@ -800,19 +910,21 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 0.2,
   },
-  seeAllLink: {
-    fontSize: 13,
-    fontWeight: "600",
-  },
   evidenceNote: {
     fontSize: 11,
+    fontWeight: "500",
+  },
+  seeAllLink: {
+    fontSize: 13,
+    fontWeight: "700",
   },
   activeAnalysisCard: {
     borderWidth: 1,
     padding: 16,
-    marginBottom: 16,
-    elevation: 2,
-    shadowOffset: { width: 0, height: 2 },
+    marginBottom: 14,
+    alignItems: "center",
+    elevation: 3,
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
   },
@@ -821,7 +933,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   analysisCaller: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "700",
   },
   analysisSubtitle: {
@@ -833,57 +945,67 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-around",
-    borderTopWidth: 1,
-    borderTopColor: "rgba(128,128,128,0.2)",
+    width: "100%",
     paddingTop: 12,
-    marginTop: 8,
+    marginTop: 6,
   },
   subScoreItem: {
     alignItems: "center",
     flex: 1,
-  },
-  subScoreDivider: {
-    width: 1,
-    height: 24,
-    backgroundColor: "rgba(128,128,128,0.2)",
   },
   subScoreLabel: {
     fontSize: 11,
     fontWeight: "600",
   },
   subScoreValue: {
-    fontSize: 16,
-    fontWeight: "700",
-    marginTop: 2,
+    fontSize: 13,
+    fontWeight: "800",
+    marginTop: 3,
+  },
+  subScoreDivider: {
+    width: 1,
+    height: 24,
   },
   idleCard: {
     borderWidth: 1,
-    padding: 22,
+    padding: 20,
     alignItems: "center",
-    marginBottom: 16,
-    elevation: 1,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
+    marginBottom: 14,
+    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
     shadowRadius: 6,
   },
+  idleLogoContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginVertical: 10,
+  },
   idleTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "700",
   },
   idleSubtitle: {
-    fontSize: 12,
-    marginTop: 4,
+    fontSize: 13,
     textAlign: "center",
+    marginTop: 4,
+    marginBottom: 16,
+    paddingHorizontal: 10,
   },
   idleActionsRow: {
     flexDirection: "row",
     gap: 10,
-    marginTop: 16,
     width: "100%",
+  },
+  btnContentRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
   },
   idleBtn: {
     flex: 1,
-    paddingVertical: 11,
+    paddingVertical: 12,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -895,7 +1017,7 @@ const styles = StyleSheet.create({
   idleBtnSecondary: {
     flex: 1,
     borderWidth: 1,
-    paddingVertical: 11,
+    paddingVertical: 12,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -905,11 +1027,76 @@ const styles = StyleSheet.create({
   },
   emptyCallsBox: {
     borderWidth: 1,
-    padding: 20,
+    padding: 24,
     alignItems: "center",
-    marginVertical: 4,
+    justifyContent: "center",
+    marginBottom: 14,
   },
   emptyCallsText: {
     fontSize: 13,
+  },
+  hubCard: {
+    borderWidth: 1,
+    padding: 14,
+    marginBottom: 16,
+  },
+  hubHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  hubIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+  },
+  hubTextCol: {
+    flex: 1,
+  },
+  hubTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  hubTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  hubLiveBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    gap: 4,
+  },
+  hubDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+  },
+  hubLiveText: {
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 0.4,
+  },
+  hubSubtitle: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+  hubDivider: {
+    height: 1,
+    marginVertical: 10,
+  },
+  hubBottomRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+  },
+  hubActionText: {
+    fontSize: 11,
+    fontWeight: "700",
   },
 });

@@ -237,6 +237,35 @@ export const useRiskStore = create<RiskStoreState>((set, get) => ({
         break;
       }
 
+      // ── Real-time streaming STT transcript update (Deepgram / Whisper) ────
+      case 'transcript_update': {
+        const text = str(event.transcript);
+        const currentCtx = state.context || {
+          score: 0,
+          confidence: 0,
+          urgency: false,
+          financial_request: false,
+          otp_request: false,
+          credential_request: false,
+          sensitive_information_request: false,
+          social_engineering: false,
+          authority_claim: false,
+          consequence: 'low',
+          transcript: '',
+          detected_phrases: [],
+          model_version: 'stt-v1',
+          is_mock: false,
+          transcript_is_mock: false,
+        };
+        patch.context = {
+          ...currentCtx,
+          transcript: text,
+          transcript_model: str(event.transcript_model, currentCtx.transcript_model || 'Deepgram Nova-2'),
+          transcript_language: str(event.language, currentCtx.transcript_language || 'en'),
+        };
+        break;
+      }
+
       // ── The primary dashboard event ──────────────────────────────────────
       case 'risk_update': {
         const score = num(event.risk_score, state.riskScore);

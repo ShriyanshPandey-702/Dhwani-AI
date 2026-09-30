@@ -184,4 +184,18 @@ describe('audioCaptureService', () => {
     expect(audioCaptureService.isActive()).toBe(false);
     expect(mockStopCapture).toHaveBeenCalledTimes(1);
   });
+
+  it('calculates real RMS and emits onAudioLevel', async () => {
+    const levelSpy = jest.fn();
+    const unsub = audioCaptureService.onAudioLevel(levelSpy);
+
+    await audioCaptureService.startCapture();
+    expect(chunkListener).toBeDefined();
+
+    // Base64 chunk for zero signal (silence)
+    chunkListener!({ data: 'AAAAAAAAAAAAAAAA', seq: 1 });
+    expect(levelSpy).toHaveBeenCalledWith(0);
+
+    unsub();
+  });
 });

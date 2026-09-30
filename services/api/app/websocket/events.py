@@ -242,3 +242,27 @@ def session_ended(session_id: str, reason: str, peak_risk_score: int,
 
 def error(session_id: str, detail: str, code: str = "internal_error") -> dict:
     return _envelope(ERROR, session_id, detail=detail, code=code)
+
+
+TRANSCRIPT_UPDATE = "transcript_update"
+EVENT_TYPES.add(TRANSCRIPT_UPDATE)
+
+
+def transcript_update(
+    session_id: str,
+    transcript: str,
+    is_interim: bool = False,
+    is_final: bool = False,
+    language: str = "en",
+    transcript_model: str = "deepgram-nova-2",
+) -> dict:
+    """Real-time streaming transcript event (interim or final)."""
+    return _envelope(
+        TRANSCRIPT_UPDATE,
+        session_id,
+        transcript=transcript,
+        is_interim=is_interim,
+        is_final=is_final,
+        language=language,
+        transcript_model=transcript_model,
+    )

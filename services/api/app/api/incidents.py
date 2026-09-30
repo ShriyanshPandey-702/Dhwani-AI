@@ -28,6 +28,11 @@ class IncidentSummary(BaseModel):
     peak_risk_state: Optional[str]
     action_taken: Optional[str] = None
     created_at: datetime
+    source: Optional[str] = None
+    caller_name: Optional[str] = None
+    caller_number: Optional[str] = None
+    contact_status: Optional[str] = None
+    filename: Optional[str] = None
 
 
 class IncidentDetail(IncidentSummary):
@@ -48,12 +53,42 @@ class OverviewStats(BaseModel):
     safe_calls: int
     suspicious_calls: int
     high_critical_calls: int
+    hold_calls: int = 0
     active_alerts: int
     average_risk: int
     recent: List[IncidentSummary]
     # True when the figures come from real recorded incidents rather than an
     # empty database; the client labels an empty state rather than inventing data.
     has_data: bool
+
+
+def _is_hold(i: Incident) -> bool:
+    """True if canonical security decision or action is HOLD."""
+    act = (i.action_taken or "").lower()
+    if act == "hold":
+        return True
+    ev = i.evidence_summary or {}
+    dec = (ev.get("final_decision") or ev.get("decision") or "").upper()
+    return dec == "HOLD"
+
+
+def _is_alert(i: Incident) -> bool:
+    """
+    True if the incident triggers a security alert:
+    - Peak/final risk state is suspicious, high, or critical, OR
+    - Policy decision/action is HOLD, BLOCK, or ESCALATE.
+    ALLOW + LOW is strictly not an alert.
+    """
+    state = (i.peak_risk_state or i.final_state or "").lower()
+    act = (i.action_taken or "").lower()
+    ev = i.evidence_summary or {}
+    dec = (ev.get("final_decision") or ev.get("decision") or "").upper()
+
+    if state in ("suspicious", "high", "critical"):
+        return True
+    if dec in ("HOLD", "BLOCK", "ESCALATE") or act in ("hold", "block", "escalate"):
+        return True
+    return False
 
 
 @router.get("", response_model=List[IncidentSummary])
@@ -113,12 +148,16 @@ async def overview_stats(
     total_calls = max(session_count, len(today))
     safe = max(0, total_calls - suspicious - elevated)
 
+    holds_count = sum(1 for i in today if _is_hold(i))
+    alerts_count = sum(1 for i in today if _is_alert(i))
+
     return OverviewStats(
         total_calls_today=total_calls,
         safe_calls=safe,
         suspicious_calls=suspicious,
         high_critical_calls=elevated,
-        active_alerts=elevated,
+        hold_calls=holds_count,
+        active_alerts=alerts_count,
         average_risk=int(round(sum(scores) / len(scores))) if scores else 0,
         recent=recent,
         has_data=bool(today or recent or session_count),
@@ -151,6 +190,7 @@ async def get_incident(
 
 
 def _summary(i: Incident) -> IncidentSummary:
+    ev = i.evidence_summary or {}
     return IncidentSummary(
         id=i.id,
         session_id=i.session_id,
@@ -159,4 +199,9 @@ def _summary(i: Incident) -> IncidentSummary:
         peak_risk_state=i.peak_risk_state,
         action_taken=i.action_taken,
         created_at=i.created_at,
+        source=ev.get("source", "Device Microphone"),
+        caller_name=ev.get("caller_name"),
+        caller_number=ev.get("caller_number"),
+        contact_status=ev.get("contact_status"),
+        filename=ev.get("filename"),
     )

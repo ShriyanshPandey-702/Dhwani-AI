@@ -19,6 +19,8 @@ import client from "../services/api/client";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { CallRow } from "../components/CallRow";
 import { BottomNavigation } from "../components/BottomNavigation";
+import { BackgroundWave } from "../components/BackgroundWave";
+import { ClipboardIcon } from "../components/Icons";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type FilterType = "all" | "low" | "suspicious" | "high";
@@ -26,10 +28,12 @@ type FilterType = "all" | "low" | "suspicious" | "high";
 type UnifiedCallRecord = {
   id: string;
   source: "screened" | "incident";
+  sourceType: "screened" | "incident" | "file" | "mic";
   callerName?: string | null;
   callerMasked: string;
   timestamp: number;
   riskState: RiskState;
+  riskScore: number | null;
   decision?: string;
   category: string;
   screenedRecord?: ScreenedCallEvent;
@@ -71,29 +75,50 @@ export const IncidentHistoryScreen: React.FC = () => {
     const list: UnifiedCallRecord[] = [];
 
     recentScreenedCalls.forEach((sc) => {
+      const isKnownContact = sc.contactStatus === "IN_CONTACTS";
       list.push({
         id: `sc-${sc.eventId}`,
         source: "screened",
-        callerName: sc.callerName,
+        sourceType: "screened",
+        callerName: sc.callerName || (isKnownContact ? null : "Unknown Caller"),
         callerMasked: sc.callerMasked,
         timestamp: sc.timestamp,
         riskState: normalizeRiskState(sc.riskState),
+        riskScore: sc.riskScore !== undefined ? sc.riskScore : null,
         decision: sc.decision,
-        category: "Incoming SIM Call — Metadata Only",
+        category: isKnownContact
+          ? "Saved Contact · SIM Metadata"
+          : "Incoming SIM Call · Metadata Only",
         screenedRecord: sc,
       });
     });
 
     incidents.forEach((inc) => {
       const ms = new Date(inc.created_at).getTime();
+      const isAudioFile =
+        inc.source?.toLowerCase().includes("file") || Boolean(inc.filename);
+
+      const callerTitle = isAudioFile
+        ? inc.filename || `Audio File ${inc.id.slice(0, 6)}`
+        : inc.caller_name || `Session ${inc.session_id?.slice(0, 8) || inc.id.slice(0, 8)}`;
+
+      const categoryText = isAudioFile
+        ? "Forensic Audio File Analysis"
+        : inc.caller_number
+        ? `${inc.caller_number} · Live Audio Stream`
+        : "Device Microphone · Live Audio";
+
       list.push({
         id: `inc-${inc.id}`,
         source: "incident",
-        callerMasked: `Session ${inc.session_id?.slice(0, 8) || inc.id.slice(0, 8)}`,
+        sourceType: isAudioFile ? "file" : "mic",
+        callerName: isAudioFile ? null : inc.caller_name || null,
+        callerMasked: callerTitle,
         timestamp: isNaN(ms) ? Date.now() : ms,
         riskState: normalizeRiskState(inc.peak_risk_state || inc.final_state),
+        riskScore: inc.peak_risk_score !== undefined ? inc.peak_risk_score : null,
         decision: inc.action_taken || undefined,
-        category: "Device Microphone — Live Audio",
+        category: categoryText,
         incidentId: inc.id,
       });
     });
@@ -121,7 +146,7 @@ export const IncidentHistoryScreen: React.FC = () => {
 
   const filterChips: { key: FilterType; label: string }[] = [
     { key: "all", label: "All" },
-    { key: "low", label: "Low" },
+    { key: "low", label: "Low / Safe" },
     { key: "suspicious", label: "Suspicious" },
     { key: "high", label: "High Risk" },
   ];
@@ -135,8 +160,10 @@ export const IncidentHistoryScreen: React.FC = () => {
         },
       ]}
     >
-      {/* Top Header (design.md Section 26) */}
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+      <BackgroundWave />
+
+      {/* Top Header (design.md Section 12) */}
+      <View style={[styles.header, { paddingTop: insets.top + 14 }]}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>
           Call History
         </Text>
@@ -145,7 +172,7 @@ export const IncidentHistoryScreen: React.FC = () => {
         </Text>
       </View>
 
-      {/* Horizontal Filter Chips (Section 26) */}
+      {/* Horizontal Filter Chips (design.md Section 12) */}
       <View style={styles.chipsWrapper}>
         <ScrollView
           horizontal
@@ -162,7 +189,11 @@ export const IncidentHistoryScreen: React.FC = () => {
                 style={[
                   styles.chip,
                   {
-                    backgroundColor: isSelected ? colors.accent : isDark ? colors.surface : colors.surface,
+                    backgroundColor: isSelected
+                      ? colors.accent
+                      : isDark
+                      ? colors.surface
+                      : colors.surface,
                     borderColor: isSelected ? colors.accent : colors.border,
                     borderRadius: radius.full,
                   },
@@ -202,8 +233,10 @@ export const IncidentHistoryScreen: React.FC = () => {
               callerMasked={item.callerMasked}
               timestamp={item.timestamp}
               riskState={item.riskState}
+              riskScore={item.riskScore}
               decision={item.decision}
               category={item.category}
+              source={item.sourceType}
               onPress={() => {
                 if (item.source === "screened" && item.screenedRecord) {
                   navigation.navigate("CallSecurityDetails", {
@@ -222,10 +255,19 @@ export const IncidentHistoryScreen: React.FC = () => {
             { paddingBottom: Math.max(insets.bottom, 20) + 16 },
           ]}
           ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Text style={{ fontSize: 36, marginBottom: 8 }}>📋</Text>
+            <View
+              style={[
+                styles.emptyState,
+                {
+                  backgroundColor: isDark ? colors.surface : colors.surface,
+                  borderColor: colors.border,
+                  borderRadius: radius.xl,
+                },
+              ]}
+            >
+              <ClipboardIcon size={38} color={colors.accent} style={{ marginBottom: 12 }} />
               <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-                No calls yet
+                No call history yet
               </Text>
               <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
                 {activeFilter === "all"
@@ -263,7 +305,7 @@ const styles = StyleSheet.create({
   chipsWrapper: {
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(128,128,128,0.15)",
+    borderBottomColor: "rgba(128,128,128,0.12)",
   },
   chipsScroll: {
     paddingHorizontal: 20,
@@ -278,7 +320,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   list: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 18,
     paddingTop: 12,
     gap: 4,
   },
@@ -290,8 +332,10 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 60,
-    paddingHorizontal: 30,
+    paddingVertical: 48,
+    paddingHorizontal: 24,
+    borderWidth: 1,
+    marginVertical: 20,
   },
   emptyTitle: {
     fontSize: 16,

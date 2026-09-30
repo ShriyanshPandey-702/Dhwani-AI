@@ -14,8 +14,8 @@ interface ThemeStoreState {
 const THEME_STORAGE_KEY = "@dhwani_ai_theme_mode";
 
 export const useThemeStore = create<ThemeStoreState>((set, get) => ({
-  mode: "dark",
-  systemColorScheme: (Appearance.getColorScheme() as "light" | "dark") || "dark",
+  mode: "light",
+  systemColorScheme: (Appearance.getColorScheme() as "light" | "dark") || "light",
 
   setMode: async (mode: ThemeMode) => {
     set({ mode });

@@ -10,11 +10,14 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../utils/theme";
+import { RootStackParamList } from "../navigation/AppNavigator";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { BottomNavigation } from "../components/BottomNavigation";
+import { BackgroundWave } from "../components/BackgroundWave";
 import {
   useConnectionStore,
   getApiBaseUrl,
@@ -24,6 +27,9 @@ import { useCallScreeningStore } from "../store/callScreeningStore";
 import { useAuthStore } from "../store/authStore";
 import { callScreeningService } from "../services/telecom/callScreeningService";
 import { DhwaniLogo } from "../components/DhwaniLogo";
+import { UserIcon, CodeIcon, ShieldIcon } from "../components/Icons";
+
+type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 const SettingRow: React.FC<{
   label: string;
@@ -47,7 +53,7 @@ const SettingRow: React.FC<{
 };
 
 export const SettingsScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
   const { colors, radius, isDark } = useTheme();
 
@@ -64,9 +70,9 @@ export const SettingsScreen: React.FC = () => {
   const isRoleHeld = useCallScreeningStore((s) => s.isRoleHeld);
   const checkRoleStatus = useCallScreeningStore((s) => s.checkRoleStatus);
   const requestRole = useCallScreeningStore((s) => s.requestRole);
-  const openSettings = useCallScreeningStore((s) => s.openSettings);
   const isRoleLoading = useCallScreeningStore((s) => s.isLoading);
 
+  const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
 
   useFocusEffect(
@@ -108,6 +114,8 @@ export const SettingsScreen: React.FC = () => {
         },
       ]}
     >
+      <BackgroundWave />
+
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
@@ -116,25 +124,75 @@ export const SettingsScreen: React.FC = () => {
             paddingBottom: Math.max(insets.bottom, 20) + 16,
           },
         ]}
+        showsVerticalScrollIndicator={false}
       >
         <Text style={[styles.title, { color: colors.textPrimary }]}>Settings</Text>
 
-        {/* ── Section: Appearance (design.md Section 33) ─────────────────── */}
+        {/* ── User Profile Card (design.md Section 19) ────────────────────── */}
         <View
           style={[
             styles.card,
             {
               backgroundColor: isDark ? colors.surface : colors.surface,
               borderColor: colors.border,
-              borderRadius: radius.md,
+              borderRadius: radius.xl,
+              shadowColor: isDark ? "#000000" : colors.cardShadow,
+            },
+          ]}
+        >
+          <View style={styles.profileRow}>
+            <View
+              style={[
+                styles.avatarCircle,
+                {
+                  backgroundColor: isDark ? `${colors.accent}20` : `${colors.accent}14`,
+                  borderColor: `${colors.accent}40`,
+                },
+              ]}
+            >
+              <UserIcon size={22} color={colors.accent} />
+            </View>
+            <View style={styles.profileInfo}>
+              <Text style={[styles.profileName, { color: colors.textPrimary }]}>
+                {user?.full_name || "Security Administrator"}
+              </Text>
+              <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>
+                {user?.email || "dhwani.ai@security.local"}
+              </Text>
+            </View>
+            <View
+              style={[
+                styles.verifiedPill,
+                {
+                  backgroundColor: `${colors.success}18`,
+                  borderColor: `${colors.success}44`,
+                },
+              ]}
+            >
+              <Text style={[styles.verifiedText, { color: colors.success }]}>
+                ENROLLED
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* ── Section: Appearance (design.md Section 19) ─────────────────── */}
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: isDark ? colors.surface : colors.surface,
+              borderColor: colors.border,
+              borderRadius: radius.xl,
+              shadowColor: isDark ? "#000000" : colors.cardShadow,
             },
           ]}
         >
           <Text style={[styles.cardHeader, { color: colors.textSecondary }]}>
-            APPEARANCE
+            APPEARANCE & THEME
           </Text>
           <Text style={[styles.cardSubtext, { color: colors.textMuted }]}>
-            Select interface theme mode. Changes apply immediately across all screens.
+            Select Light mode, Dark mode, or follow system default.
           </Text>
           <ThemeToggle />
         </View>
@@ -146,7 +204,8 @@ export const SettingsScreen: React.FC = () => {
             {
               backgroundColor: isDark ? colors.surface : colors.surface,
               borderColor: colors.border,
-              borderRadius: radius.md,
+              borderRadius: radius.xl,
+              shadowColor: isDark ? "#000000" : colors.cardShadow,
             },
           ]}
         >
@@ -195,7 +254,8 @@ export const SettingsScreen: React.FC = () => {
             {
               backgroundColor: isDark ? colors.surface : colors.surface,
               borderColor: colors.border,
-              borderRadius: radius.md,
+              borderRadius: radius.xl,
+              shadowColor: isDark ? "#000000" : colors.cardShadow,
             },
           ]}
         >
@@ -244,7 +304,8 @@ export const SettingsScreen: React.FC = () => {
             {
               backgroundColor: isDark ? colors.surface : colors.surface,
               borderColor: colors.border,
-              borderRadius: radius.md,
+              borderRadius: radius.xl,
+              shadowColor: isDark ? "#000000" : colors.cardShadow,
             },
           ]}
         >
@@ -278,14 +339,14 @@ export const SettingsScreen: React.FC = () => {
                   { color: isRoleHeld ? colors.success : colors.warning },
                 ]}
               >
-                {isRoleHeld ? "Active" : "Disabled"}
+                {isRoleHeld ? "ACTIVE" : "NOT CONFIGURED"}
               </Text>
             </View>
           </View>
 
           {!isRoleHeld && (
             <TouchableOpacity
-              style={[styles.actionBtn, { backgroundColor: colors.accent }]}
+              style={[styles.actionBtn, { backgroundColor: colors.accent, borderRadius: radius.md }]}
               onPress={requestRole}
               disabled={isRoleLoading}
             >
@@ -301,12 +362,61 @@ export const SettingsScreen: React.FC = () => {
               {
                 backgroundColor: isDark ? colors.surfaceElevated : colors.surfaceElevated,
                 borderColor: colors.border,
+                borderRadius: radius.md,
               },
             ]}
             onPress={handleTestNotification}
           >
             <Text style={[styles.secondaryBtnText, { color: colors.textPrimary }]}>
               🔔 Test Security Alert Notification
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* ── Section: Platform & Integration APIs ─────────────────────────── */}
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: isDark ? colors.surface : colors.surface,
+              borderColor: colors.border,
+              borderRadius: radius.xl,
+              shadowColor: isDark ? "#000000" : colors.cardShadow,
+            },
+          ]}
+        >
+          <Text style={[styles.cardHeader, { color: colors.textSecondary }]}>
+            PLATFORM & INTEGRATION APIS
+          </Text>
+
+          <View style={styles.integrationCardRow}>
+            <View style={[styles.integrationIconBox, { backgroundColor: `${colors.accent}18` }]}>
+              <CodeIcon size={20} color={colors.accent} strokeWidth={2.2} />
+            </View>
+            <View style={styles.integrationTextCol}>
+              <Text style={[styles.integrationTitle, { color: colors.textPrimary }]}>
+                Dhwani AI Integration Hub
+              </Text>
+              <Text style={[styles.integrationSubtitle, { color: colors.textSecondary }]}>
+                REST, WebSocket, SDK, SIP, Banking & Contact Center APIs
+              </Text>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={[
+              styles.integrationBtn,
+              {
+                backgroundColor: colors.accent,
+                borderRadius: radius.md,
+              },
+            ]}
+            onPress={() => navigation.navigate("IntegrationHub")}
+            accessibilityRole="button"
+            accessibilityLabel="Open Integration Hub"
+          >
+            <Text style={styles.integrationBtnText}>
+              OPEN INTEGRATION HUB & CONSOLE →
             </Text>
           </TouchableOpacity>
         </View>
@@ -318,7 +428,8 @@ export const SettingsScreen: React.FC = () => {
             {
               backgroundColor: isDark ? colors.surface : colors.surface,
               borderColor: colors.border,
-              borderRadius: radius.md,
+              borderRadius: radius.xl,
+              shadowColor: isDark ? "#000000" : colors.cardShadow,
             },
           ]}
         >
@@ -374,6 +485,7 @@ export const SettingsScreen: React.FC = () => {
                     backgroundColor: isDark ? colors.surfaceElevated : colors.surfaceElevated,
                     color: colors.textPrimary,
                     borderColor: colors.border,
+                    borderRadius: radius.sm,
                   },
                 ]}
                 value={wifiHost}
@@ -392,6 +504,7 @@ export const SettingsScreen: React.FC = () => {
                     backgroundColor: isDark ? colors.surfaceElevated : colors.surfaceElevated,
                     color: colors.textPrimary,
                     borderColor: colors.border,
+                    borderRadius: radius.sm,
                   },
                 ]}
                 value={wifiPort}
@@ -418,6 +531,7 @@ export const SettingsScreen: React.FC = () => {
               {
                 backgroundColor: isDark ? colors.surfaceElevated : colors.surfaceElevated,
                 borderColor: colors.border,
+                borderRadius: radius.md,
               },
             ]}
             onPress={testConnection}
@@ -457,7 +571,8 @@ export const SettingsScreen: React.FC = () => {
             {
               backgroundColor: isDark ? colors.surface : colors.surface,
               borderColor: colors.border,
-              borderRadius: radius.md,
+              borderRadius: radius.xl,
+              shadowColor: isDark ? "#000000" : colors.cardShadow,
             },
           ]}
         >
@@ -477,7 +592,10 @@ export const SettingsScreen: React.FC = () => {
             </Text>
           </View>
           <Text style={[styles.aboutTagline, { color: colors.textSecondary }]}>
-            Secure Calls. Trusted People. Built for a Safer India.
+            Real-Time Voice Protection · Detect. Verify. Prevent.
+          </Text>
+          <Text style={[styles.aboutIndia, { color: colors.accent }]}>
+            🇮🇳 Built for a Safer India · SIH 2026
           </Text>
 
           <TouchableOpacity
@@ -486,7 +604,7 @@ export const SettingsScreen: React.FC = () => {
               {
                 backgroundColor: `${colors.danger}18`,
                 borderColor: `${colors.danger}44`,
-                borderRadius: radius.sm,
+                borderRadius: radius.md,
               },
             ]}
             onPress={logout}
@@ -498,7 +616,7 @@ export const SettingsScreen: React.FC = () => {
         </View>
       </ScrollView>
 
-      {/* Persistent Bottom Navigation (Section 28) */}
+      {/* Persistent Bottom Navigation */}
       <BottomNavigation activeTab="settings" />
     </View>
   );
@@ -522,15 +640,54 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 16,
     gap: 12,
+    elevation: 3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
   },
   cardHeader: {
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 0.8,
   },
   cardSubtext: {
     fontSize: 12,
     marginTop: -4,
+  },
+  profileRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  avatarCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  profileInfo: {
+    flex: 1,
+  },
+  profileName: {
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  profileEmail: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  verifiedPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 99,
+    borderWidth: 1,
+  },
+  verifiedText: {
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 0.5,
   },
   settingRow: {
     flexDirection: "row",
@@ -566,14 +723,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   statusBadgeText: {
-    fontSize: 11,
-    fontWeight: "700",
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 0.5,
   },
   actionBtn: {
     paddingVertical: 12,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 8,
   },
   actionBtnText: {
     color: "#FFFFFF",
@@ -585,7 +742,6 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 8,
   },
   secondaryBtnText: {
     fontSize: 13,
@@ -617,7 +773,6 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderRadius: 6,
     paddingHorizontal: 12,
     paddingVertical: 8,
     fontSize: 13,
@@ -652,6 +807,11 @@ const styles = StyleSheet.create({
   aboutTagline: {
     fontSize: 12,
   },
+  aboutIndia: {
+    fontSize: 11,
+    fontWeight: "600",
+    marginTop: -4,
+  },
   logoutBtn: {
     borderWidth: 1,
     paddingVertical: 11,
@@ -662,5 +822,40 @@ const styles = StyleSheet.create({
   logoutText: {
     fontSize: 13,
     fontWeight: "700",
+  },
+  integrationCardRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  integrationIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+  },
+  integrationTextCol: {
+    flex: 1,
+  },
+  integrationTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  integrationSubtitle: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+  integrationBtn: {
+    paddingVertical: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  integrationBtnText: {
+    color: "#FFFFFF",
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.5,
   },
 });

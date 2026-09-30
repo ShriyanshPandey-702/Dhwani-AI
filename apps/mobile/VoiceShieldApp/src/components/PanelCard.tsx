@@ -7,11 +7,20 @@ interface Props {
   meta?: string;
   children: React.ReactNode;
   accent?: string;
+  /** Icon shown before the title */
+  icon?: React.ReactNode;
 }
 
-/** Shared chrome for the evidence panels so they read as one system. */
-export const PanelCard: React.FC<Props> = ({ title, meta, children, accent }) => {
-  const { colors, radius, spacing, isDark } = useTheme();
+/**
+ * Glassmorphic panel card — shared chrome for all evidence panels.
+ * Dark mode: subtle surface elevation + tinted border.
+ * Accent: coloured left-stripe + border tint when a threat is active.
+ */
+export const PanelCard: React.FC<Props> = ({ title, meta, children, accent, icon }) => {
+  const { colors, radius, isDark } = useTheme();
+
+  const borderColor = accent ? `${accent}50` : colors.border;
+  const stripeColor = accent ?? colors.accent;
 
   return (
     <View
@@ -19,17 +28,68 @@ export const PanelCard: React.FC<Props> = ({ title, meta, children, accent }) =>
         styles.card,
         {
           backgroundColor: isDark ? colors.surface : colors.surface,
-          borderColor: accent ? `${accent}55` : colors.border,
-          borderRadius: radius.md,
-          shadowColor: colors.cardShadow,
+          borderColor,
+          borderRadius: radius.lg,
         },
       ]}
     >
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.textSecondary }]}>{title}</Text>
-        {!!meta && <Text style={[styles.meta, { color: colors.textMuted }]}>{meta}</Text>}
+      {/* Coloured left accent stripe */}
+      <View
+        style={[
+          styles.stripe,
+          {
+            backgroundColor: stripeColor,
+            borderTopLeftRadius: radius.lg,
+            borderBottomLeftRadius: radius.lg,
+          },
+        ]}
+      />
+
+      <View style={styles.inner}>
+        {/* Header row */}
+        <View style={styles.header}>
+          <View style={styles.titleRow}>
+            {typeof icon === "string" ? (
+              <Text style={styles.icon}>{icon}</Text>
+            ) : (
+              icon
+            )}
+            <Text
+              style={[
+                styles.title,
+                { color: accent ? accent : colors.textSecondary },
+              ]}
+            >
+              {title}
+            </Text>
+          </View>
+          {!!meta && (
+            <View
+              style={[
+                styles.metaBadge,
+                {
+                  backgroundColor: accent
+                    ? `${accent}20`
+                    : `${colors.accent}18`,
+                  borderColor: accent ? `${accent}40` : `${colors.accent}30`,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.meta,
+                  { color: accent ? accent : colors.accent },
+                ]}
+              >
+                {meta}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* Body */}
+        <View style={styles.body}>{children}</View>
       </View>
-      <View style={styles.body}>{children}</View>
     </View>
   );
 };
@@ -37,29 +97,59 @@ export const PanelCard: React.FC<Props> = ({ title, meta, children, accent }) =>
 const styles = StyleSheet.create({
   card: {
     borderWidth: 1,
-    padding: 16,
-    gap: 12,
-    marginVertical: 4,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
+    marginVertical: 5,
+    flexDirection: "row",
+    overflow: "hidden",
+    // shadow
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  stripe: {
+    width: 4,
+    alignSelf: "stretch",
+  },
+  inner: {
+    flex: 1,
+    padding: 14,
+    gap: 10,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    flex: 1,
+  },
+  icon: {
+    fontSize: 13,
+  },
   title: {
     fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 1.2,
+    fontWeight: "800",
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+    flexShrink: 1,
+  },
+  metaBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 99,
+    borderWidth: 1,
+    marginLeft: 8,
   },
   meta: {
     fontSize: 10,
-    fontWeight: "500",
+    fontWeight: "700",
+    letterSpacing: 0.3,
   },
   body: {
-    gap: 8,
+    gap: 6,
   },
 });

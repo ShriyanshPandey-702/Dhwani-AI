@@ -12,6 +12,7 @@ export interface UseAudioCaptureReturn {
   permissionStatus: MicPermissionState;
   error: string | null;
   metrics: AudioCaptureMetrics;
+  audioLevel: number;
   requestPermission: () => Promise<boolean>;
   start: () => Promise<boolean>;
   stop: () => Promise<void>;
@@ -28,12 +29,27 @@ export const useAudioCapture = (autoStart: boolean = false): UseAudioCaptureRetu
   const [permissionStatus, setPermissionStatus] = useState<MicPermissionState>('undetermined');
   const [error, setError] = useState<string | null>(null);
   const [metrics, setMetrics] = useState<AudioCaptureMetrics>(audioCaptureService.getMetrics());
+  const [audioLevel, setAudioLevel] = useState<number>(0.0);
 
   const isMountedRef = useRef<boolean>(true);
+
+  // Subscribe to real-time audioLevel updates from native PCM chunks
+  useEffect(() => {
+    const unsub = audioCaptureService.onAudioLevel((lvl) => {
+      if (isMountedRef.current) {
+        setAudioLevel(lvl);
+      }
+    });
+
+    return () => {
+      unsub();
+    };
+  }, []);
 
   // Poll metrics periodically while recording for UI telemetry
   useEffect(() => {
     if (!isRecording) {
+      setAudioLevel(0.0);
       return;
     }
 
@@ -168,6 +184,7 @@ export const useAudioCapture = (autoStart: boolean = false): UseAudioCaptureRetu
     permissionStatus,
     error,
     metrics,
+    audioLevel,
     requestPermission,
     start,
     stop,

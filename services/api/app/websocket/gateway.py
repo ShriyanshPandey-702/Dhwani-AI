@@ -38,6 +38,7 @@ from app.simulation.mock_audio import generate_frame
 from app.websocket import events as ev
 from app.websocket.manager import manager
 from app.websocket.stt_queue import STTJob, STTQueue
+from app.ml.stt.deepgram_stream import DeepgramLiveStreamer
 from app.websocket.pipeline import (
     MODEL_VERSIONS,
     analyze_window,
@@ -57,6 +58,10 @@ log = structlog.get_logger()
 router = APIRouter()
 
 RECEIVE_TIMEOUT_S = 60.0
+
+# In-memory registry of active Deepgram live streaming sessions
+_deepgram_streamers: Dict[str, DeepgramLiveStreamer] = {}
+
 
 # Ingest limits (§5, §25). 250 ms of 16 kHz int16 mono is 8000 bytes, so this
 # accepts chunks well beyond the largest documented size while still bounding
@@ -156,6 +161,83 @@ async def websocket_endpoint(
         session_id, pipeline_mode=state.pipeline_mode, model_versions=MODEL_VERSIONS
     ))
 
+    # Initialize real-time Deepgram live streaming if configured
+    if settings.DEEPGRAM_API_KEY and settings.STT_PROVIDER == "deepgram":
+        async def _on_deepgram_live_transcript(
+            transcript_text: str,
+            is_final: bool,
+            speech_final: bool,
+            confidence: float,
+        ) -> None:
+            st = manager.get_state(session_id)
+            if st is None or st.closed:
+                return
+
+            if is_final or speech_final:
+                accumulated = st.append_transcript(transcript_text)
+                ctx = _ctx.classify(
+                    session_id,
+                    accumulated,
+                    transcript_is_mock=False,
+                    transcript_model="deepgram-nova-2",
+                    transcript_pipeline_mode="real_ml",
+                    transcript_language="en",
+                    transcript_confidence=confidence,
+                )
+                if ctx is not None:
+                    ctx_dict = ctx.to_dict()
+                    ctx_dict["transcript"] = accumulated
+                    ctx_dict["latest_segment"] = transcript_text
+                    st.last_context = ctx_dict
+                    st.consequence = ctx.consequence
+
+                    update, verdict = fuse_and_decide(st, st.pipeline_mode)
+                    outgoing = [update] + list(_context_timeline(st)) + list(decision_tail(st, verdict))
+                    outgoing.append(
+                        ev.transcript_update(
+                            session_id,
+                            transcript=accumulated,
+                            is_interim=False,
+                            is_final=True,
+                            language="en",
+                            transcript_model="deepgram-nova-2",
+                        )
+                    )
+                    await manager.publish_many(session_id, outgoing)
+                    await persist_snapshot(session_id, update)
+                else:
+                    await manager.publish(
+                        session_id,
+                        ev.transcript_update(
+                            session_id,
+                            transcript=accumulated,
+                            is_interim=False,
+                            is_final=True,
+                            language="en",
+                            transcript_model="deepgram-nova-2",
+                        ),
+                    )
+            else:
+                base_acc = st.last_context.get("transcript", "") if st.last_context else ""
+                display_text = f"{base_acc} {transcript_text}".strip() if base_acc else transcript_text
+                await manager.publish(
+                    session_id,
+                    ev.transcript_update(
+                        session_id,
+                        transcript=display_text,
+                        is_interim=True,
+                        is_final=False,
+                        language="en",
+                        transcript_model="deepgram-nova-2",
+                    ),
+                )
+
+        deepgram_streamer = DeepgramLiveStreamer(session_id, _on_deepgram_live_transcript)
+        started = await deepgram_streamer.start()
+        if started:
+            _deepgram_streamers[session_id] = deepgram_streamer
+
+
     try:
         while True:
             raw = await asyncio.wait_for(
@@ -239,6 +321,10 @@ async def websocket_endpoint(
                         continue
                     state.last_audio_seq = raw_seq
 
+                # Feed real-time streaming STT (Deepgram Nova-2) immediately
+                if session_id in _deepgram_streamers and _deepgram_streamers[session_id].is_active:
+                    _deepgram_streamers[session_id].push_audio(pcm_bytes)
+
                 # Real client audio runs the identical pipeline with bounded admission backpressure.
                 if state.pending_audio_tasks >= settings.MAX_PENDING_AUDIO_CHUNKS:
                     state.dropped_audio_chunks += 1
@@ -290,7 +376,7 @@ async def _apply_transcript(job: STTJob, segment) -> None:
     the client can never move backwards.
     """
     state = manager.get_state(job.session_id)
-    if state is None or stt_queue.is_closed(job.session_id):
+    if state is None or state.closed or stt_queue.is_closed(job.session_id):
         stt_queue.metrics.dropped_session_gone += 1
         return
 
@@ -335,6 +421,8 @@ async def _apply_transcript(job: STTJob, segment) -> None:
     # Re-decide with the same Risk Engine and the same policy — only the
     # evidence available to it has changed.
     update, verdict = fuse_and_decide(state, state.pipeline_mode)
+    if state.closed:
+        return
     outgoing = [update] + list(_context_timeline(state)) + list(decision_tail(state, verdict))
     await manager.publish_many(job.session_id, outgoing)
     await persist_snapshot(job.session_id, update)
@@ -426,6 +514,9 @@ async def _process(session_id: str, pcm_bytes: bytes, pipeline_mode: str) -> Non
                     stt_submit=sink,
                 )
 
+            if state.closed:
+                return
+
             await manager.publish_many(session_id, outgoing)
             await _persist_snapshot(session_id, state, outgoing)
     except asyncio.CancelledError:
@@ -485,9 +576,7 @@ async def _demo_loop(session_id: str) -> None:
 # ── Teardown ──────────────────────────────────────────────────────────────────
 
 async def _teardown(session_id: str, user_id: str) -> None:
-    # Refuse further transcription work and discard anything still in flight,
-    # so a late transcript cannot resurrect a completed session (§25).
-    stt_queue.close_session(session_id)
+    # 1. Immediately mark state as closed and cancel active tasks
     state = manager.get_state(session_id)
     if state:
         state.closed = True
@@ -496,20 +585,39 @@ async def _teardown(session_id: str, user_id: str) -> None:
                 task.cancel()
         state.active_tasks.clear()
 
+    # 2. Refuse further transcription work and discard anything still in flight
+    stt_queue.close_session(session_id)
+
+    # 3. Stop Deepgram live streaming if active with short timeout guard
+    streamer = _deepgram_streamers.pop(session_id, None)
+    if streamer is not None:
+        try:
+            await asyncio.wait_for(streamer.stop(), timeout=0.3)
+        except Exception:
+            pass
+
+    # 4. Save incident asynchronously
     incident_id: Optional[str] = None
-    if state:
-        incident_id = await _save_incident(session_id, user_id, state)
+    if state and user_id:
+        try:
+            incident_id = await _save_incident(session_id, user_id, state)
+        except Exception as e:
+            log.warning("ws.incident_save_failed", session_id=session_id, error=str(e))
 
+    # 5. Publish session ended event
     if state:
-        await manager.publish(session_id, ev.session_ended(
-            session_id,
-            reason="disconnected",
-            peak_risk_score=state.peak_risk_score,
-            peak_risk_state=state.peak_risk_state,
-            incident_id=incident_id,
-        ))
+        try:
+            await manager.publish(session_id, ev.session_ended(
+                session_id,
+                reason="disconnected",
+                peak_risk_score=state.peak_risk_score,
+                peak_risk_state=state.peak_risk_state,
+                incident_id=incident_id,
+            ))
+        except Exception:
+            pass
 
-    # Clear all per-session ML state so the next call starts clean.
+    # 6. Clear all per-session ML state so the next call starts clean
     speaker_identity.clear(session_id)
     transcriber.reset(session_id)
     context_classifier.reset(session_id)
