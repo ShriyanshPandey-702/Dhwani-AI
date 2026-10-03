@@ -16,6 +16,7 @@ import { useRiskStore } from "../store/riskStore";
 import { useSessionStore } from "../store/sessionStore";
 import { useRiskStream } from "../hooks/useRiskStream";
 import { useAudioCapture } from "../hooks/useAudioCapture";
+import { useFileAudioCapture } from "../hooks/useFileAudioCapture";
 import { wsService } from "../services/websocket/wsService";
 
 import { RiskOrb } from "../components/RiskOrb";
@@ -33,6 +34,8 @@ import { PhoneIcon, MicIcon, DeviceIcon, UserIcon } from "../components/Icons";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { notificationService } from "../services/notification/notificationService";
 
+import { LIVE_DEMO_MODE } from "../utils/demoLiveEngine";
+import { useLiveDemoPlayback } from "../hooks/useLiveDemoPlayback";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Route = RouteProp<RootStackParamList, "Call">;
@@ -49,7 +52,8 @@ export const CallScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const { colors, radius, isDark } = useTheme();
 
-  const { sessionId, mode = "live" } = route.params;
+  const { sessionId } = route.params;
+  const mode: "mock" | "live" | "recording" = route.params.mode ?? "live";
   const routeParams = route.params as any;
   const source = routeParams?.source;
   const callerNumber = routeParams?.callerNumber;
@@ -78,34 +82,63 @@ export const CallScreen: React.FC = () => {
   const dismissAlert = useRiskStore((s) => s.dismissAlert);
   const reset = useRiskStore((s) => s.reset);
 
+  const captureMode = mode as string;
+  const isDemoMode: boolean = Boolean(LIVE_DEMO_MODE || captureMode === "recording" || captureMode === "mock");
+  const demo = useLiveDemoPlayback(isDemoMode);
+
   const [isEnding, setIsEnding] = useState(false);
   const isEndingRef = useRef(false);
 
   const {
     start: startMicCapture,
     stop: stopMicCapture,
-    audioLevel,
+    audioLevel: micAudioLevel,
   } = useAudioCapture(false);
+
+  // ── File-based recording capture (SIH recording mode)
+  // Plays WAV assets through speaker + streams PCM to existing pipeline.
+  // Used when mode === 'recording'. Does NOT start the microphone.
+  const {
+    start: startFileCapture,
+    stop: stopFileCapture,
+    audioLevel: fileAudioLevel,
+  } = useFileAudioCapture();
+
+  // The waveform reacts to actual audio — demo audio in demo mode, mic in live mode, file in recording mode
+  const audioLevel = isDemoMode
+    ? demo.waveformState.rms
+    : captureMode === "recording"
+    ? fileAudioLevel
+    : micAudioLevel;
 
   useRiskStream(sessionId);
 
   useEffect(() => {
-    if (sessionStatus === "ended" && mode === "live") {
-      stopMicCapture().catch(() => {});
+    if (sessionStatus === "ended" && !isDemoMode && (captureMode === "live" || captureMode === "recording")) {
+      if (captureMode === "live") stopMicCapture().catch(() => {});
+      if (captureMode === "recording") stopFileCapture().catch(() => {});
     }
-  }, [sessionStatus, mode, stopMicCapture]);
+  }, [sessionStatus, captureMode, stopMicCapture, stopFileCapture, isDemoMode]);
 
   useEffect(() => {
+    if (isDemoMode) return; // In demo mode, useLiveDemoPlayback handles playback & simulation
+
     let cancelled = false;
     reset();
 
     wsService
       .connect(sessionId)
       .then(() => {
-        if (!cancelled && mode === "mock") {
+        if (!cancelled && captureMode === "mock") {
           wsService.startDemo();
-        } else if (!cancelled && mode === "live") {
+        } else if (!cancelled && captureMode === "live") {
+          // Normal microphone analysis — unchanged
           startMicCapture();
+          notificationService.notifyMicAnalysisStarted().catch(() => {});
+        } else if (!cancelled && captureMode === "recording") {
+          // SIH recording: stream WAV files through the existing audio pipeline
+          // The microphone is NOT started — file audio is the sole source
+          startFileCapture();
           notificationService.notifyMicAnalysisStarted().catch(() => {});
         }
       })
@@ -113,40 +146,40 @@ export const CallScreen: React.FC = () => {
 
     return () => {
       cancelled = true;
-      if (mode === "live") {
-        stopMicCapture().catch(() => {});
-      }
+      if (captureMode === "live") stopMicCapture().catch(() => {});
+      if (captureMode === "recording") stopFileCapture().catch(() => {});
       notificationService.reset();
       wsService.disconnect();
       stopSession(sessionId).catch(() => {});
       reset();
     };
-  }, [sessionId, mode, reset, startMicCapture, stopMicCapture, stopSession]);
-
-  useEffect(() => {
-    if (sessionStatus === "monitoring") {
-      notificationService
-        .notifyRiskTransition(riskState, riskScore, decision, recommendedAction)
-        .catch(() => {});
-    }
-  }, [sessionStatus, riskState, riskScore, decision, recommendedAction]);
+  }, [sessionId, captureMode, reset, startMicCapture, stopMicCapture, startFileCapture, stopFileCapture, stopSession, isDemoMode]);
 
   const handleEndSession = useCallback(() => {
     if (isEndingRef.current) return;
     isEndingRef.current = true;
     setIsEnding(true);
 
-    // 1. Stop native microphone capture immediately
-    if (mode === "live") {
-      stopMicCapture().catch(() => {});
+    if (isDemoMode) {
+      demo.stop().catch(() => {});
+    } else {
+      // 1. Stop native microphone / file capture immediately
+      if (mode === "live") {
+        stopMicCapture().catch(() => {});
+      } else if (mode === "recording") {
+        stopFileCapture().catch(() => {});
+      }
+
+      // 2. Disconnect WebSocket cleanly and immediately
+      wsService.disconnect();
+
+      // 3. Reset notifications & local risk store immediately
+      notificationService.reset();
+      reset();
+
+      // 5. Fire-and-forget backend session stop asynchronously in the background
+      stopSession(sessionId).catch(() => {});
     }
-
-    // 2. Disconnect WebSocket cleanly and immediately
-    wsService.disconnect();
-
-    // 3. Reset notifications & local risk store immediately
-    notificationService.reset();
-    reset();
 
     // 4. Immediately transition the mobile UI out of the active/loading state (<200ms)
     if (navigation.canGoBack()) {
@@ -154,12 +187,40 @@ export const CallScreen: React.FC = () => {
     } else {
       navigation.navigate("Home");
     }
-
-    // 5. Fire-and-forget backend session stop asynchronously in the background
-    stopSession(sessionId).catch(() => {});
-  }, [sessionId, mode, stopMicCapture, stopSession, reset, navigation]);
+  }, [sessionId, mode, stopMicCapture, stopFileCapture, stopSession, reset, navigation, isDemoMode, demo]);
 
   const resolveEvidenceStatus = () => {
+    if (isDemoMode) {
+      const banner = demo.multimodalState.warningBanner;
+      const bgMap = {
+        safe: `${colors.success}14`,
+        info: `${colors.accent}14`,
+        warning: `${colors.warning}18`,
+        critical: `${colors.critical || colors.danger}18`,
+      };
+      const borderMap = {
+        safe: `${colors.success}44`,
+        info: `${colors.accent}44`,
+        warning: `${colors.warning}55`,
+        critical: `${colors.critical || colors.danger}55`,
+      };
+      const textMap = {
+        safe: colors.success,
+        info: colors.accent,
+        warning: colors.warning,
+        critical: colors.critical || colors.danger,
+      };
+
+      return {
+        message: banner.message,
+        subMessage: banner.subMessage,
+        icon: banner.icon,
+        bg: bgMap[banner.severity],
+        border: borderMap[banner.severity],
+        textColor: textMap[banner.severity],
+      };
+    }
+
     if (sessionStatus !== "monitoring") {
       return {
         message: "Connecting audio stream...",
@@ -294,9 +355,54 @@ export const CallScreen: React.FC = () => {
     };
   };
 
+  const activeAuthenticity = isDemoMode ? (demo.multimodalState.authenticity as any) : authenticity;
+  const activeIdentity = isDemoMode ? (demo.multimodalState.identity as any) : identity;
+  const activeContext = isDemoMode ? (demo.multimodalState.context as any) : context;
+  const activeDecision = isDemoMode ? demo.multimodalState.decision : decision;
+  const activeDecisionReasons = isDemoMode ? demo.multimodalState.decisionReasons : decisionReasons;
+  const activeRecommendedAction = isDemoMode ? demo.multimodalState.recommendedAction : recommendedAction;
+  const activeEvidenceConfidence = isDemoMode ? demo.multimodalState.evidenceConfidence : evidenceConfidence;
+  const activeChallengeState = isDemoMode ? demo.multimodalState.challengeState : challengeState;
+  const activeVerificationState = isDemoMode ? demo.multimodalState.verificationState : verificationState;
+  const activeEvents = isDemoMode ? demo.multimodalState.detectedEvents : detectedEvents;
+
+  const currentRiskScore = isDemoMode ? demo.displayedScore : riskScore;
+  const currentRiskState = isDemoMode ? demo.riskState : riskState;
+  const isElevated = currentRiskState === "high" || currentRiskState === "critical";
+
   const evidenceStatus = resolveEvidenceStatus();
   const latestAlert = alerts[0];
-  const isElevated = riskState === "high" || riskState === "critical";
+
+  useEffect(() => {
+    if (isDemoMode) {
+      if (demo.playbackStatus === "playing" || demo.playbackStatus === "ended") {
+        notificationService
+          .notifyRiskTransition(
+            currentRiskState,
+            currentRiskScore,
+            activeDecision,
+            activeRecommendedAction
+          )
+          .catch(() => {});
+      }
+    } else if (sessionStatus === "monitoring") {
+      notificationService
+        .notifyRiskTransition(riskState, riskScore, decision, recommendedAction)
+        .catch(() => {});
+    }
+  }, [
+    isDemoMode,
+    demo.playbackStatus,
+    currentRiskState,
+    currentRiskScore,
+    activeDecision,
+    activeRecommendedAction,
+    sessionStatus,
+    riskState,
+    riskScore,
+    decision,
+    recommendedAction,
+  ]);
 
   return (
     <View
@@ -331,7 +437,7 @@ export const CallScreen: React.FC = () => {
 
         <View style={styles.headerTitleWrap}>
           <View style={styles.headerTitleRow}>
-            {sessionStatus === "monitoring" && (
+            {(isDemoMode ? (demo.playbackStatus === "playing" || demo.playbackStatus === "ended") : sessionStatus === "monitoring") && (
               <View style={[styles.liveIndicator, { backgroundColor: colors.success }]} />
             )}
             <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
@@ -339,7 +445,11 @@ export const CallScreen: React.FC = () => {
             </Text>
           </View>
           <Text style={[styles.headerSubtitle, { color: colors.accent }]}>
-            {sessionStatus === "monitoring" ? "● Active Monitoring" : "○ Connecting…"}
+            {isDemoMode
+              ? "● Active Monitoring"
+              : sessionStatus === "monitoring"
+              ? "● Active Monitoring"
+              : "○ Connecting…"}
           </Text>
         </View>
 
@@ -372,7 +482,7 @@ export const CallScreen: React.FC = () => {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <PipelineModeBanner mode={pipelineMode} />
+        {!isDemoMode && <PipelineModeBanner mode={pipelineMode} />}
 
         {/* ── Caller & Channel Information ───── */}
         <View
@@ -401,26 +511,20 @@ export const CallScreen: React.FC = () => {
             >
               {source === "voip" || (mode as string) === "voip" || source === "asterisk" ? (
                 <PhoneIcon size={20} color={colors.accent} />
-              ) : mode === "live" ? (
-                <MicIcon size={20} color={colors.accent} />
               ) : (
-                <DeviceIcon size={20} color={colors.accent} />
+                <MicIcon size={20} color={colors.accent} />
               )}
             </View>
             <View style={styles.callerInfo}>
               <Text style={[styles.callerPhone, { color: colors.textPrimary }]}>
                 {source === "voip" || (mode as string) === "voip" || source === "asterisk"
                   ? callerNumber || "SIP / Asterisk Trunk"
-                  : mode === "live"
-                  ? "Device Microphone"
-                  : "Simulated Caller"}
+                  : "Device Microphone"}
               </Text>
               <Text style={[styles.callerName, { color: colors.textSecondary }]}>
                 {source === "voip" || (mode as string) === "voip" || source === "asterisk"
                   ? callerName || "Live VoIP Caller"
-                  : mode === "live"
-                  ? "Acoustic Speech Stream"
-                  : "Unknown Caller"}
+                  : "Acoustic Speech Stream"}
               </Text>
             </View>
 
@@ -437,9 +541,7 @@ export const CallScreen: React.FC = () => {
               <Text style={[styles.sourceText, { color: colors.accent }]}>
                 {source === "voip" || (mode as string) === "voip" || source === "asterisk"
                   ? "VOIP"
-                  : mode === "live"
-                  ? "MIC"
-                  : "MOCK"}
+                  : "MIC"}
               </Text>
             </View>
           </View>
@@ -447,13 +549,13 @@ export const CallScreen: React.FC = () => {
 
         {/* ── Central Voice Risk Orb (Sections 13, 14, 20) ─────────────────── */}
         <RiskOrb
-          score={riskScore}
-          state={riskState}
-          isActive={sessionStatus === "monitoring"}
-          trend={riskTrend}
+          score={currentRiskScore}
+          state={currentRiskState}
+          isActive={isDemoMode ? (demo.playbackStatus === "playing" || demo.playbackStatus === "paused") : sessionStatus === "monitoring"}
+          trend={isDemoMode ? demo.riskTrend : riskTrend}
           size={200}
-          audioLevel={mode === "live" ? audioLevel : (audioActive ? 0.35 : 0.05)}
-          sublabel="LIVE RISK"
+          audioLevel={isDemoMode ? demo.waveformState.rms : audioLevel}
+          sublabel={isDemoMode ? demo.sublabel : "LIVE RISK"}
         />
 
         {/* ── Real-Time Audio-Reactive Waveform ────────────────────────────── */}
@@ -468,15 +570,16 @@ export const CallScreen: React.FC = () => {
           ]}
         >
           <LiveAudioWaveform
-            isActive={sessionStatus === "monitoring"}
-            audioLevel={mode === "live" ? audioLevel : (audioActive ? 0.40 : 0.04)}
+            isActive={isDemoMode ? (demo.playbackStatus === "playing" || demo.playbackStatus === "paused") : sessionStatus === "monitoring"}
+            audioLevel={isDemoMode ? demo.waveformState.rms : audioLevel}
+            bars={isDemoMode ? demo.waveformState.bars : undefined}
+            isSilence={isDemoMode ? demo.waveformState.isSilence : false}
             height={44}
             barCount={36}
           />
         </View>
 
         {/* ── Sub-scores Row: Synthetic, Identity, Context ── */}
-
         <View
           style={[
             styles.subMetricsCard,
@@ -490,11 +593,11 @@ export const CallScreen: React.FC = () => {
         >
           {/* Synthetic Risk */}
           {(() => {
-            const hasAuth = authenticity && authenticity.confidence > 0;
+            const hasAuth = activeAuthenticity && activeAuthenticity.confidence > 0;
             const authColor = hasAuth
-              ? authenticity!.score >= 50
+              ? activeAuthenticity.score >= 50
                 ? colors.danger
-                : authenticity!.score >= 25
+                : activeAuthenticity.score >= 25
                 ? colors.warning
                 : colors.success
               : colors.textMuted;
@@ -505,7 +608,7 @@ export const CallScreen: React.FC = () => {
                   Synthetic
                 </Text>
                 <Text style={[styles.subMetricScore, { color: authColor }]}>
-                  {hasAuth ? `${authenticity!.score}%` : "—"}
+                  {hasAuth ? `${activeAuthenticity.score}%` : "—"}
                 </Text>
                 <View
                   style={[
@@ -514,7 +617,7 @@ export const CallScreen: React.FC = () => {
                   ]}
                 >
                   <Text style={[styles.subMetricBandText, { color: authColor }]}>
-                    {hasAuth ? authenticity!.acoustic_anomaly : "UNAVAILABLE"}
+                    {hasAuth ? activeAuthenticity.acoustic_anomaly : "UNAVAILABLE"}
                   </Text>
                 </View>
               </View>
@@ -526,14 +629,14 @@ export const CallScreen: React.FC = () => {
           {/* Identity */}
           {(() => {
             const hasId =
-              identity &&
-              identity.enrollment_status !== "NOT_ENROLLED" &&
-              identity.match_score !== null;
+              activeIdentity &&
+              activeIdentity.enrollment_status !== "NOT_ENROLLED" &&
+              activeIdentity.match_score !== null;
             const idColor = !hasId
               ? colors.textMuted
-              : identity!.match_score! >= 75
+              : activeIdentity.match_score >= 75
               ? colors.success
-              : identity!.match_score! >= 50
+              : activeIdentity.match_score >= 50
               ? colors.warning
               : colors.danger;
             return (
@@ -543,10 +646,10 @@ export const CallScreen: React.FC = () => {
                   Identity
                 </Text>
                 <Text style={[styles.subMetricScore, { color: idColor }]}>
-                  {identity?.enrollment_status === "NOT_ENROLLED"
+                  {activeIdentity?.enrollment_status === "NOT_ENROLLED"
                     ? "—"
                     : hasId
-                    ? `${identity!.match_score}%`
+                    ? `${activeIdentity.match_score}%`
                     : "—"}
                 </Text>
                 <View
@@ -556,9 +659,9 @@ export const CallScreen: React.FC = () => {
                   ]}
                 >
                   <Text style={[styles.subMetricBandText, { color: idColor }]}>
-                    {identity?.enrollment_status === "NOT_ENROLLED"
+                    {activeIdentity?.enrollment_status === "NOT_ENROLLED"
                       ? "NOT ENROLLED"
-                      : identity?.consistency?.toLowerCase() || "UNAVAILABLE"}
+                      : activeIdentity?.consistency?.toUpperCase() || "UNAVAILABLE"}
                   </Text>
                 </View>
               </View>
@@ -569,12 +672,14 @@ export const CallScreen: React.FC = () => {
 
           {/* Context Threat */}
           {(() => {
-            const hasCtx = context && context.transcript;
+            const hasCtx = isDemoMode
+              ? !demo.transcriptState.isSilence
+              : Boolean(activeContext && activeContext.transcript);
             const ctxColor = !hasCtx
               ? colors.textMuted
-              : context!.score >= 50
+              : activeContext.score >= 50
               ? colors.danger
-              : context!.score >= 25
+              : activeContext.score >= 25
               ? colors.warning
               : colors.success;
             return (
@@ -584,7 +689,7 @@ export const CallScreen: React.FC = () => {
                   Context
                 </Text>
                 <Text style={[styles.subMetricScore, { color: ctxColor }]}>
-                  {hasCtx ? `${context!.score}` : "—"}
+                  {hasCtx ? `${activeContext.score}` : "—"}
                 </Text>
                 <View
                   style={[
@@ -593,7 +698,7 @@ export const CallScreen: React.FC = () => {
                   ]}
                 >
                   <Text style={[styles.subMetricBandText, { color: ctxColor }]}>
-                    {hasCtx ? context!.consequence : "NO SPEECH"}
+                    {hasCtx ? activeContext.consequence.toUpperCase() : "NO SPEECH"}
                   </Text>
                 </View>
               </View>
@@ -624,7 +729,7 @@ export const CallScreen: React.FC = () => {
                 </Text>
               ) : null}
             </View>
-            {sessionStatus === "monitoring" && (
+            {(isDemoMode ? (demo.playbackStatus === "playing" || demo.playbackStatus === "ended") : sessionStatus === "monitoring") && (
               <View
                 style={[
                   styles.livePill,
@@ -648,7 +753,9 @@ export const CallScreen: React.FC = () => {
             styles.transcriptCard,
             {
               backgroundColor: isDark ? colors.surface : colors.surface,
-              borderColor: context?.transcript ? `${colors.accent}44` : colors.border,
+              borderColor: (isDemoMode ? !demo.transcriptState.isSilence : Boolean(activeContext?.transcript))
+                ? `${colors.accent}44`
+                : colors.border,
               borderRadius: radius.xl,
               shadowColor: isDark ? "#000000" : colors.cardShadow,
             },
@@ -658,13 +765,31 @@ export const CallScreen: React.FC = () => {
             <Text style={[styles.transcriptHeader, { color: colors.textSecondary }]}>
               💬 LIVE TRANSCRIPT
             </Text>
-            {context?.transcript_model && (
-              <Text style={[styles.transcriptEngine, { color: colors.textMuted }]}>
-                {context.transcript_model}
-              </Text>
-            )}
+            <Text style={[styles.transcriptEngine, { color: colors.textMuted }]}>
+              {isDemoMode ? demo.transcriptState.model : (activeContext?.transcript_model || "Deepgram Nova-2")}
+            </Text>
           </View>
-          {context?.transcript ? (
+          {isDemoMode ? (
+            demo.transcriptState.transcript && demo.transcriptState.transcript !== "No speech detected" ? (
+              <View
+                style={[
+                  styles.transcriptQuoteBlock,
+                  {
+                    backgroundColor: `${colors.accent}0D`,
+                    borderLeftColor: colors.accent,
+                  },
+                ]}
+              >
+                <Text style={[styles.transcriptContent, { color: colors.textPrimary }]}>
+                  {`"${demo.transcriptState.transcript}"`}
+                </Text>
+              </View>
+            ) : (
+              <Text style={[styles.transcriptContent, { color: colors.textMuted, fontStyle: "italic" }]}>
+                No speech detected
+              </Text>
+            )
+          ) : activeContext?.transcript ? (
             <View
               style={[
                 styles.transcriptQuoteBlock,
@@ -675,7 +800,7 @@ export const CallScreen: React.FC = () => {
               ]}
             >
               <Text style={[styles.transcriptContent, { color: colors.textPrimary }]}>
-                {`"${context.transcript}"`}
+                {`"${activeContext.transcript}"`}
               </Text>
             </View>
           ) : (
@@ -692,13 +817,11 @@ export const CallScreen: React.FC = () => {
               styles.controlBtn,
               {
                 backgroundColor:
-                  challengeState !== "idle"
+                  activeChallengeState !== "idle"
                     ? `${colors.accent}18`
-                    : isDark
-                    ? colors.surfaceElevated
                     : colors.surfaceElevated,
                 borderColor:
-                  challengeState !== "idle" ? `${colors.accent}50` : colors.border,
+                  activeChallengeState !== "idle" ? `${colors.accent}50` : colors.border,
                 borderRadius: radius.lg,
               },
             ]}
@@ -712,13 +835,13 @@ export const CallScreen: React.FC = () => {
                 styles.controlBtnText,
                 {
                   color:
-                    challengeState !== "idle" ? colors.accent : colors.textPrimary,
+                    activeChallengeState !== "idle" ? colors.accent : colors.textPrimary,
                 },
               ]}
             >
               Challenge
             </Text>
-            {challengeState !== "idle" && (
+            {activeChallengeState !== "idle" && (
               <View
                 style={[
                   styles.controlBtnBadge,
@@ -729,7 +852,7 @@ export const CallScreen: React.FC = () => {
                 ]}
               >
                 <Text style={[styles.controlBtnSub, { color: colors.accent }]}>
-                  {challengeState.toUpperCase()}
+                  {activeChallengeState.toUpperCase()}
                 </Text>
               </View>
             )}
@@ -740,13 +863,11 @@ export const CallScreen: React.FC = () => {
               styles.controlBtn,
               {
                 backgroundColor:
-                  verificationState !== "idle"
+                  activeVerificationState !== "idle"
                     ? `${colors.accentSecondary}18`
-                    : isDark
-                    ? colors.surfaceElevated
                     : colors.surfaceElevated,
                 borderColor:
-                  verificationState !== "idle"
+                  activeVerificationState !== "idle"
                     ? `${colors.accentSecondary}50`
                     : colors.border,
                 borderRadius: radius.lg,
@@ -762,7 +883,7 @@ export const CallScreen: React.FC = () => {
                 styles.controlBtnText,
                 {
                   color:
-                    verificationState !== "idle"
+                    activeVerificationState !== "idle"
                       ? colors.accentSecondary
                       : colors.textPrimary,
                 },
@@ -770,7 +891,7 @@ export const CallScreen: React.FC = () => {
             >
               Verify
             </Text>
-            {verificationState !== "idle" && (
+            {activeVerificationState !== "idle" && (
               <View
                 style={[
                   styles.controlBtnBadge,
@@ -786,7 +907,7 @@ export const CallScreen: React.FC = () => {
                     { color: colors.accentSecondary },
                   ]}
                 >
-                  {verificationState.toUpperCase()}
+                  {activeVerificationState.toUpperCase()}
                 </Text>
               </View>
             )}
@@ -795,45 +916,82 @@ export const CallScreen: React.FC = () => {
 
         {/* ── Security Decision Panel (design.md Section 21) ──────────────── */}
         <DecisionPanel
-          decision={decision}
-          reasons={decisionReasons}
-          recommendedAction={recommendedAction}
-          evidenceConfidence={evidenceConfidence}
+          decision={activeDecision}
+          reasons={activeDecisionReasons}
+          recommendedAction={activeRecommendedAction}
+          evidenceConfidence={activeEvidenceConfidence}
         />
 
         {/* ── Active Alert ────────────────────────────────────────────────── */}
-        {latestAlert && (
-          <View style={{ marginVertical: 6 }}>
-            <AlertCard
-              severity={SEVERITY_TO_CARD[latestAlert.severity] ?? "warning"}
-              title="Security Alert"
-              message={latestAlert.message}
-              recommendedAction={latestAlert.recommendedAction}
-            />
-            <TouchableOpacity
-              onPress={() => dismissAlert(latestAlert.id)}
-              style={{ alignSelf: "center", paddingVertical: 6 }}
-            >
-              <Text style={{ color: colors.textMuted, fontSize: 12 }}>Dismiss</Text>
-            </TouchableOpacity>
-          </View>
+        {isDemoMode ? (
+          currentRiskScore >= 25 && (
+            <View style={{ marginVertical: 6 }}>
+              <AlertCard
+                severity={
+                  currentRiskScore >= 85
+                    ? "critical"
+                    : currentRiskScore >= 60
+                    ? "error"
+                    : "warning"
+                }
+                title={
+                  currentRiskScore >= 85
+                    ? "Critical Security Threat"
+                    : currentRiskScore >= 60
+                    ? "High Risk Alert"
+                    : "Suspicious Activity"
+                }
+                message={
+                  currentRiskScore >= 85
+                    ? "Critical synthetic-voice risk detected"
+                    : currentRiskScore >= 60
+                    ? "High synthetic-voice risk detected"
+                    : "Suspicious voice activity detected"
+                }
+                recommendedAction={
+                  currentRiskScore >= 85
+                    ? "Do not share credentials or authorize transactions"
+                    : currentRiskScore >= 60
+                    ? "Synthetic speech signature identified — verify caller"
+                    : "Acoustic anomaly detected — continue with caution"
+                }
+              />
+            </View>
+          )
+        ) : (
+          latestAlert && (
+            <View style={{ marginVertical: 6 }}>
+              <AlertCard
+                severity={SEVERITY_TO_CARD[latestAlert.severity] ?? "warning"}
+                title="Security Alert"
+                message={latestAlert.message}
+                recommendedAction={latestAlert.recommendedAction}
+              />
+              <TouchableOpacity
+                onPress={() => dismissAlert(latestAlert.id)}
+                style={{ alignSelf: "center", paddingVertical: 6 }}
+              >
+                <Text style={{ color: colors.textMuted, fontSize: 12 }}>Dismiss</Text>
+              </TouchableOpacity>
+            </View>
+          )
         )}
 
         {/* ── 4 Persistent Evidence Panels (design.md Sections 14 & 22) ────── */}
-        <AuthenticityPanel authenticity={authenticity} />
-        <IdentityPanel identity={identity} />
+        <AuthenticityPanel authenticity={activeAuthenticity as any} />
+        <IdentityPanel identity={activeIdentity as any} />
         <ActiveLivenessPanel
-          challengeState={challengeState}
+          challengeState={activeChallengeState as any}
           challengeText={challengeText}
-          verificationState={verificationState}
-          audioActive={audioActive}
+          verificationState={activeVerificationState as any}
+          audioActive={isDemoMode ? !demo.waveformState.isSilence : audioActive}
         />
-        <ConsequencesPanel context={context} />
+        <ConsequencesPanel context={activeContext as any} />
 
         {/* ── Event Timeline ──────────────────────────────────────────────── */}
-        <EventTimeline events={detectedEvents} />
+        <EventTimeline events={activeEvents} />
 
-        {/* ── Technical Diagnostics Disclosure ────────────────────────────── */}
+        {/* ── Technical Diagnostics Disclosure ─────────────────────────── */}
         <View style={styles.disclosureBox}>
           <Text style={[styles.disclosureText, { color: colors.textMuted }]}>
             ℹ Dhwani AI analyses device microphone PCM audio. Raw cellular SIM media cannot be recorded on Android.
@@ -880,7 +1038,7 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 2,
   },
-  callerAccentBar: { height: 3, width: "100%" },
+  callerAccentBar: { height: 2, width: "100%" },
   callerRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -1007,4 +1165,25 @@ const styles = StyleSheet.create({
 
   disclosureBox: { paddingVertical: 6, paddingHorizontal: 2, marginTop: 4 },
   disclosureText: { fontSize: 10, lineHeight: 14 },
+
+  demoControlsWrap: {
+    gap: 8,
+    marginVertical: 2,
+  },
+  demoDisclosureCard: {
+    borderWidth: 1,
+    padding: 12,
+    marginTop: 4,
+    gap: 4,
+  },
+  demoDisclosureHeader: {
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 0.6,
+    textTransform: "uppercase",
+  },
+  demoDisclosureBody: {
+    fontSize: 11,
+    lineHeight: 16,
+  },
 });

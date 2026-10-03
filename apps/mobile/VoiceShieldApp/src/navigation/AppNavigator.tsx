@@ -20,7 +20,13 @@ import { ScreenedCallEvent } from "../types/telecom";
 export type RootStackParamList = {
   Login?: undefined;
   Home: undefined;
-  Call: { sessionId: string; mode?: "mock" | "live" };
+  Call: {
+    sessionId: string;
+    mode?: "mock" | "live" | "recording";
+    source?: string;
+    callerNumber?: string;
+    callerName?: string;
+  };
   Challenge: { sessionId: string };
   Verification: { sessionId: string };
   Incidents: undefined;

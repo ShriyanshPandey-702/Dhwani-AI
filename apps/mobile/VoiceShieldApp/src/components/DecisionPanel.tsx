@@ -52,7 +52,7 @@ export const DecisionPanel: React.FC<Props> = ({
   recommendedAction,
   evidenceConfidence,
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const cfg = DECISION_CONFIG[decision] ?? DECISION_CONFIG.ALLOW;
 
   const decisionColor =
@@ -73,8 +73,8 @@ export const DecisionPanel: React.FC<Props> = ({
       style={[
         styles.card,
         {
-          borderColor: `${decisionColor}50`,
-          backgroundColor: `${decisionColor}0D`,
+          borderColor: isDark ? `${decisionColor}40` : `${decisionColor}30`,
+          backgroundColor: isDark ? colors.surface : colors.surface,
         },
       ]}
     >
@@ -123,8 +123,8 @@ export const DecisionPanel: React.FC<Props> = ({
           style={[
             styles.actionBox,
             {
-              backgroundColor: `${decisionColor}14`,
-              borderColor: `${decisionColor}40`,
+              backgroundColor: `${decisionColor}10`,
+              borderColor: `${decisionColor}30`,
             },
           ]}
         >
@@ -169,13 +169,13 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingBottom: 14,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
   },
   topBar: {
-    height: 4,
+    height: 2,
     width: '100%',
   },
   sectionLabel: {

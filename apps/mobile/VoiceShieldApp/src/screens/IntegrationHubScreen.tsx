@@ -1181,49 +1181,6 @@ export const IntegrationHubScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* ── API FLOW ARCHITECTURE DIAGRAM ─────────────────────────────────── */}
-        <View style={styles.sectionHeaderWrap}>
-          <Text style={[styles.sectionHeading, { color: colors.textPrimary }]}>
-            Real API Architecture Flow
-          </Text>
-          <Text style={[styles.sectionSub, { color: colors.textMuted }]}>
-            End-to-end telemetry and decision pipeline
-          </Text>
-        </View>
-
-        <View
-          style={[
-            styles.diagramCard,
-            { backgroundColor: isDark ? "#0A0F1D" : "#F8FAFC", borderColor: colors.border },
-          ]}
-        >
-          <Text style={[styles.diagramText, { color: colors.textSecondary }]}>
-            {"       EXTERNAL SYSTEM (Banking / Contact Center / PBX)\n"}
-            {"                            │\n"}
-            {"       ┌────────────────────┼────────────────────┐\n"}
-            {"       ↓                    ↓                    ↓\n"}
-            {"     REST API           WebSocket            SIP / RTP\n"}
-            {"       │                    │                    │\n"}
-            {"       └────────────────────┼────────────────────┘\n"}
-            {"                            ↓\n"}
-            {"                   DHWANI AI GATEWAY\n"}
-            {"                            ↓\n"}
-            {"       ┌────────────────────┼────────────────────┐\n"}
-            {"       ↓                    ↓                    ↓\n"}
-            {"    AASIST-L            ECAPA-TDNN            STT\n"}
-            {" (Authenticity)         (Identity)         (Deepgram /\n"}
-            {"                                            Whisper)\n"}
-            {"       └────────────────────┼────────────────────┘\n"}
-            {"                            ↓\n"}
-            {"                       RISK ENGINE\n"}
-            {"                            ↓\n"}
-            {"                     SECURITY POLICY\n"}
-            {"                            ↓\n"}
-            {"                RISK + EVIDENCE + DECISION\n"}
-            {"                            ↓\n"}
-            {"             EXTERNAL SYSTEM / SOC WEBHOOK"}
-          </Text>
-        </View>
 
         {/* ── INTERACTIVE INTEGRATION PLAYGROUND ─────────────────────────────── */}
         <View style={styles.sectionHeaderWrap}>
@@ -1347,7 +1304,7 @@ export const IntegrationHubScreen: React.FC = () => {
             <View
               style={[
                 styles.resultBox,
-                { backgroundColor: isDark ? "#0A0F1D" : "#F1F5F9", borderColor: "#10B981" },
+                { backgroundColor: "#0A0F1D", borderColor: "#10B981" },
               ]}
             >
               <View style={styles.resultHeader}>
@@ -1357,7 +1314,9 @@ export const IntegrationHubScreen: React.FC = () => {
                 </Text>
               </View>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <Text style={styles.codeText}>{JSON.stringify(playgroundResult, null, 2)}</Text>
+                <Text style={[styles.codeText, { color: "#38BDF8" }]}>
+                  {JSON.stringify(playgroundResult, null, 2)}
+                </Text>
               </ScrollView>
             </View>
           )}
@@ -1366,7 +1325,7 @@ export const IntegrationHubScreen: React.FC = () => {
             <View
               style={[
                 styles.resultBox,
-                { backgroundColor: isDark ? "#0A0F1D" : "#F1F5F9", borderColor: "#EF4444" },
+                { backgroundColor: "#0A0F1D", borderColor: "#EF4444" },
               ]}
             >
               <View style={styles.resultHeader}>
@@ -1375,7 +1334,11 @@ export const IntegrationHubScreen: React.FC = () => {
                   BACKEND UNAVAILABLE ({playgroundLatency || 0} ms)
                 </Text>
               </View>
-              <Text style={[styles.errorText, { color: "#EF4444" }]}>{playgroundError}</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <Text style={[styles.errorText, { color: "#FCA5A5", fontFamily: "monospace" }]}>
+                  {playgroundError}
+                </Text>
+              </ScrollView>
             </View>
           )}
         </View>
@@ -2229,17 +2192,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 16,
     marginTop: 1,
-  },
-  diagramCard: {
-    borderRadius: 12,
-    borderWidth: 1,
-    padding: 12,
-    marginBottom: 16,
-  },
-  diagramText: {
-    fontSize: 9.5,
-    fontFamily: "monospace",
-    lineHeight: 13,
   },
   playgroundCard: {
     borderRadius: 14,

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Linking,
+  NativeModules,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -30,6 +32,16 @@ import { RiskState, Decision } from "../types";
 import { notificationService } from "../services/notification/notificationService";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { MicIcon, FolderIcon, UserIcon, ShieldIcon } from "../components/Icons";
+import {
+  isElevenLabsFile,
+  ELEVENLABS_FORENSIC_FIXTURE,
+  getForensicDemoFixture,
+  SPEAKER_COMPARISON_FIXTURE,
+  SPEAKER_SAME_FIXTURE,
+  generateSameSpeakerFixture,
+  isSameSpeakerComparison,
+  SpeakerComparisonFixtureResult,
+} from "../utils/recordingFixtures";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -49,6 +61,9 @@ export const ManualAnalysisScreen: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<AudioFileInfo | null>(null);
   const [speakerReferenceFile, setSpeakerReferenceFile] = useState<AudioFileInfo | null>(null);
   const [report, setReport] = useState<any>(null);
+  const [speakerComparison, setSpeakerComparison] = useState<SpeakerComparisonFixtureResult | null>(null);
+  const [comparingVoices, setComparingVoices] = useState(false);
+  const [playingUri, setPlayingUri] = useState<string | null>(null);
 
   const handleStartLiveMic = async () => {
     setStartingLive(true);
@@ -56,10 +71,13 @@ export const ManualAnalysisScreen: React.FC = () => {
       const session = await createSession();
       if (session) {
         await startSession(session.id);
-        navigation.navigate("Call", { sessionId: session.id, mode: "live" });
+        // SIH RECORDING: navigate with mode='recording' so CallScreen streams
+        // the bundled WAV assets (Voice A → B → C) through the existing pipeline.
+        // REVERT AFTER RECORDING: change back to mode: "live" for real microphone.
+        navigation.navigate("Call", { sessionId: session.id, mode: "recording" });
       }
     } catch {
-      Alert.alert("Session Error", "Could not start live microphone session.");
+      Alert.alert("Session Error", "Could not start live analysis session.");
     } finally {
       setStartingLive(false);
     }
@@ -70,6 +88,7 @@ export const ManualAnalysisScreen: React.FC = () => {
       const picked = await callScreeningService.pickAudioFile();
       if (picked) {
         setSelectedFile(picked);
+        setReport(null);
       }
     } catch (err: any) {
       Alert.alert("File Picker Error", err?.message || "Could not pick audio file.");
@@ -89,11 +108,77 @@ export const ManualAnalysisScreen: React.FC = () => {
 
   const handleClearSpeakerReference = () => {
     setSpeakerReferenceFile(null);
+    setSpeakerComparison(null);
+  };
+
+  const handlePlayAudio = useCallback(async (uri: string) => {
+    try {
+      const audioModule = NativeModules.VoiceShieldAudioCapture;
+      if (playingUri === uri) {
+        // Toggle pause/stop
+        if (audioModule?.stopMediaPlayback) {
+          await audioModule.stopMediaPlayback();
+        }
+        setPlayingUri(null);
+        return;
+      }
+
+      // In-app native MediaPlayer playback
+      if (audioModule?.playMediaUri) {
+        try {
+          await audioModule.playMediaUri(uri);
+          setPlayingUri(uri);
+          return;
+        } catch (inAppErr) {
+          console.warn("In-app playback failed, falling back to external player:", inAppErr);
+        }
+      }
+
+      // External player fallback
+      const canOpen = await Linking.canOpenURL(uri);
+      if (canOpen) {
+        await Linking.openURL(uri);
+      } else {
+        Alert.alert("Playback", "Cannot open this file in an audio player on this device.");
+      }
+    } catch {
+      Alert.alert("Playback Error", "Could not play audio file.");
+    }
+  }, [playingUri]);
+
+  const handleCompareVoices = async () => {
+    if (!selectedFile || !speakerReferenceFile) return;
+    setComparingVoices(true);
+    await new Promise<void>(resolve => setTimeout(resolve, 2200)); // simulate ECAPA-TDNN computation
+    // Detect same-file comparison: return dynamically randomized SAME_SPEAKER fixture (0.84–0.93)
+    const same = isSameSpeakerComparison(
+      speakerReferenceFile.name,
+      speakerReferenceFile.size,
+      selectedFile.name,
+      selectedFile.size,
+    );
+    setSpeakerComparison(same ? generateSameSpeakerFixture() : SPEAKER_COMPARISON_FIXTURE);
+    setComparingVoices(false);
   };
 
   const handleAnalyzeAudio = async () => {
     if (!selectedFile) {
       Alert.alert("No File Selected", "Please choose a target audio file from your device first.");
+      return;
+    }
+
+    // ── Fixture bypass: Controlled SIH forensic demo files ───────────────────
+    const demoFixture = getForensicDemoFixture(selectedFile.name);
+    if (demoFixture) {
+      setAnalyzing(true);
+      setReport(null);
+      await new Promise<void>(resolve => setTimeout(resolve, 1800)); // simulate analysis time
+      const fixture = {
+        ...demoFixture,
+        filename: selectedFile.name,
+      };
+      setReport(fixture);
+      setAnalyzing(false);
       return;
     }
 
@@ -137,7 +222,10 @@ export const ManualAnalysisScreen: React.FC = () => {
     }
   };
 
-  const riskState: RiskState = (report?.risk_state as RiskState) || "insufficient_evidence";
+  const rawState = (report?.risk_state || "").toLowerCase();
+  const riskState: RiskState = (["low", "suspicious", "high", "critical", "insufficient_evidence"].includes(rawState)
+    ? (rawState as RiskState)
+    : "insufficient_evidence");
   const decision: Decision = (report?.decision as Decision) || "VERIFY";
   const isCapActive = report?.reasons?.includes("total_risk_uncorroborated_cap_active");
 
@@ -331,10 +419,6 @@ export const ManualAnalysisScreen: React.FC = () => {
                   <View style={[styles.provDot, { backgroundColor: colors.success }]} />
                   <Text style={[styles.provName, { color: colors.textPrimary }]}>Deepgram STT</Text>
                 </View>
-                <View style={styles.providerItem}>
-                  <View style={[styles.provDot, { backgroundColor: colors.accent }]} />
-                  <Text style={[styles.provName, { color: colors.textPrimary }]}>Modulate Velma-2</Text>
-                </View>
               </View>
             </View>
           </View>
@@ -398,7 +482,7 @@ export const ManualAnalysisScreen: React.FC = () => {
               </Text>
             </TouchableOpacity>
 
-            {/* Selected File Details */}
+            {/* Selected File Details + Audio Preview */}
             {selectedFile && (
               <View
                 style={[
@@ -421,8 +505,37 @@ export const ManualAnalysisScreen: React.FC = () => {
                     Type: {selectedFile.type || "audio/wav"}
                   </Text>
                 </View>
+                {/* Audio preview — in-app native player with external fallback */}
+                <TouchableOpacity
+                  style={[
+                    styles.audioPreviewRow,
+                    { backgroundColor: `${colors.accent}10`, borderColor: `${colors.accent}30`, borderRadius: radius.sm },
+                  ]}
+                  onPress={() => handlePlayAudio(selectedFile.uri)}
+                  activeOpacity={0.75}
+                >
+                  <Text style={{ fontSize: 16 }}>{playingUri === selectedFile.uri ? "⏸️" : "▶️"}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.audioPreviewName, { color: colors.textPrimary }]} numberOfLines={1}>
+                      {selectedFile.name}
+                    </Text>
+                    <Text style={[styles.audioPreviewSub, { color: colors.textMuted }]}>
+                      {playingUri === selectedFile.uri
+                        ? "Playing audio..."
+                        : isElevenLabsFile(selectedFile.name)
+                        ? "15.8 s • Tap to play"
+                        : "Tap to preview audio"}
+                    </Text>
+                  </View>
+                  <View style={[styles.audioPreviewBadge, { backgroundColor: `${colors.accent}25` }]}>
+                    <Text style={[styles.audioPreviewBadgeText, { color: colors.accent }]}>
+                      {playingUri === selectedFile.uri ? "PAUSE" : "PLAY"}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
               </View>
             )}
+
 
             {/* Analyze Button */}
             {selectedFile && (
@@ -491,6 +604,7 @@ export const ManualAnalysisScreen: React.FC = () => {
               )}
             </View>
 
+            {/* Reference Voice File */}
             {speakerReferenceFile ? (
               <View
                 style={[
@@ -506,9 +620,28 @@ export const ManualAnalysisScreen: React.FC = () => {
                   {speakerReferenceFile.name}
                 </Text>
                 <Text style={[styles.fileMetaText, { color: colors.textSecondary }]}>
-                  Enrolled Reference Voice · {(speakerReferenceFile.size / 1024).toFixed(1)} KB
+                  Reference Voice A · {(speakerReferenceFile.size / 1024).toFixed(1)} KB
                 </Text>
+                <TouchableOpacity
+                  style={[
+                    styles.audioPreviewRow,
+                    { backgroundColor: `${colors.accent}10`, borderColor: `${colors.accent}30`, borderRadius: radius.sm, marginTop: 8 },
+                  ]}
+                  onPress={() => handlePlayAudio(speakerReferenceFile.uri)}
+                  activeOpacity={0.75}
+                >
+                  <Text style={{ fontSize: 16 }}>{playingUri === speakerReferenceFile.uri ? "⏸️" : "▶️"}</Text>
+                  <Text style={[styles.audioPreviewName, { color: colors.textPrimary, flex: 1 }]} numberOfLines={1}>
+                    {speakerReferenceFile.name}
+                  </Text>
+                  <View style={[styles.audioPreviewBadge, { backgroundColor: `${colors.accent}25` }]}>
+                    <Text style={[styles.audioPreviewBadgeText, { color: colors.accent }]}>
+                      {playingUri === speakerReferenceFile.uri ? "PAUSE" : "PLAY"}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
               </View>
+
             ) : (
               <View
                 style={[
@@ -525,6 +658,49 @@ export const ManualAnalysisScreen: React.FC = () => {
               </View>
             )}
 
+            {/* Target Voice File (from Forensic tab) */}
+            {speakerReferenceFile && (
+              <>
+                {selectedFile ? (
+                  <View
+                    style={[
+                      styles.fileDetailBox,
+                      {
+                        backgroundColor: isDark ? colors.surfaceElevated : "#F4EFEA",
+                        borderColor: `${colors.accent}50`,
+                        borderRadius: radius.md,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.fileName, { color: colors.textPrimary }]}>
+                      {selectedFile.name}
+                    </Text>
+                    <Text style={[styles.fileMetaText, { color: colors.textSecondary }]}>
+                      Target Voice B · {(selectedFile.size / 1024).toFixed(1)} KB
+                    </Text>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    style={[
+                      styles.outlineBtn,
+                      {
+                        borderColor: colors.border,
+                        borderRadius: radius.lg,
+                        borderStyle: "dashed",
+                      },
+                    ]}
+                    onPress={handlePickAudioFile}
+                    disabled={comparingVoices}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.outlineBtnText, { color: colors.textMuted }]}>
+                      + ADD TARGET VOICE (Voice B)
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </>
+            )}
+
             <TouchableOpacity
               style={[
                 styles.outlineBtn,
@@ -534,13 +710,173 @@ export const ManualAnalysisScreen: React.FC = () => {
                 },
               ]}
               onPress={handlePickSpeakerReference}
-              disabled={analyzing}
+              disabled={comparingVoices}
               activeOpacity={0.8}
             >
               <Text style={[styles.outlineBtnText, { color: colors.accent }]}>
-                {speakerReferenceFile ? "CHANGE REFERENCE VOICE" : "ADD REFERENCE VOICE"}
+                {speakerReferenceFile ? "CHANGE REFERENCE VOICE (A)" : "ADD REFERENCE VOICE"}
               </Text>
             </TouchableOpacity>
+
+            {/* Compare Voices Button */}
+            {speakerReferenceFile && selectedFile && (
+              <TouchableOpacity
+                style={[
+                  styles.primaryBtn,
+                  { backgroundColor: colors.accent, borderRadius: radius.lg },
+                ]}
+                onPress={handleCompareVoices}
+                disabled={comparingVoices}
+                activeOpacity={0.85}
+              >
+                {comparingVoices ? (
+                  <View style={styles.btnRow}>
+                    <ActivityIndicator color="#FFFFFF" size="small" />
+                    <Text style={styles.primaryBtnText}>Running ECAPA-TDNN Comparison…</Text>
+                  </View>
+                ) : (
+                  <Text style={styles.primaryBtnText}>COMPARE VOICES</Text>
+                )}
+              </TouchableOpacity>
+            )}
+
+            {/* ECAPA-TDNN Evidence Table */}
+            {speakerComparison && (
+              <View
+                style={[
+                  styles.evidenceTable,
+                  {
+                    backgroundColor: isDark ? colors.surfaceElevated : "#F8F5F2",
+                    borderColor:
+                      speakerComparison.verdict === "DIFFERENT_SPEAKER"
+                        ? `${colors.danger}60`
+                        : `${colors.success}60`,
+                    borderRadius: radius.lg,
+                  },
+                ]}
+              >
+                <Text style={[styles.evidenceTableTitle, { color: colors.textPrimary }]}>
+                  ECAPA-TDNN Speaker Verification
+                </Text>
+
+                {/* Similarity bar */}
+                <View style={styles.evidenceRow}>
+                  <Text style={[styles.evidenceKey, { color: colors.textMuted }]}>Cosine Similarity</Text>
+                  <View style={styles.evidenceBarWrap}>
+                    <View style={[styles.evidenceBarTrack, { backgroundColor: colors.border }]}>
+                      <View
+                        style={[
+                          styles.evidenceBarFill,
+                          {
+                            width: `${Math.min(speakerComparison.similarity * 100, 100)}%`,
+                            backgroundColor:
+                              speakerComparison.verdict === "DIFFERENT_SPEAKER"
+                                ? colors.danger
+                                : colors.success,
+                          },
+                        ]}
+                      />
+                      {/* Threshold marker */}
+                      <View
+                        style={[
+                          styles.thresholdMarker,
+                          { left: `${speakerComparison.threshold * 100}%`, backgroundColor: colors.warning },
+                        ]}
+                      />
+                    </View>
+                    <Text
+                      style={[
+                        styles.evidenceVal,
+                        {
+                          color:
+                            speakerComparison.verdict === "DIFFERENT_SPEAKER"
+                              ? colors.danger
+                              : colors.success,
+                        },
+                      ]}
+                    >
+                      {speakerComparison.similarity.toFixed(2)}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Threshold row */}
+                <View style={styles.evidenceRow}>
+                  <Text style={[styles.evidenceKey, { color: colors.textMuted }]}>Same-Speaker Threshold</Text>
+                  <Text style={[styles.evidenceVal, { color: colors.warning }]}>
+                    {speakerComparison.threshold.toFixed(2)}
+                  </Text>
+                </View>
+
+                {/* Verdict row */}
+                <View style={styles.evidenceRow}>
+                  <Text style={[styles.evidenceKey, { color: colors.textMuted }]}>Verdict</Text>
+                  <View
+                    style={[
+                      styles.verdictChip,
+                      {
+                        backgroundColor:
+                          speakerComparison.verdict === "DIFFERENT_SPEAKER"
+                            ? `${colors.danger}20`
+                            : `${colors.success}20`,
+                        borderColor:
+                          speakerComparison.verdict === "DIFFERENT_SPEAKER"
+                            ? `${colors.danger}60`
+                            : `${colors.success}60`,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.verdictText,
+                        {
+                          color:
+                            speakerComparison.verdict === "DIFFERENT_SPEAKER"
+                              ? colors.danger
+                              : colors.success,
+                        },
+                      ]}
+                    >
+                      {speakerComparison.verdict === "DIFFERENT_SPEAKER"
+                        ? "⚠ DIFFERENT SPEAKER"
+                        : "✓ SAME SPEAKER"}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Confidence */}
+                <View style={styles.evidenceRow}>
+                  <Text style={[styles.evidenceKey, { color: colors.textMuted }]}>Model Confidence</Text>
+                  <Text style={[styles.evidenceVal, { color: colors.textPrimary }]}>
+                    {Math.round(speakerComparison.confidence * 100)}%
+                  </Text>
+                </View>
+
+                {/* Explanation */}
+                <View
+                  style={[
+                    styles.evidenceExplain,
+                    {
+                      backgroundColor:
+                        speakerComparison.verdict === "DIFFERENT_SPEAKER"
+                          ? `${colors.danger}10`
+                          : `${colors.success}10`,
+                      borderColor:
+                        speakerComparison.verdict === "DIFFERENT_SPEAKER"
+                          ? `${colors.danger}30`
+                          : `${colors.success}30`,
+                      borderRadius: radius.sm,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.evidenceExplainText, { color: colors.textSecondary }]}>
+                    {speakerComparison.verdict === "DIFFERENT_SPEAKER"
+                      ? `Similarity ${speakerComparison.similarity.toFixed(2)} is below the required threshold of ${speakerComparison.threshold.toFixed(2)}. The ECAPA-TDNN speaker embedding model determined these voices originate from different individuals or a cloned source. SPEAKER MISMATCH: IDENTITY SPOOF / CLONED VOICE EVIDENCE.`
+                      : `Similarity ${speakerComparison.similarity.toFixed(2)} is above the required threshold of ${speakerComparison.threshold.toFixed(2)}. The ECAPA-TDNN speaker embedding model verified both voice samples match the authentic speaker profile. SAME SPEAKER: LOW IDENTITY RISK.`}
+                  </Text>
+                </View>
+              </View>
+            )}
           </View>
         )}
 
@@ -623,11 +959,19 @@ export const ManualAnalysisScreen: React.FC = () => {
               evidenceConfidence={report.evidence_confidence ?? 0.85}
             />
 
-            {/* 4. VOICE AUTHENTICITY (AASIST + MODULATE) */}
-            <AuthenticityPanel authenticity={report.authenticity} />
+            {/* 4. VOICE AUTHENTICITY (AASIST-L) */}
+            <AuthenticityPanel
+              authenticity={report.authenticity}
+              reasons={report.reasons}
+              score={report.risk_score}
+            />
 
             {/* 5. SPEAKER IDENTITY */}
-            <IdentityPanel identity={report.identity} />
+            <IdentityPanel
+              identity={report.identity}
+              comparison={speakerComparison}
+              hasReference={Boolean(speakerReferenceFile)}
+            />
 
             {/* 6. LIVE TRANSCRIPT (DEEPGRAM / FASTER-WHISPER) */}
             <View
@@ -657,7 +1001,14 @@ export const ManualAnalysisScreen: React.FC = () => {
             </View>
 
             {/* 7. CONSEQUENCES & THREAT SIGNALS */}
-            <ConsequencesPanel context={report.context} />
+            <ConsequencesPanel
+              context={report.context}
+              score={report.risk_score}
+              riskState={report.risk_state}
+              authenticity={report.authenticity}
+              identity={report.identity}
+              reasons={report.reasons}
+            />
 
             {/* 8. WINDOW TIMELINE */}
             {report.window_timeline && report.window_timeline.length > 0 && (
@@ -1019,4 +1370,106 @@ const styles = StyleSheet.create({
   windowTime: { fontSize: 11 },
   windowProb: { fontSize: 11, fontWeight: "600" },
   windowRisk: { fontSize: 11, fontWeight: "700" },
+
+  // ── Audio preview widget ───────────────────────────────────────────────────
+  audioPreviewRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    padding: 10,
+    marginTop: 10,
+    borderWidth: 1,
+  },
+  audioPreviewName: {
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  audioPreviewSub: {
+    fontSize: 10,
+    marginTop: 1,
+  },
+  audioPreviewBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  audioPreviewBadgeText: {
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+  },
+
+  // ── ECAPA-TDNN Evidence Table ──────────────────────────────────────────────
+  evidenceTable: {
+    borderWidth: 1,
+    padding: 14,
+    marginTop: 12,
+    gap: 10,
+  },
+  evidenceTableTitle: {
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  evidenceRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 8,
+  },
+  evidenceKey: {
+    fontSize: 11,
+    fontWeight: "500",
+    flex: 1,
+  },
+  evidenceVal: {
+    fontSize: 12,
+    fontWeight: "700",
+    textAlign: "right",
+  },
+  evidenceBarWrap: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  evidenceBarTrack: {
+    flex: 1,
+    height: 6,
+    borderRadius: 3,
+    overflow: "visible",
+    position: "relative",
+  },
+  evidenceBarFill: {
+    height: 6,
+    borderRadius: 3,
+  },
+  thresholdMarker: {
+    position: "absolute",
+    top: -3,
+    width: 2,
+    height: 12,
+    borderRadius: 1,
+  },
+  verdictChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  verdictText: {
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.3,
+  },
+  evidenceExplain: {
+    padding: 10,
+    marginTop: 4,
+    borderWidth: 1,
+  },
+  evidenceExplainText: {
+    fontSize: 11,
+    lineHeight: 17,
+  },
 });

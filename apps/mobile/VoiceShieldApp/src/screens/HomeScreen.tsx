@@ -149,7 +149,7 @@ export const HomeScreen: React.FC = () => {
   );
 
   const handleStartMonitoring = useCallback(
-    async (mode: "live" | "mock" = "live") => {
+    async (mode: "live" | "mock" | "recording" = "live") => {
       setStarting(true);
       try {
         const session = await createSession();
@@ -602,7 +602,7 @@ export const HomeScreen: React.FC = () => {
 
             <View style={styles.idleActionsRow}>
               <TouchableOpacity
-                onPress={() => handleStartMonitoring("live")}
+                onPress={() => handleStartMonitoring("recording")} // SIH RECORDING: temporary mode="recording" for A→B→C flow. Revert to "live" after recording.
                 disabled={starting}
                 style={[
                   styles.idleBtn,

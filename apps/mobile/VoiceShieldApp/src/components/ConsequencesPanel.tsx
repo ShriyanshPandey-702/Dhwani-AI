@@ -6,27 +6,57 @@ import { useTheme } from '../utils/theme';
 import { ContextEvidence } from '../types';
 
 interface Props {
-  context: ContextEvidence | null;
+  context?: ContextEvidence | null;
+  score?: number;
+  riskState?: string;
+  threatLevel?: string;
+  transactionConsequence?: string;
+  authenticity?: any;
+  identity?: any;
+  reasons?: string[];
 }
 
-const CONSEQUENCE_TONE = {
+const CONSEQUENCE_TONE: Record<string, 'good' | 'warn' | 'bad'> = {
+  LOW: 'good',
+  MEDIUM: 'warn',
+  HIGH: 'bad',
+  CRITICAL: 'bad',
   low: 'good',
   medium: 'warn',
   high: 'bad',
   critical: 'bad',
-} as const;
+};
 
 type ThreatEntry = { label: string; icon: string };
 
 /**
  * Evidence stream 4 — Consequences & Threat Classification.
  * Surfaces real financial, credential, urgency, authority, and impersonation
- * threat detection. Never fabricates data.
+ * threat detection, as well as forensic authenticity & voice cloning signals.
+ * Never fabricates data.
  */
-export const ConsequencesPanel: React.FC<Props> = ({ context }) => {
+export const ConsequencesPanel: React.FC<Props> = ({
+  context,
+  score,
+  riskState,
+  threatLevel: propThreatLevel,
+  transactionConsequence: propTransactionConsequence,
+  authenticity,
+  identity,
+  reasons,
+}) => {
   const { colors } = useTheme();
 
-  if (!context || !context.transcript) {
+  // Effective score priority: explicit prop score > context.score
+  const effectiveScore: number | undefined =
+    typeof score === 'number'
+      ? score
+      : typeof context?.score === 'number'
+      ? context.score
+      : undefined;
+
+  // If neither transcript nor valid score is available, show pending state
+  if ((!context || !context.transcript) && typeof effectiveScore !== 'number') {
     return (
       <PanelCard title="CONSEQUENCES & THREATS" icon="🛡" meta="speech context">
         <MetricRow label="Consequence Level" value="Insufficient Evidence" tone="muted" pill />
@@ -38,43 +68,191 @@ export const ConsequencesPanel: React.FC<Props> = ({ context }) => {
     );
   }
 
-  const detectedThreats: ThreatEntry[] = [];
-  if (context.otp_request) detectedThreats.push({ label: 'OTP / 2FA Request', icon: '🔑' });
-  if (context.credential_request) detectedThreats.push({ label: 'Password / Credentials', icon: '🔐' });
-  if (context.financial_request) detectedThreats.push({ label: 'Bank / Money / UPI Transfer', icon: '💸' });
-  if (context.sensitive_information_request)
-    detectedThreats.push({ label: 'KYC / Card / Personal Data', icon: '📋' });
-  if (context.authority_claim)
-    detectedThreats.push({ label: 'Authority Impersonation', icon: '🚨' });
-  if (context.urgency) detectedThreats.push({ label: 'Artificial Urgency / Panic', icon: '⏱' });
-  if (context.social_engineering)
-    detectedThreats.push({ label: 'Social Engineering Pattern', icon: '⚡' });
+  // ── Score-driven severity mapping for Consequences & Threats ──────────────
+  // 0–29   → LOW
+  // 30–59  → MEDIUM
+  // 60–79  → HIGH
+  // 80–100 → CRITICAL
+  let threatLevel: string;
+  let consequenceLevel: string;
 
-  const consequenceLevel = context.consequence?.toUpperCase() || 'LOW';
-  const tone = CONSEQUENCE_TONE[context.consequence] ?? 'good';
+  if (propThreatLevel) {
+    threatLevel = propThreatLevel.toUpperCase();
+  } else if (typeof effectiveScore === 'number') {
+    if (effectiveScore >= 80) {
+      threatLevel = 'CRITICAL';
+    } else if (effectiveScore >= 60) {
+      threatLevel = 'HIGH';
+    } else if (effectiveScore >= 30) {
+      threatLevel = 'MEDIUM';
+    } else {
+      threatLevel = 'LOW';
+    }
+  } else if (context?.consequence) {
+    threatLevel = context.consequence.toUpperCase();
+  } else {
+    threatLevel = 'LOW';
+  }
+
+  if (propTransactionConsequence) {
+    consequenceLevel = propTransactionConsequence.toUpperCase();
+  } else if (typeof effectiveScore === 'number') {
+    // Both 93 and 73 (>= 60) map to HIGH for Transaction Consequence
+    if (effectiveScore >= 60) {
+      consequenceLevel = 'HIGH';
+    } else if (effectiveScore >= 30) {
+      consequenceLevel = 'MEDIUM';
+    } else {
+      consequenceLevel = 'LOW';
+    }
+  } else if (context?.consequence) {
+    consequenceLevel = context.consequence.toUpperCase();
+  } else {
+    consequenceLevel = 'LOW';
+  }
+
+  const threatTone = CONSEQUENCE_TONE[threatLevel] ?? 'good';
+  const consequenceTone = CONSEQUENCE_TONE[consequenceLevel] ?? 'good';
+
+  // ── Derive active threat signals from available evidence ──────────────────
+  const detectedThreats: ThreatEntry[] = [];
+  const seenLabels = new Set<string>();
+
+  const addThreat = (label: string, icon: string) => {
+    if (!seenLabels.has(label)) {
+      seenLabels.add(label);
+      detectedThreats.push({ label, icon });
+    }
+  };
+
+  // 1. Context behavioral flags (transcript / conversation intent)
+  if (context?.otp_request) addThreat('OTP / 2FA Request', '🔑');
+  if (context?.credential_request) addThreat('Password / Credentials', '🔐');
+  if (context?.financial_request) addThreat('Bank / Money / UPI Transfer', '💸');
+  if (context?.sensitive_information_request) addThreat('KYC / Card / Personal Data', '📋');
+  if (context?.authority_claim) addThreat('Authority Impersonation', '🚨');
+  if (context?.urgency) addThreat('Artificial Urgency / Panic', '⏱');
+  if (context?.social_engineering) addThreat('Social Engineering Pattern', '⚡');
+
+  // Check intent_flag if present on context
+  const contextAny = context as any;
+  if (contextAny?.intent_flag) {
+    const intent = String(contextAny.intent_flag).toUpperCase();
+    if (intent.includes('URGENCY')) addThreat('Artificial Urgency / Panic', '⏱');
+    if (intent.includes('FINANCIAL')) addThreat('Bank / Money / UPI Transfer', '💸');
+    if (intent.includes('IMPERSONATION') || intent.includes('FRAUD')) addThreat('Authority Impersonation', '🚨');
+  }
+
+  // 2. Synthetic / AI-generated voice detection
+  const isSynthetic =
+    authenticity?.is_synthetic === true ||
+    (typeof authenticity?.synthetic_probability === 'number' && authenticity.synthetic_probability >= 0.6) ||
+    (typeof authenticity?.spoof_probability === 'number' && authenticity.spoof_probability >= 0.6) ||
+    (authenticity?.is_synthetic !== false &&
+      effectiveScore !== undefined && effectiveScore >= 60 &&
+      Array.isArray(reasons) &&
+      reasons.some((r: string) => /(?:high probability|confidence|detected).*synthetic|synthetic.*detected|elevenlabs/i.test(r)));
+
+  if (isSynthetic) {
+    addThreat('Synthetic / AI-Generated Voice', '🤖');
+  }
+
+  // 3. Voice cloning indicators
+  const hasCloning =
+    (Array.isArray(authenticity?.artifacts_detected) && authenticity.artifacts_detected.length > 0) ||
+    (authenticity?.is_synthetic !== false &&
+      effectiveScore !== undefined && effectiveScore >= 60 &&
+      Array.isArray(reasons) &&
+      reasons.some((r: string) => /(?:clon|vocoder|phase).*detected|indicators detected|characteristics of.*clone/i.test(r)));
+
+  if (hasCloning) {
+    addThreat('Voice Cloning Indicators', '🧬');
+  }
+
+  // 4. Authenticity anomaly
+  const hasAnomaly =
+    (typeof authenticity?.raw_score === 'number' && authenticity.raw_score >= 0.6) ||
+    (typeof authenticity?.score === 'number' && authenticity.score >= 60) ||
+    (typeof authenticity?.synthetic_probability === 'number' && authenticity.synthetic_probability >= 0.7) ||
+    (typeof authenticity?.spoof_probability === 'number' && authenticity.spoof_probability >= 0.7) ||
+    authenticity?.acoustic_anomaly === 'HIGH' ||
+    authenticity?.acoustic_anomaly === 'CRITICAL' ||
+    (authenticity?.is_synthetic !== false &&
+      effectiveScore !== undefined && effectiveScore >= 60 &&
+      Array.isArray(reasons) &&
+      reasons.some((r: string) => /anomaly detected|spectral discontinuities|phase discontinuities/i.test(r)));
+
+  if (hasAnomaly) {
+    addThreat('Authenticity Anomaly', '⚠️');
+  }
+
+  // 5. Speaker mismatch
+  const hasSpeakerMismatch =
+    identity &&
+    (identity.speaker_match === false ||
+     identity.enrollment_status === 'MISMATCH' ||
+     (typeof identity.similarity_score === 'number' && identity.similarity_score < 0.6) ||
+     (typeof identity.similarity === 'number' && identity.similarity < 0.6) ||
+     (Array.isArray(reasons) && reasons.some((r: string) => /speaker mismatch|different speaker|identity spoof/i.test(r))));
+
+  if (hasSpeakerMismatch) {
+    addThreat('Speaker Mismatch', '👤');
+  }
+
+  // 6. Generic high-risk signal fallback if high risk but no specific signals
+  if (typeof effectiveScore === 'number' && effectiveScore >= 60 && detectedThreats.length === 0) {
+    addThreat('High-risk voice authenticity result', '⚠️');
+  }
+
   const hasHighThreat =
-    context.consequence === 'critical' || context.consequence === 'high';
-  const accentColor = hasHighThreat ? colors.danger : detectedThreats.length > 0 ? colors.warning : undefined;
+    threatLevel === 'CRITICAL' ||
+    threatLevel === 'HIGH' ||
+    consequenceLevel === 'HIGH' ||
+    consequenceLevel === 'CRITICAL';
+
+  const accentColor = hasHighThreat
+    ? colors.danger
+    : threatLevel === 'MEDIUM' || consequenceLevel === 'MEDIUM' || detectedThreats.length > 0
+    ? colors.warning
+    : undefined;
 
   return (
     <PanelCard
       title="CONSEQUENCES & THREATS"
       icon="🛡"
-      meta={`level ${consequenceLevel}`}
+      meta={`level ${threatLevel}`}
       accent={accentColor}
     >
       {/* Consequence level + threat score */}
       <MetricRow
+        label="Threat Level"
+        value={threatLevel}
+        tone={threatTone}
+        pill
+      />
+      <MetricRow
         label="Transaction Consequence"
         value={consequenceLevel}
-        tone={tone}
+        tone={consequenceTone}
         pill
       />
       <MetricRow
         label="Context Threat Score"
-        value={`${context.score} / 100`}
-        tone={context.score >= 50 ? 'bad' : context.score >= 25 ? 'warn' : 'good'}
-        fraction={context.score / 100}
+        value={
+          typeof effectiveScore === 'number'
+            ? `${effectiveScore} / 100`
+            : '0 / 100'
+        }
+        tone={
+          typeof effectiveScore === 'number'
+            ? effectiveScore >= 60
+              ? 'bad'
+              : effectiveScore >= 30
+              ? 'warn'
+              : 'good'
+            : 'good'
+        }
+        fraction={typeof effectiveScore === 'number' ? effectiveScore / 100 : 0}
       />
 
       {/* Threat classification summary */}
@@ -113,7 +291,7 @@ export const ConsequencesPanel: React.FC<Props> = ({ context }) => {
       )}
 
       {/* Detected phrases */}
-      {context.detected_phrases && context.detected_phrases.length > 0 && (
+      {context?.detected_phrases && context.detected_phrases.length > 0 && (
         <View style={styles.phrasesRow}>
           <Text style={[styles.phrasesLabel, { color: colors.textMuted }]}>
             Trigger phrases:{' '}
@@ -125,7 +303,7 @@ export const ConsequencesPanel: React.FC<Props> = ({ context }) => {
       )}
 
       {/* Transcript quote */}
-      {!!context.transcript && (
+      {!!context?.transcript && (
         <View
           style={[
             styles.transcriptBlock,

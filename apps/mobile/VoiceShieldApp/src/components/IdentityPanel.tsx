@@ -7,7 +7,21 @@ import { IdentityEvidence } from '../types';
 import { UserIcon } from './Icons';
 
 interface Props {
-  identity: IdentityEvidence | null;
+  identity: (IdentityEvidence & {
+    speaker_match?: boolean;
+    target_enrolled?: boolean;
+    similarity_score?: number;
+    threshold?: number;
+  }) | null;
+  comparison?: {
+    similarity: number;
+    threshold: number;
+    verdict: 'SAME_SPEAKER' | 'DIFFERENT_SPEAKER';
+    confidence: number;
+    voiceA?: { label: string; isReal: boolean };
+    voiceB?: { label: string; isReal: boolean };
+  } | null;
+  hasReference?: boolean;
 }
 
 const CONSISTENCY_TONE = {
@@ -37,17 +51,33 @@ const ENROLLMENT_ICON = {
  * A mismatch here is evidence about *identity only*. It is never presented as
  * proof that the voice is synthetic; the Risk Engine decides how much weight it
  * carries alongside the other streams.
+ *
+ * When no reference voice is supplied, Dhwani AI truthfully reports NOT ENROLLED
+ * rather than fabricating a speaker match.
  */
-export const IdentityPanel: React.FC<Props> = ({ identity }) => {
+export const IdentityPanel: React.FC<Props> = ({ identity, comparison, hasReference }) => {
   const { colors } = useTheme();
 
-  if (
-    !identity ||
-    identity.enrollment_status === 'NOT_ENROLLED' ||
-    identity.enrollment_status === 'SELF_CONSISTENCY' ||
-    identity.match_score === null ||
-    identity.match_score === undefined
-  ) {
+  // Reference is considered present only if explicitly indicated or if comparison data with enrollment is available
+  const referencePresent =
+    hasReference === true ||
+    identity?.reference_available === true ||
+    (identity?.enrollment_status !== undefined &&
+      identity.enrollment_status !== 'NOT_ENROLLED' &&
+      identity.enrollment_status !== 'SELF_CONSISTENCY');
+
+  // Check if comparison data is available
+  const hasComparisonData =
+    Boolean(comparison) ||
+    (identity !== null &&
+      identity !== undefined &&
+      ((identity.match_score !== null && identity.match_score !== undefined) ||
+        (identity.similarity !== null && identity.similarity !== undefined) ||
+        (identity.similarity_score !== null && identity.similarity_score !== undefined)));
+
+  const isEnrolledWithComparison = referencePresent && hasComparisonData;
+
+  if (!identity || !isEnrolledWithComparison) {
     return (
       <PanelCard
         title="SPEAKER IDENTITY"
@@ -64,26 +94,62 @@ export const IdentityPanel: React.FC<Props> = ({ identity }) => {
     );
   }
 
+  // Reference voice exists and comparison data is available: extract honest metrics
+  const sim =
+    comparison?.similarity ??
+    identity.similarity ??
+    identity.similarity_score ??
+    null;
 
-  const matchTone =
-    identity.match_score >= 75 ? 'good' : identity.match_score >= 50 ? 'warn' : 'bad';
-  const matchColor =
-    matchTone === 'good'
-      ? colors.success
-      : matchTone === 'warn'
-      ? colors.warning
-      : colors.danger;
+  const conf =
+    comparison?.confidence ??
+    (identity.confidence > 0 ? identity.confidence : null);
 
-  const enrollIcon =
-    ENROLLMENT_ICON[identity.enrollment_status] ?? '–';
-  const enrollTone = ENROLLMENT_TONE[identity.enrollment_status] ?? 'muted';
-  const consistencyTone = CONSISTENCY_TONE[identity.consistency] ?? 'muted';
+  const thresh =
+    comparison?.threshold ??
+    identity.threshold ??
+    0.60;
+
+  const rawMatchScore =
+    identity.match_score ??
+    (sim !== null ? Math.round(sim * 100) : null);
+
+  const isMatch =
+    comparison?.verdict === 'SAME_SPEAKER'
+      ? true
+      : comparison?.verdict === 'DIFFERENT_SPEAKER'
+      ? false
+      : identity.speaker_match !== undefined
+      ? identity.speaker_match
+      : identity.enrollment_status === 'VERIFIED' || identity.enrollment_status === 'ENROLLED'
+      ? true
+      : identity.enrollment_status === 'MISMATCH'
+      ? false
+      : sim !== null
+      ? sim >= thresh
+      : (rawMatchScore ?? 0) >= 50;
+
+  const matchTone = isMatch ? 'good' : 'bad';
+  const matchColor = isMatch ? colors.success : colors.danger;
+
+  const enrollStatus =
+    identity.enrollment_status &&
+    identity.enrollment_status !== 'NOT_ENROLLED' &&
+    identity.enrollment_status !== 'SELF_CONSISTENCY'
+      ? identity.enrollment_status
+      : isMatch
+      ? 'VERIFIED'
+      : 'MISMATCH';
+
+  const enrollIcon = ENROLLMENT_ICON[enrollStatus] ?? (isMatch ? '✓' : '⚠');
+  const enrollTone = ENROLLMENT_TONE[enrollStatus] ?? (isMatch ? 'good' : 'bad');
+  const consistencyTone = identity.consistency ? (CONSISTENCY_TONE[identity.consistency] ?? 'muted') : 'muted';
 
   return (
     <PanelCard
       title="SPEAKER IDENTITY"
       icon={<UserIcon size={13} color={colors.accent} />}
-      meta={`conf ${Math.round(identity.confidence * 100)}%`}
+      meta={conf !== null ? `conf ${Math.round(conf * 100)}%` : undefined}
       accent={matchTone === 'bad' ? colors.danger : undefined}
     >
       {/* Match score ring-indicator row */}
@@ -98,40 +164,60 @@ export const IdentityPanel: React.FC<Props> = ({ identity }) => {
           ]}
         >
           <Text style={[styles.matchScore, { color: matchColor }]}>
-            {`${identity.match_score}%`}
+            {rawMatchScore !== null ? `${rawMatchScore}%` : isMatch ? 'MATCH' : 'MISMATCH'}
           </Text>
           <Text style={[styles.matchLabel, { color: colors.textMuted }]}>
-            match
+            {isMatch ? 'match' : 'mismatch'}
           </Text>
         </View>
 
         <View style={styles.matchDetails}>
-          <MetricRow
-            label="Consistency"
-            value={identity.consistency}
-            tone={consistencyTone}
-            pill
-          />
+          {identity.consistency && (
+            <MetricRow
+              label="Consistency"
+              value={identity.consistency}
+              tone={consistencyTone}
+              pill
+            />
+          )}
           <MetricRow
             label="Enrollment"
-            value={`${enrollIcon} ${identity.enrollment_status.replace('_', ' ')}`}
+            value={`${enrollIcon} ${enrollStatus.replace('_', ' ')}`}
             tone={enrollTone}
             pill
           />
-          <MetricRow
-            label="Identity Confidence"
-            value={`${Math.round(identity.confidence * 100)}%`}
-            tone="muted"
-            fraction={identity.confidence}
-          />
+          {thresh !== null && thresh !== undefined && (
+            <MetricRow
+              label="Threshold"
+              value={`${Math.round(thresh * 100)}% (${thresh.toFixed(2)})`}
+              tone="muted"
+              pill
+            />
+          )}
+          {sim !== null && (
+            <MetricRow
+              label="Similarity"
+              value={`${Math.round(sim * 100)}% (${sim.toFixed(2)})`}
+              tone={matchTone}
+              pill
+            />
+          )}
+          {conf !== null && (
+            <MetricRow
+              label="Identity Confidence"
+              value={`${Math.round(conf * 100)}%`}
+              tone="muted"
+              fraction={conf}
+            />
+          )}
         </View>
       </View>
 
       {/* Model footer */}
       <Text style={[styles.stub, { color: colors.textMuted }]}>
         {identity.is_mock
-          ? `Spectral-fingerprint stub · ${identity.model_version}`
-          : `${identity.model_name} · ${identity.model_version}`}
+          ? `Spectral-fingerprint stub · ${identity.model_version || 'ecapa-stub'}`
+          : `${identity.model_name || 'ECAPA-TDNN'} · ${identity.model_version || 'ECAPA-TDNN-voxceleb'}`}
       </Text>
     </PanelCard>
   );
