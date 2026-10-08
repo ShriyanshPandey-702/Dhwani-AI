@@ -1,7 +1,6 @@
 # Dhwani AI Mobile App — Product Requirements Document (PRD)
 
 **Project:** Dhwani AI
-**SIH 2026:** Problem Statement 26104
 **Platform:** Android-first mobile security application
 **Status:** Product specification for prototype and phased implementation
 
@@ -318,7 +317,7 @@ For every meaningful intervention, show:
 - ML-service failure must degrade safely.
 - A failure in any single evidence stream must not stop the security system;
   the remaining streams continue and evidence confidence drops accordingly.
-- Local-loopback/demo mode must exist for SIH demonstration reliability.
+- Local-loopback/demo mode must exist for demonstration reliability.
 
 ### Security
 - TLS for network communication.

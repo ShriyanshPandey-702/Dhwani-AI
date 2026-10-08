@@ -1,7 +1,6 @@
 # Dhwani AI — Implementation Plan
 
-**SIH 2026 · Problem Statement 26104 — AI-Powered Real-Time Detection and
-Prevention of Voice Cloning Impersonation Attacks**
+**AI-Powered Real-Time Detection and Prevention of Voice Cloning Impersonation Attacks**
 
 This plan records what is built, what is stubbed, and what comes next. It is
 kept honest deliberately: a component is only marked complete when it works.
@@ -68,7 +67,7 @@ Invariants:
 | 6 | Real ML models — AASIST, ECAPA-TDNN, faster-whisper | ✅ Integrated (unevaluated) |
 | 7 | Model evaluation — EER/ROC-AUC/FAR-FRR, unseen generators, codecs | ⬜ Next |
 | 8 | Real Android audio capture (consented, permissioned) | ⬜ After 7 |
-| 8 | Security hardening, load testing, SIH demo hardening | ⬜ After 7 |
+| 8 | Security hardening, load testing, demo hardening | ⬜ After 7 |
 | 9 | Optional: blockchain anchoring for evidence integrity | ⬜ Optional |
 
 ---
@@ -79,7 +78,7 @@ Invariants:
 - The Resemble AI adapter, its config keys, env vars, engine fusion branch, and
   every documentation reference. A test now guards against reintroduction.
 - A stale duplicate mobile source tree at `apps/mobile/src`, which shadowed the
-  real app at `apps/mobile/VoiceShieldApp/src`.
+  real app at `apps/mobile/DhwaniAIApp/src`.
 
 ### Backend
 - `websocket/events.py` — the single definition of the wire format. Twelve event
@@ -147,7 +146,7 @@ Invariants:
 - The SQLAlchemy models used PostgreSQL-only `JSONB`/`UUID` types, so the
   backend could not run anywhere without a PostgreSQL server. Made them
   dialect-portable with `with_variant`, which leaves PostgreSQL unchanged and
-  lets local runs and the SIH demo fall back to SQLite.
+  lets local runs and demonstrations fall back to SQLite.
 
 ---
 

@@ -217,7 +217,7 @@ Dhwani AI's target operational domain includes VoIP and contact-center telephony
 
 ---
 
-## 14. Defensible SIH Hackathon Claims & Honest Limitations
+## 14. Defensible Scientific Claims & Honest Limitations
 
 ### What Dhwani AI CAN Claim (Scientifically Grounded):
 1. **End-to-End Real-Time Architecture**: Fully operational, verified streaming pipeline integrating acoustic, biometric, and contextual defense with sub-second turnaround on standard CPU.

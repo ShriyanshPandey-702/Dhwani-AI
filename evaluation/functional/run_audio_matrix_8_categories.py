@@ -106,7 +106,7 @@ categories = [
         "cat_id": 4,
         "name": "Normal Conversation",
         "description": "Authentic academic/conversational discussion, multi-sentence",
-        "path": BASE_DIR / "apps/mobile/VoiceShieldApp/android/app/src/main/assets/demo_samples/benign_sample.wav",
+        "path": BASE_DIR / "apps/mobile/DhwaniAIApp/android/app/src/main/assets/demo_samples/benign_sample.wav",
         "wav_bytes": None,
     },
     {
@@ -127,7 +127,7 @@ categories = [
         "cat_id": 7,
         "name": "Short Audio Gate",
         "description": "2.0-second audio clip under minimum 4.038s window geometry",
-        "path": BASE_DIR / "apps/mobile/VoiceShieldApp/android/app/src/main/assets/demo_samples/short_sample.wav",
+        "path": BASE_DIR / "apps/mobile/DhwaniAIApp/android/app/src/main/assets/demo_samples/short_sample.wav",
         "wav_bytes": None,
     },
     {
@@ -135,7 +135,7 @@ categories = [
         "name": "Noisy Audio (Low SNR)",
         "description": "Genuine human audio degraded with 3dB SNR additive noise",
         "path": None,
-        "wav_bytes": make_noisy_wav(BASE_DIR / "apps/mobile/VoiceShieldApp/android/app/src/main/assets/demo_samples/benign_sample.wav", target_snr_db=3.0),
+        "wav_bytes": make_noisy_wav(BASE_DIR / "apps/mobile/DhwaniAIApp/android/app/src/main/assets/demo_samples/benign_sample.wav", target_snr_db=3.0),
     },
 ]
 

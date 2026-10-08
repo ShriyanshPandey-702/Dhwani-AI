@@ -2,8 +2,6 @@
 
 **Purpose:** This README is a handoff/context document for a new AI
 agent, teammate, or developer joining the Dhwani AI project.\
-**Project:** Smart India Hackathon 2026 --- Problem Statement
-**SIH26104**\
 **Product:** Dhwani AI --- AI-Powered Real-Time Detection and
 Prevention of Voice Cloning Impersonation Attacks
 
@@ -39,10 +37,10 @@ fusion. A genuine human asking for an OTP must not become "synthetic"
 merely because the request is suspicious, and an unfamiliar speaker must
 not automatically become "fake."
 
-The official SIH problem statement asks for real-time synthetic-voice
+Dhwani AI provides real-time synthetic-voice
 detection, dynamic risk scoring, actionable alerts before sensitive
 actions, privacy preservation, scalability, and support for multilingual
-Indian accents/dialects. The Dhwani AI design extends this with active
+Indian accents/dialects. The Dhwani AI design features active
 challenge-response and an independent verification channel so that
 high-risk decisions can actually be protected rather than merely
 reported.
@@ -218,9 +216,9 @@ These are phases such as:
 
 ### Layer B --- Product/deployment roadmap
 
-The master SIH document separately describes:
+The product roadmap separately describes:
 
--   Product Phase 0 --- Hackathon
+-   Product Phase 0 --- Prototype
 -   Product Phase 1 --- Pilot
 -   Product Phase 2 --- Scale
 -   Product Phase 3 --- Ecosystem
@@ -1096,11 +1094,11 @@ core prototype.
 
 ------------------------------------------------------------------------
 
-# 24. Product Roadmap From the Master SIH Document
+# 24. Long-Term Product Roadmap
 
 The master design separately defines the long-term product roadmap.
 
-## Product Phase 0 --- Hackathon
+## Product Phase 0 --- Prototype
 
 Scope:
 
@@ -1170,11 +1168,11 @@ event can correlate with:
 The current project has the following broad structure:
 
 ``` text
-voiceshield/
+Dhwani Ai/
 │
 ├── apps/
 │   └── mobile/
-│       └── VoiceShieldApp/
+│       └── DhwaniAIApp/
 │
 ├── services/
 │   └── api/
@@ -1197,7 +1195,7 @@ voiceshield/
 │       ├── models/
 │       ├── vendor/
 │       ├── requirements.txt
-│       └── voiceshield.db
+│       └── dhwaniai.db
 │
 ├── data/
 ├── docs/
@@ -1423,7 +1421,7 @@ If a problem is suspected:
 
 Use this short explanation:
 
-> "Dhwani AI is a real-time voice-security system for SIH26104. We
+> "Dhwani AI is a real-time voice-security system. We
 > have already built the backend, mobile app, WebSocket pipeline, Risk
 > Engine, challenge/verification workflow, and integrated real AASIST-L,
 > ECAPA-TDNN and Whisper. We also evaluated the detector across
@@ -1522,15 +1520,7 @@ accurate."
 
 The project context is grounded primarily in:
 
--   `SIH26104_VoiceShield_MASTER_v18_Final.md` --- master SIH
-    architecture, roadmap, claim-safety, research and presentation
-    reference.
--   `PS26104_VoiceShield_Explained.pdf` --- official problem statement
-    and plain-language mapping.
--   `Final SIH Winning Strategy Guide.pdf` --- SIH strategy/presentation
-    guidance.
--   `Conducting Internal Hackathon for Smart India Hackathon 2026.pdf`
-    --- internal SIH/hackathon process context.
+-   Master architecture, roadmap, claim-safety, research and reference specifications.
 -   Current Dhwani AI repository source, tests, evaluation results and
     implementation plans.
 -   Phase 1.5 and Phase 1.6 engineering validation reports.

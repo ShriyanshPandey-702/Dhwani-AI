@@ -156,7 +156,7 @@ def test_websocket_rejects_a_forged_token(ws_client):
 
 def test_no_api_secrets_are_bundled_into_the_mobile_app():
     """The mobile bundle must never contain a backend secret or key."""
-    mobile_src = REPO_ROOT / "apps" / "mobile" / "VoiceShieldApp" / "src"
+    mobile_src = REPO_ROOT / "apps" / "mobile" / "DhwaniAIApp" / "src"
     forbidden = ("JWT_SECRET", "SECRET_KEY", "API_KEY", "api_key", "PRIVATE_KEY")
     offenders = []
     for path in mobile_src.rglob("*.ts*"):
@@ -168,18 +168,18 @@ def test_no_api_secrets_are_bundled_into_the_mobile_app():
 
 
 def test_no_third_party_detection_api_remains_in_the_repository():
-    """Resemble AI was removed; nothing may reintroduce it."""
+    """Third-party detection APIs must not remain in the codebase."""
+    mobile_src = REPO_ROOT / "apps" / "mobile" / "DhwaniAIApp" / "src"
     roots = [
         REPO_ROOT / "services" / "api" / "app",
-        REPO_ROOT / "apps" / "mobile" / "VoiceShieldApp" / "src",
+        mobile_src,
     ]
     offenders = []
     for root in roots:
         for path in root.rglob("*"):
             if path.is_file() and path.suffix in {".py", ".ts", ".tsx"}:
-                if "resemble" in path.read_text(
-                    encoding="utf-8", errors="ignore"
-                ).lower():
+                content = path.read_text(encoding="utf-8", errors="ignore").lower()
+                if "resemble" in content or "modulate.ai" in content or "velma" in content:
                     offenders.append(str(path))
     assert not offenders, offenders
 

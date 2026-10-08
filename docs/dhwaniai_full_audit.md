@@ -1,4 +1,4 @@
-# Dhwani AI (formerly VoiceShield) — Full Project Audit Report
+# Dhwani AI — Full Project Audit Report
 **Date:** 2026-09-16  
 **Auditor:** Antigravity  
 **Phase:** Post-Phase-2.0 forensic audit  
@@ -75,7 +75,7 @@ ba61d88 chore(phase-2.0): update mobile submodule
 |---|---|
 | AASIST-L checkpoint on disk | SHA-256 verified above |
 | StreamWindower invariants | Computed from source, all match |
-| Native AudioRecord module | `VoiceShieldAudioModule.kt` — real AudioRecord, 16 kHz, PCM16, 250ms |
+| Native AudioRecord module | `DhwaniAIAudioModule.kt` — real AudioRecord, 16 kHz, PCM16, 250ms |
 | WebSocket pipeline | `gateway.py` + `pipeline.py` — real orchestration |
 | FastAPI auth/sessions/incidents/risk | All endpoints present and tested |
 | JWT auth | Present, tested |
@@ -83,7 +83,7 @@ ba61d88 chore(phase-2.0): update mobile submodule
 | Mobile navigation | 9 screens in `AppNavigator` |
 | Backend tests | 19 test files |
 | Mobile Jest tests | 5 test files, ~1085 lines |
-| Monorepo structure | `apps/mobile/VoiceShieldApp` = 97 files directly tracked by root |
+| Monorepo structure | `apps/mobile/DhwaniAIApp` = 97 files directly tracked by root |
 | All 3 phase tags | `phase-1.7-pass`, `phase-1.8-pass`, `phase-2.0-pass` confirmed |
 
 ---
@@ -120,7 +120,7 @@ ba61d88 chore(phase-2.0): update mobile submodule
 
 ```
 PHYSICAL ANDROID (Realme 8 / Android 13)
-  └─ AudioRecord [native Kotlin: VoiceShieldAudioModule.kt]
+  └─ AudioRecord [native Kotlin: DhwaniAIAudioModule.kt]
         16 kHz / mono / PCM16 / 250ms chunks (4000 samples / 8000 bytes)
         ↓ NativeEventEmitter bridge
   audioCaptureService.ts — base64-encodes PCM chunk
@@ -198,7 +198,7 @@ FASTAPI BACKEND (services/api/app/)
 
 ---
 
-## 9. MOBILE STATUS (apps/mobile/VoiceShieldApp/)
+## 9. MOBILE STATUS (apps/mobile/DhwaniAIApp/)
 
 **React Native 0.87.1, New Architecture ON, Hermes ON**
 
@@ -220,7 +220,7 @@ FASTAPI BACKEND (services/api/app/)
 | WebSocket service | `wsService.ts` | REAL |
 | API client | `client.ts` | REAL |
 | Auth service | `authService.ts` | REAL |
-| Native audio module | `VoiceShieldAudioModule.kt` | REAL (AudioRecord, 16 kHz PCM16) |
+| Native audio module | `DhwaniAIAudioModule.kt` | REAL (AudioRecord, 16 kHz PCM16) |
 | Android manifest | `AndroidManifest.xml` | REAL (RECORD_AUDIO + INTERNET) |
 | Risk store | `riskStore.ts` | REAL |
 | Auth store | `authStore.ts` | REAL |
@@ -327,14 +327,14 @@ FASTAPI BACKEND (services/api/app/)
 
 ### Problem A (standalone JS) — No source code changes needed
 ```bash
-cd apps/mobile/VoiceShieldApp/android
+cd apps/mobile/DhwaniAIApp/android
 ./gradlew assembleRelease
 ```
 `build.gradle` already has `release` signed with debug keystore — sufficient for side-loading.
 
 ### Problem B (backend URL) — Source change required
 
-**File:** [`apps/mobile/VoiceShieldApp/src/config/api.ts`](file:///Users/shriyansh/Desktop/voiceshield/apps/mobile/VoiceShieldApp/src/config/api.ts)
+**File:** `apps/mobile/DhwaniAIApp/src/config/api.ts`
 
 ```diff
 -export const API_BASE_URL = 'http://localhost:8000';
@@ -351,7 +351,7 @@ cd apps/mobile/VoiceShieldApp/android
 
 ### Problem C (SettingsScreen stale text) — Source change required
 
-**File:** [`apps/mobile/VoiceShieldApp/src/screens/SettingsScreen.tsx`](file:///Users/shriyansh/Desktop/voiceshield/apps/mobile/VoiceShieldApp/src/screens/SettingsScreen.tsx)
+**File:** `apps/mobile/DhwaniAIApp/src/screens/SettingsScreen.tsx`
 
 Update the Detection Pipeline section from stale stub descriptions to accurate real-ML descriptions.
 
@@ -422,7 +422,7 @@ test_websocket_integration.py
 - **No source changes needed**
 
 ### B — Make backend URL configurable
-- **File:** `apps/mobile/VoiceShieldApp/src/config/api.ts`
+- **File:** `apps/mobile/DhwaniAIApp/src/config/api.ts`
 - **Why:** `localhost:8000` only works with USB; standalone needs LAN/cloud IP
 
 ### C — Set `PIPELINE_MODE=real_ml` at deploy time
@@ -430,7 +430,7 @@ test_websocket_integration.py
 - **Why:** Default `mock` silently degrades to heuristic demo mode
 
 ### D — Update SettingsScreen model descriptions
-- **File:** `apps/mobile/VoiceShieldApp/src/screens/SettingsScreen.tsx`
+- **File:** `apps/mobile/DhwaniAIApp/src/screens/SettingsScreen.tsx`
 - **Why:** "Heuristic DSP stub" is factually wrong since Phase 1.7
 
 ---

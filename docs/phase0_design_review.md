@@ -73,7 +73,7 @@ generators). Division of labour: **β = unseen generators, γ = unseen vocoders 
 matched content, δ = unseen real-world domain.**
 
 **Non-commercial caveat.** If δ is research-only, every δ result is
-non-commercial evidence — acceptable for the current academic/SIH context,
+non-commercial evidence — acceptable for the current academic research context,
 identical to how β is already used, but it must be recorded, and it means δ
 cannot underwrite a commercial claim later.
 

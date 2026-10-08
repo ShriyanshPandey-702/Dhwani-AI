@@ -1,6 +1,6 @@
-# Dhwani AI — Final SIH Demo Runbook (Phase 5.4 Freeze)
+# Dhwani AI — Final Demo Runbook (Phase 5.4 Freeze)
 
-This is the definitive, authoritative runbook for the Smart India Hackathon (SIH) demonstration of **Dhwani AI**. It details the exact system architecture, prerequisites, service startup commands, preflight checks, scenario sequences, judge presentation flows, recovery procedures, and scientific claim boundaries.
+This is the definitive, authoritative runbook for the demonstration of **Dhwani AI**. It details the exact system architecture, prerequisites, service startup commands, preflight checks, scenario sequences, live presentation flows, recovery procedures, and scientific claim boundaries.
 
 ---
 
@@ -128,7 +128,7 @@ PIPELINE_MODE=real_ml JWT_SECRET=local-dev-secret-not-for-production-1234567890a
 Verify backend health:
 ```bash
 curl -s http://localhost:8000/health
-# Expected output: {"status":"ok","service":"voiceshield-api"}
+# Expected output: {"status":"ok","service":"dhwani-ai-api"}
 ```
 
 ### Step 3: Run Master Preflight Verification
@@ -138,7 +138,7 @@ PYTHONPATH=. services/api/.venv/bin/python services/telephony/scripts/validate_p
 
 ---
 
-## 6. SIH Demo Scenario Sequence
+## 6. Demo Scenario Sequence
 
 ### Flow A: Normal Legitimate Call (Bona-Fide Speech)
 1. **Action**: Caller establishes VoIP call with genuine human speech (`LJ007-0005.wav`).
@@ -215,7 +215,7 @@ PYTHONPATH=. services/api/.venv/bin/python services/telephony/scripts/validate_p
 
 ---
 
-## 7. SIH Demonstration Capabilities & Presentation Guide
+## 7. Demonstration Capabilities & Presentation Guide
 
 1. **True Real-Time Processing**: Dhwani AI receives live 20ms RTP packets, converts/accumulates them into the configured PCM analysis windows, and performs ML inference on those analysis windows with inference under 300 ms on standard CPU.
 2. **Multi-Factor Defense-in-Depth**: No single ML model has the authority to block a call. Blocking requires corroborated signals (Authenticity + Identity + Threat Intent).

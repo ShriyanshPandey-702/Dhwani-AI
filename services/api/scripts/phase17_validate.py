@@ -217,7 +217,7 @@ def test_01_backend_regression() -> bool:
 # =============================================================================
 def test_02_mobile_regression() -> bool:
     banner("TEST 2: Mobile Regression Test Suite & TypeScript Compilation")
-    mobile_dir = REPO_ROOT / "apps" / "mobile" / "VoiceShieldApp"
+    mobile_dir = REPO_ROOT / "apps" / "mobile" / "DhwaniAIApp"
     if not mobile_dir.exists():
         record_result("Mobile Regression Tests", False, "Mobile app directory missing")
         return False

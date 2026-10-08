@@ -130,7 +130,7 @@ Authenticity and context are deliberately kept separate until final policy fusio
 ## 4. Mobile Architecture
 
 ```text
-apps/mobile/VoiceShieldApp/
+apps/mobile/DhwaniAIApp/
 ├── App.tsx                      # Root: splash, then the navigator
 ├── src/
 │   ├── screens/                 # Splash, Login, Home, Call, Challenge,
@@ -170,7 +170,7 @@ Actual structure. Directories that do not exist yet are marked PLANNED.
 Dhwani Ai/
 ├── apps/
 │   └── mobile/
-│       └── VoiceShieldApp/      # React Native app (see section 4)
+│       └── DhwaniAIApp/         # React Native app (see section 4)
 │
 ├── services/
 │   └── api/
@@ -234,7 +234,7 @@ Example React Native setup:
 
 ```bash
 git clone <repository>
-cd voiceshield
+cd dhwani-ai
 
 npm install
 
@@ -606,7 +606,7 @@ testing.
 - Kotlin native bridge producing 16 kHz mono PCM frames
 - `pipeline_mode = "live"` through the identical backend pipeline
 
-### Phase 8 — SIH Demo Hardening
+### Phase 8 — Demo Hardening
 - Local-loopback fallback
 - Preloaded test scenarios
 - Mock OOB service
@@ -654,14 +654,14 @@ Critical ────────→ Hold
 
 ## 17. Folder/Module Ownership
 
-- Mobile: `apps/mobile/VoiceShieldApp/src`
+- Mobile: `apps/mobile/DhwaniAIApp/src`
 - Backend: `services/api/app` (`api/`, `core/`, `models/`, `risk/`, `websocket/`)
 - ML: `services/api/app/ml` and `services/api/app/simulation`
 - Database: `services/api/schema.sql`
 - DevOps: `docker-compose.yml` (an `infra/` tree is PLANNED)
 - Security/evidence: `app/core/security.py` and the incident integrity hash
   (a `blockchain/evidence/` tree is PLANNED)
-- QA: `services/api/tests`, `apps/mobile/VoiceShieldApp/__tests__`, `docs/test.md`
+- QA: `services/api/tests`, `apps/mobile/DhwaniAIApp/__tests__`, `docs/test.md`
 
 ## 18. Architecture Principles
 
@@ -736,7 +736,7 @@ network loss. One malformed event never breaks the dashboard.
 | Voice authenticity model | REAL — AASIST/AASIST-L pretrained checkpoint, **evaluated**: ROC-AUC 0.9987 in-domain / **0.6055 unseen TTS** |
 | Speaker identity model | REAL — ECAPA-TDNN pretrained checkpoint (not independently evaluated) |
 | Speech-to-text | REAL — faster-whisper, chunked windows (WER unmeasured) |
-| Demo backends | REAL — deterministic heuristics retained for the SIH demonstration |
+| Demo backends | REAL — deterministic heuristics retained for demonstration |
 | Audio source | MOCK — development mock audio; Android capture planned |
 | Blockchain evidence anchoring | PLANNED |
 

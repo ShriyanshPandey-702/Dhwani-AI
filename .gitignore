@@ -29,10 +29,10 @@ apps/mobile/android/local.properties
 apps/mobile/android/.gradle/
 apps/mobile/android/app/build/
 apps/mobile/android/build/
-apps/mobile/VoiceShieldApp/android/local.properties
-apps/mobile/VoiceShieldApp/android/.gradle/
-apps/mobile/VoiceShieldApp/android/app/build/
-apps/mobile/VoiceShieldApp/android/build/
+apps/mobile/DhwaniAIApp/android/local.properties
+apps/mobile/DhwaniAIApp/android/.gradle/
+apps/mobile/DhwaniAIApp/android/app/build/
+apps/mobile/DhwaniAIApp/android/build/
 *.apk
 *.aab
 *.keystore

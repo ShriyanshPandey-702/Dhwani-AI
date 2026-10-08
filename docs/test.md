@@ -4,7 +4,7 @@
 
 Verify that the Dhwani AI Android application is functional, secure, real-time, privacy-conscious, accessible, and safe under normal and failure conditions.
 
-**Release rule:** all Critical and High severity tests must pass before an SIH demo/release build.
+**Release rule:** all Critical and High severity tests must pass before a release build.
 
 ## 2. Test Environment
 
@@ -398,7 +398,7 @@ The mobile MVP can be considered demo-ready only when:
 7. No API secret is embedded in the mobile client.
 8. Test audio covers genuine, synthetic, noisy and compressed cases.
 9. Incident evidence is tamper-evident.
-10. The complete SIH demo can run using a local/controlled fallback if venue network fails.
+10. The complete demo can run using a local/controlled fallback if venue network fails.
 
 ---
 
@@ -408,8 +408,8 @@ Run with:
 
 ```bash
 cd services/api && .venv/bin/python -m pytest              # 125 tests
-cd apps/mobile/VoiceShieldApp && npm test                  # 58 tests
-cd apps/mobile/VoiceShieldApp && npx tsc --noEmit           # 0 type errors
+cd apps/mobile/DhwaniAIApp && npm test                     # 58 tests
+cd apps/mobile/DhwaniAIApp && npx tsc --noEmit              # 0 type errors
 ```
 
 ### Backend — `services/api/tests/`
@@ -424,7 +424,7 @@ cd apps/mobile/VoiceShieldApp && npx tsc --noEmit           # 0 type errors
 | `test_websocket_integration.py` | 8 | A real WebSocket connection end to end: authorised connect and `session_started`; ping/pong; unknown message types and malformed JSON returning errors without dropping the socket; invalid base64 audio; the full demo scenario (score escalation, moving series, trend, all three streams separate, ALLOW→VERIFY→HOLD, alerts, timeline without repeats, mock labelling); envelope on every event with strictly increasing `seq` and unique `event_id`; a client audio chunk running the same pipeline labelled `live` |
 | `test_security.py` | 14 | Valid/tampered/forged/expired JWTs; `alg: none` confusion; access vs refresh tokens; password hashing and salting; WebSocket rejection of missing, invalid, forged and refresh tokens; no secrets in the mobile bundle; no third-party detection API; evidence-hash tamper detection and key-order stability |
 
-### Mobile — `apps/mobile/VoiceShieldApp/__tests__/`
+### Mobile — `apps/mobile/DhwaniAIApp/__tests__/`
 
 | File | Tests | Covers |
 |---|---|---|

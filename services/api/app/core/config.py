@@ -99,9 +99,7 @@ class Settings(BaseSettings):
 
     # ─── Third-Party Live Audio & AI Providers ────────────────────────────
     DEEPGRAM_API_KEY: str = ""
-    MODULATE_API_KEY: str = ""
     STT_PROVIDER: str = "deepgram"        # "deepgram" | "faster_whisper"
-    SYNTHETIC_PROVIDER: str = "modulate"  # "modulate" | "none"
 
     # Push (stubbed)
     FCM_PROJECT_ID: str = ""

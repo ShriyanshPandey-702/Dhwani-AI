@@ -65,15 +65,7 @@ Use exactly:
 
 **Dhwani AI**
 
-Never display:
-
--   VoiceShield
--   Voice Shield
--   Dhvani AI
--   Dhwani Voice Shield
-
-The visible product name throughout the application must be **Dhwani
-AI**.
+The visible product name throughout the application must consistently be **Dhwani AI**.
 
 Internal package/application identifiers may remain unchanged if
 required for Android build compatibility.
@@ -82,7 +74,7 @@ required for Android build compatibility.
 
 # 4. Logo
 
-Replace the old VoiceShield logo with the supplied **Dhwani AI shield
+Replace any old logo with the supplied **Dhwani AI shield
 logo**.
 
 The logo should be used consistently in:
@@ -1538,25 +1530,15 @@ This distinction must remain visible where relevant.
 
 ------------------------------------------------------------------------
 
-# 44. Logo Migration Checklist
+# 44. Branding Standards Checklist
 
-Search repository for:
-
-``` text
-VoiceShield
-Voice Shield
-voiceshield
-old logo assets
-old app icon
-```
-
-Replace user-visible branding with:
+Ensure all user-visible branding consistently displays:
 
 ``` text
 Dhwani AI
 ```
 
-Do not break:
+Do not modify internal technical package identifiers:
 
 ``` text
 com.voiceshieldapp
@@ -1599,7 +1581,7 @@ The redesign is complete only when:
 ### Branding
 
 -   Dhwani AI appears everywhere.
--   Old VoiceShield branding is absent from user-visible UI.
+-   Legacy branding is absent from user-visible UI.
 -   New Dhwani logo is used consistently.
 -   Launcher icon is updated.
 
@@ -1680,7 +1662,7 @@ After implementation:
 11. test call history
 12. test incoming-call UI
 13. verify the new Dhwani AI logo
-14. verify no old VoiceShield branding remains in user-visible UI
+14. verify no legacy branding remains in user-visible UI
 15. report files changed
 16. report tests passed/failed
 

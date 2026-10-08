@@ -318,7 +318,7 @@ Never insert sample calls into production runtime.
 
 # 13. Live Call --- Low Risk
 
-This is a primary SIH demo screen.
+This is a primary demonstration screen.
 
 ### Header
 
@@ -757,7 +757,7 @@ Detailed evidence may appear below.
 
 ------------------------------------------------------------------------
 
-# 28. SIH Demo Priority
+# 28. Demonstration Priority
 
 The Live Analysis screen is the most important screen.
 

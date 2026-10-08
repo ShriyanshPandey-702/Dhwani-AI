@@ -31,7 +31,6 @@ from app.api.deps import get_current_user
 from app.core.database import get_db
 from app.models.models import Incident, Session, User
 from app.ml.authenticity.detector import AuthenticityDetector, AuthenticityResult
-from app.ml.authenticity.modulate import get_modulate_detector, ModulateEvidence
 from app.ml.context.classifier import ContextClassifier, ContextResult
 from app.ml.context.transcriber import Transcriber
 from app.ml.identity.speaker import SpeakerIdentity, ENROLLED, NOT_ENROLLED
@@ -347,14 +346,6 @@ async def analyze_audio(
         consequence = context_result.consequence if context_result else "low"
         ctx_conf = context_result.confidence if context_result else 0.0
 
-        # ── 5b. Modulate Velma-2 Synthetic Voice Detection ────────────────────
-        modulate_detector = get_modulate_detector()
-        modulate_evidence: Optional[ModulateEvidence] = None
-        if modulate_detector.is_configured:
-            try:
-                modulate_evidence = modulate_detector.analyze_chunk_sync(audio[:min(len(audio), 64608 * 2)])
-            except Exception as e:
-                log.warning("manual_analysis.modulate_failed", error=str(e))
 
         # ── 6. ECAPA Identity Setup & Mode Selection ──────────────────────────
         ref_embedding: Optional[np.ndarray] = None
@@ -546,17 +537,6 @@ async def analyze_audio(
                 "model_version": peak_auth_dict.get("model_version", "AASIST-L-ASVspoof2019"),
                 "status": "connected" if peak_auth_dict.get("spoof_probability") is not None else "unavailable",
             }
-            if modulate_evidence:
-                peak_auth_dict["modulate"] = modulate_evidence.to_dict()
-            else:
-                peak_auth_dict["modulate"] = {
-                    "provider": "modulate",
-                    "model": "velma-2-synthetic-voice-detection-batch",
-                    "synthetic_probability": None,
-                    "verdict": "UNDECIDED",
-                    "confidence": 0.0,
-                    "provider_status": "not_configured" if not modulate_detector.is_configured else "unavailable",
-                }
 
         context_dict = context_result.to_dict() if context_result else None
         if context_dict:

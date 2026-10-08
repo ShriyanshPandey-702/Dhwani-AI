@@ -126,7 +126,7 @@ Dhwani Ai/
 │
 ├── apps/
 │   └── mobile/
-│       └── VoiceShieldApp/     # React Native mobile application
+│       └── DhwaniAIApp/        # React Native mobile application
 │           ├── android/        # Android native source (Kotlin telecom & audio modules)
 │           ├── ios/            # iOS native project
 │           ├── src/            # React Native components, screens, hooks, stores
@@ -185,7 +185,7 @@ Create your local `.env` configuration from the provided template:
 cp .env.example .env
 ```
 
-Review `.env` and configure local parameters. For cloud STT and synthetic voice fallback providers (e.g., Deepgram, Modulate), supply your private API keys locally.
+Review `.env` and configure local parameters. For optional cloud STT transcription (e.g., Deepgram Nova-2), supply your private API key locally.
 
 ### 4. Setup Backend Environment
 
@@ -215,7 +215,7 @@ The REST API will be available at `http://localhost:8000`, with interactive Open
 
 ```bash
 # Navigate to mobile project directory
-cd apps/mobile/VoiceShieldApp
+cd apps/mobile/DhwaniAIApp
 
 # Install dependencies
 npm install
@@ -242,7 +242,6 @@ All runtime settings are declared in `.env.example`. Key settings include:
 | `ANALYSIS_WINDOW_MS` | `4038` | Model window length (64,608 samples at 16 kHz) |
 | `ANALYSIS_HOP_MS` | `1000` | Sliding window hop step (16,000 samples at 16 kHz) |
 | `DEEPGRAM_API_KEY` | *(blank)* | Optional Deepgram Nova-2 API key for cloud STT |
-| `MODULATE_API_KEY` | *(blank)* | Optional Modulate API key for synthetic voice verification |
 | `ARI_USER` | `voiceshield` | Asterisk REST Interface username |
 | `ARI_PASSWORD` | *(local secret)* | Asterisk REST Interface authentication secret |
 
@@ -277,7 +276,7 @@ PYTHONPATH=. pytest services/telephony/tests/ -v
 
 ### Mobile Application Tests
 ```bash
-cd apps/mobile/VoiceShieldApp
+cd apps/mobile/DhwaniAIApp
 
 # Run Jest unit and component tests
 npm test -- --watchAll=false
@@ -288,7 +287,7 @@ npx tsc --noEmit
 
 ### Android Native Module Build Verification
 ```bash
-cd apps/mobile/VoiceShieldApp/android
+cd apps/mobile/DhwaniAIApp/android
 ./gradlew compileDebugKotlin
 ```
 
@@ -310,7 +309,7 @@ recording_samples/
     └── test.wav                         # Multi-modal evaluation clip
 ```
 
-> **Note on Forensic Scores**: Scores generated on sample recordings demonstrate pipeline functionality and relative risk tiering. They do not represent universal guarantees of production model accuracy across unconstrained acoustic environments.
+> **Note on Sample Recordings**: Sample recordings are provided for local pipeline testing and evaluation. Results depend on the input audio and should not be interpreted as universal production accuracy guarantees.
 
 ---
 

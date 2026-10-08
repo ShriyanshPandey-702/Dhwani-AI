@@ -10,7 +10,7 @@ This is the backend half of the "done" criterion:
 
     backend → WebSocket → structured events → (Zustand → dashboard)
 
-The client half is covered by apps/mobile/VoiceShieldApp/__tests__/riskStore.test.ts,
+The client half is covered by apps/mobile/DhwaniAIApp/__tests__/riskStore.test.ts,
 which drives the same event shapes.
 """
 

@@ -131,7 +131,7 @@ class SipUacClient:
             f"CSeq: {self.cseq} INVITE\r\n"
             f"Contact: <sip:{self.caller_number}@127.0.0.1:{self.local_sip_port}{contact_param}>\r\n"
             f"Max-Forwards: 70\r\n"
-            f"User-Agent: VoiceShield-Test-UAC\r\n"
+            f"User-Agent: DhwaniAI-Test-UAC\r\n"
             f"Content-Type: application/sdp\r\n"
             f"Content-Length: {len(sdp)}\r\n\r\n"
             f"{sdp}"
@@ -506,7 +506,7 @@ def run_call(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="VoiceShield SIP Test Call Generator")
+    parser = argparse.ArgumentParser(description="Dhwani AI SIP Test Call Generator")
     parser.add_argument("--wav", default="data/external/LJSpeech-1.1/wavs/LJ007-0005.wav", help="WAV file to stream")
     parser.add_argument("--server", default="127.0.0.1", help="Asterisk SIP server IP")
     parser.add_argument("--port", type=int, default=5060, help="Asterisk SIP port")

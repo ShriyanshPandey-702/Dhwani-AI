@@ -1173,7 +1173,7 @@ class Phase54ScenarioRunner:
 
         # 1. Run Android unit tests: CallScreeningEvaluatorTest
         cmd = ["./gradlew", "testDebugUnitTest"]
-        cwd = "apps/mobile/VoiceShieldApp/android"
+        cwd = "apps/mobile/DhwaniAIApp/android"
         proc = await asyncio.to_thread(
             subprocess.run,
             cmd,
@@ -1222,7 +1222,7 @@ class Phase54ScenarioRunner:
         log.info("=" * 70)
         t0 = time.time()
 
-        cmd = ["npm", "test", "--prefix", "apps/mobile/VoiceShieldApp", "--", "--watchAll=false"]
+        cmd = ["npm", "test", "--prefix", "apps/mobile/DhwaniAIApp", "--", "--watchAll=false"]
         proc = await asyncio.to_thread(
             subprocess.run,
             cmd,
