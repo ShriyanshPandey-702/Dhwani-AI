@@ -1,6 +1,6 @@
 /**
  * Dhwani AI Integration Contracts & Proto Definitions
- * Exposes the exact protobuf schema and API structures (SIH 2026 PS26104).
+ * Exposes the exact protobuf schema and API structures.
  */
 
 export const PROTO_DEFINITION = `syntax = "proto3";
@@ -8,7 +8,6 @@ export const PROTO_DEFINITION = `syntax = "proto3";
 package dhwani.v1;
 
 // Dhwani AI Voice Impersonation Defense Service
-// SIH 2026 Problem Statement PS26104
 service DhwaniSecurityService {
   // Bi-directional 16kHz PCM streaming for real-time live call/audio inspection
   rpc StreamAudio(stream AudioChunkRequest) returns (stream RiskEventResponse);

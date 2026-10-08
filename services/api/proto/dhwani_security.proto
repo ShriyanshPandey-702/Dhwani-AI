@@ -7,7 +7,7 @@ option java_multiple_files = true;
 option java_package = "ai.dhwani.v1";
 
 // Dhwani AI Security Service
-// Real-Time Voice Cloning Impersonation Detection & Prevention (SIH 2026 PS26104)
+// Real-Time Voice Cloning Impersonation Detection & Prevention
 service DhwaniSecurityService {
   // Bi-directional streaming for real-time live call/audio inspection
   rpc StreamAudio(stream AudioChunkRequest) returns (stream RiskEventResponse);

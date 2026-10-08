@@ -595,7 +595,7 @@ export const SettingsScreen: React.FC = () => {
             Real-Time Voice Protection · Detect. Verify. Prevent.
           </Text>
           <Text style={[styles.aboutIndia, { color: colors.accent }]}>
-            🇮🇳 Built for a Safer India · SIH 2026
+            🇮🇳 Built for a Safer India · Voice Security Platform
           </Text>
 
           <TouchableOpacity

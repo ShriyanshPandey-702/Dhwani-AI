@@ -491,7 +491,7 @@ export const IntegrationHubScreen: React.FC = () => {
           <View style={styles.sihCardHeader}>
             <ShieldIcon size={16} color={colors.accent} strokeWidth={2} />
             <Text style={[styles.sihLabel, { color: colors.accent }]}>
-              SIH 2026 PS26104 — WHY DHWANI AI INTEGRATES
+              CORE ARCHITECTURE — WHY DHWANI AI INTEGRATES
             </Text>
           </View>
           <Text style={[styles.sihTagline, { color: colors.textPrimary }]}>

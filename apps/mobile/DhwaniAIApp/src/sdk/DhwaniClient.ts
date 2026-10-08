@@ -3,7 +3,7 @@
  * 
  * Official client library for integrating Dhwani AI Voice Cloning & Impersonation
  * Defense into Core Banking systems, Contact Centers, Enterprise Communication tools,
- * and Telecom/VoIP services (SIH 2026 PS26104).
+ * and Telecom/VoIP services.
  * 
  * Capabilities:
  * - JWT & Token-based API Authentication
