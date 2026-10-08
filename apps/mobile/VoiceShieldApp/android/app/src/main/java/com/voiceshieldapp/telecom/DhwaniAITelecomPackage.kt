@@ -7,12 +7,12 @@ import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.uimanager.ViewManager
 
 /**
- * ReactPackage registering VoiceShieldCallScreeningModule.
+ * ReactPackage registering DhwaniAICallScreeningModule.
  */
-class VoiceShieldTelecomPackage : ReactPackage {
+class DhwaniAITelecomPackage : ReactPackage {
 
     override fun createNativeModules(reactContext: ReactApplicationContext): List<NativeModule> {
-        return listOf(VoiceShieldCallScreeningModule(reactContext))
+        return listOf(DhwaniAICallScreeningModule(reactContext))
     }
 
     override fun createViewManagers(reactContext: ReactApplicationContext): List<ViewManager<*, *>> {

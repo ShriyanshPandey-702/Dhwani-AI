@@ -41,9 +41,9 @@ logging.basicConfig(
 )
 log = logging.getLogger("Phase52Validation")
 
-ARI_URL = "http://localhost:8088/ari"
-ARI_USER = "voiceshield"
-ARI_PASS = "voiceshield_secret_pass"
+ARI_URL = os.getenv("ARI_URL", "http://localhost:8088/ari")
+ARI_USER = os.getenv("ARI_USER", "voiceshield")
+ARI_PASS = os.getenv("ARI_PASSWORD") or os.getenv("ARI_PASS") or ""
 ARI_AUTH = (ARI_USER, ARI_PASS)
 WAV_PATH = "data/external/LJSpeech-1.1/wavs/LJ007-0005.wav"
 

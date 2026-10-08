@@ -30,7 +30,7 @@
 
       <!-- Android Telecom Call Screening Service -->
       <service
-        android:name=".telecom.VoiceShieldCallScreeningService"
+        android:name=".telecom.DhwaniAICallScreeningService"
         android:permission="android.permission.BIND_SCREENING_SERVICE"
         android:exported="true">
         <intent-filter>

@@ -436,8 +436,11 @@ def run_call(
                 try:
                     import sqlite3
                     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                    sounds_dir = os.path.join(base_dir, "sounds")
-                    db_path = os.path.join(os.path.dirname(base_dir), "api", "voiceshield.db")
+                    db_path = os.path.join(os.path.dirname(base_dir), "api", "dhwaniai.db")
+                    if not os.path.exists(db_path):
+                        db_path = os.path.join(os.path.dirname(base_dir), "api", "voiceshield.db")
+                    if not os.path.exists(db_path):
+                        db_path = "/workspace/services/api/dhwaniai.db"
                     if not os.path.exists(db_path):
                         db_path = "/workspace/services/api/voiceshield.db"
                     conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)

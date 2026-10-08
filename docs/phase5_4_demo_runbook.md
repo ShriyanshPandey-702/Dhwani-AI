@@ -115,7 +115,8 @@ docker start voiceshield_asterisk
 Verify Asterisk health:
 ```bash
 docker ps --filter "name=voiceshield_asterisk"
-curl -s -u voiceshield:voiceshield_secret_pass http://localhost:8088/ari/asterisk/info
+curl -s -u "${ARI_USER:-voiceshield}:${ARI_PASSWORD}" http://localhost:8088/ari/asterisk/info
+# (Or: curl -s -u voiceshield:<ARI_PASSWORD> http://localhost:8088/ari/asterisk/info)
 ```
 
 ### Step 2: Start Backend with Real ML Pipeline
@@ -264,8 +265,9 @@ print('Asterisk resources cleaned.')
 
 Verify zero orphan channels and bridges:
 ```bash
-curl -s -u voiceshield:voiceshield_secret_pass http://localhost:8088/ari/channels
-curl -s -u voiceshield:voiceshield_secret_pass http://localhost:8088/ari/bridges
+curl -s -u "${ARI_USER:-voiceshield}:${ARI_PASSWORD}" http://localhost:8088/ari/channels
+curl -s -u "${ARI_USER:-voiceshield}:${ARI_PASSWORD}" http://localhost:8088/ari/bridges
+# (Or: curl -s -u voiceshield:<ARI_PASSWORD> http://localhost:8088/ari/channels)
 # Both should return empty JSON lists: []
 ```
 

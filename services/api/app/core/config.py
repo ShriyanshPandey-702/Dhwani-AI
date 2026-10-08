@@ -18,7 +18,13 @@ class Settings(BaseSettings):
     CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:8081"]
 
     # Database
-    DATABASE_URL: str = "postgresql+asyncpg://voiceshield:voiceshield@localhost:5432/voiceshield"
+    DATABASE_URL: str = "sqlite+aiosqlite:///./dhwaniai.db"
+
+    # Telephony ARI (Asterisk REST Interface)
+    ARI_URL: str = "http://localhost:8088/ari"
+    ARI_WS_URL: str = "ws://localhost:8088/ari/events"
+    ARI_USER: str = "voiceshield"
+    ARI_PASSWORD: str = ""
 
     # Redis
     REDIS_URL: str = "redis://localhost:6379"

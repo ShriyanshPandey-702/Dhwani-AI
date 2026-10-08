@@ -1,4 +1,4 @@
-"""SQLAlchemy ORM models — mirrors database/schema.sql."""
+"""SQLAlchemy ORM models — mirrors services/api/schema.sql."""
 
 import uuid
 from datetime import datetime, timezone

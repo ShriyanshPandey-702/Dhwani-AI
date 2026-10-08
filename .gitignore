@@ -29,17 +29,29 @@ apps/mobile/android/local.properties
 apps/mobile/android/.gradle/
 apps/mobile/android/app/build/
 apps/mobile/android/build/
+apps/mobile/VoiceShieldApp/android/local.properties
+apps/mobile/VoiceShieldApp/android/.gradle/
+apps/mobile/VoiceShieldApp/android/app/build/
+apps/mobile/VoiceShieldApp/android/build/
 *.apk
 *.aab
 *.keystore
-!debug.keystore
+*.jks
 
 # ─── Secrets / env ────────────────────────────────────────────────────────────
 .env
-.env.local
-.env.production
+.env.*
+!.env.example
 *.pem
 *.key
+*.runtime
+.ari.conf.runtime
+services/telephony/asterisk/.ari.conf.runtime
+
+# ─── Databases (local runtime) ────────────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
 
 # ─── Datasets / models (large files) ─────────────────────────────────────────
 datasets/raw/

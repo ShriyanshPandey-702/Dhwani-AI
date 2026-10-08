@@ -7,12 +7,12 @@ import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.uimanager.ViewManager
 
 /**
- * ReactPackage for VoiceShield audio capture native module.
+ * ReactPackage for Dhwani AI audio capture native module.
  */
-class VoiceShieldAudioPackage : ReactPackage {
+class DhwaniAIAudioPackage : ReactPackage {
 
     override fun createNativeModules(reactContext: ReactApplicationContext): List<NativeModule> {
-        return listOf(VoiceShieldAudioModule(reactContext))
+        return listOf(DhwaniAIAudioModule(reactContext))
     }
 
     override fun createViewManagers(reactContext: ReactApplicationContext): List<ViewManager<*, *>> {

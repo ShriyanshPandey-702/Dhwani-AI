@@ -227,7 +227,8 @@ def evaluate_challenge_response(
 def _get_active_user_id() -> str:
     try:
         import sqlite3
-        conn = sqlite3.connect("services/api/voiceshield.db")
+        db_path = "services/api/dhwaniai.db" if os.path.exists("services/api/dhwaniai.db") else "services/api/voiceshield.db"
+        conn = sqlite3.connect(db_path)
         cur = conn.cursor()
         cur.execute("SELECT id FROM users WHERE is_active = 1 ORDER BY created_at ASC LIMIT 1")
         row = cur.fetchone()
@@ -319,7 +320,7 @@ class TelephonyGateway:
         ari_url: str = "http://localhost:8088/ari",
         ari_ws_url: str = "ws://localhost:8088/ari/events",
         ari_username: str = "voiceshield",
-        ari_password: str = "voiceshield_secret_pass",
+        ari_password: Optional[str] = None,
         ari_app: str = "voiceshield",
         backend_http_url: str = "http://localhost:8000",
         backend_ws_url: str = "ws://localhost:8000/ws/sessions",
@@ -341,8 +342,8 @@ class TelephonyGateway:
     ):
         self.ari_url = ari_url.rstrip("/")
         self.ari_ws_url = ari_ws_url
-        self.ari_username = ari_username
-        self.ari_password = ari_password
+        self.ari_username = ari_username or os.getenv("ARI_USER", "voiceshield")
+        self.ari_password = ari_password or os.getenv("ARI_PASSWORD") or os.getenv("ARI_PASS") or ""
         self.ari_app = ari_app
         self.backend_http_url = backend_http_url.rstrip("/")
         self.backend_ws_url = backend_ws_url.rstrip("/")
@@ -1527,8 +1528,12 @@ async def main():
     parser = argparse.ArgumentParser(description="VoiceShield Telephony Gateway")
     parser.add_argument("--ari-url", default="http://localhost:8088/ari", help="Asterisk ARI URL")
     parser.add_argument("--ari-ws", default="ws://localhost:8088/ari/events", help="Asterisk ARI WS URL")
-    parser.add_argument("--ari-user", default="voiceshield", help="ARI username")
-    parser.add_argument("--ari-pass", default="voiceshield_secret_pass", help="ARI password")
+    parser.add_argument("--ari-user", default=os.getenv("ARI_USER", "voiceshield"), help="ARI username")
+    parser.add_argument(
+        "--ari-pass",
+        default=os.getenv("ARI_PASSWORD") or os.getenv("ARI_PASS") or "",
+        help="ARI password (defaults to ARI_PASSWORD or ARI_PASS env var)",
+    )
     parser.add_argument("--ari-app", default="voiceshield", help="ARI Stasis app name")
     parser.add_argument("--backend-http", default="http://localhost:8000", help="VoiceShield FastAPI HTTP URL")
     parser.add_argument("--backend-ws", default="ws://localhost:8000/ws/sessions", help="VoiceShield WS base URL")

@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * Native Android Audio Capture Module for VoiceShield.
+ * Native Android Audio Capture Module for Dhwani AI.
  *
  * Captures raw microphone audio via Android AudioRecord and delivers verified
  * 16 kHz mono signed 16-bit linear PCM little-endian in 250 ms chunks
@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * This module is the sole owner of the authoritative audio sequence number
  * (`seq = 0, 1, 2, 3...`), which resets to 0 on every capture session.
  */
-class VoiceShieldAudioModule(private val reactContext: ReactApplicationContext) :
+class DhwaniAIAudioModule(private val reactContext: ReactApplicationContext) :
     ReactContextBaseJavaModule(reactContext) {
 
     companion object {

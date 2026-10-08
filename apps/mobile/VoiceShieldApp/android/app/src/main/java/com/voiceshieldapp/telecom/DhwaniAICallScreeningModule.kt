@@ -27,7 +27,7 @@ import java.lang.ref.WeakReference
  * React Native native module bridging Android Telecom CallScreeningService,
  * RoleManager, local audio file selection, and demo audio assets to JavaScript.
  */
-class VoiceShieldCallScreeningModule(private val reactContext: ReactApplicationContext) :
+class DhwaniAICallScreeningModule(private val reactContext: ReactApplicationContext) :
     ReactContextBaseJavaModule(reactContext) {
 
     companion object {
@@ -40,7 +40,7 @@ class VoiceShieldCallScreeningModule(private val reactContext: ReactApplicationC
         private const val REQUEST_CODE_SETTINGS = 4041
         private const val REQUEST_CODE_PICK_AUDIO = 4042
 
-        private var currentInstance: WeakReference<VoiceShieldCallScreeningModule>? = null
+        private var currentInstance: WeakReference<DhwaniAICallScreeningModule>? = null
 
         /**
          * Called by VoiceShieldCallScreeningService when a call is screened.

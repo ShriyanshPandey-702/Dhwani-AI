@@ -167,7 +167,7 @@ android/app/src/main/java/com/voiceshieldapp/
 Actual structure. Directories that do not exist yet are marked PLANNED.
 
 ```text
-voiceshield/
+Dhwani Ai/
 ├── apps/
 │   └── mobile/
 │       └── VoiceShieldApp/      # React Native app (see section 4)
@@ -175,6 +175,7 @@ voiceshield/
 ├── services/
 │   └── api/
 │       ├── main.py
+│       ├── schema.sql            # DB schema (migrations/ PLANNED via Alembic)
 │       ├── app/
 │       │   ├── api/             # auth, users, devices, sessions, risk,
 │       │   │                    # incidents, challenge, verification
@@ -188,23 +189,30 @@ voiceshield/
 │       ├── pytest.ini
 │       └── requirements.txt
 │
-├── database/
-│   └── schema.sql               # migrations/ PLANNED (Alembic)
+├── training/                    # AASIST model training scripts
+├── evaluation/                  # Multi-domain ML evaluation harness
+├── experiments/                 # Phase-specific experiment scripts
+├── models/                      # Local model weights (ecapa/, whisper/)
 │
-├── docs/
+├── docs/                        # Technical documentation
 │   ├── prd.md
 │   ├── tech.md
-│   └── test.md
+│   ├── test.md
+│   ├── models.md
+│   ├── DhwaniAI_Project_Context_README.md
+│   └── ...
 │
-├── implementation_plan.md
-├── docker-compose.yml           # Postgres + Redis
+├── recording_samples/           # Demo/manual-test audio assets
+│   └── demo/
+│
+├── docker-compose.yml           # Orchestrates all services
 ├── .env.example
 └── README.md
 ```
 
-PLANNED, not yet present: `infra/` (Docker, Redis and Postgres configuration
-beyond docker-compose), `blockchain/evidence/` (evidence anchoring),
-`datasets/` (training and evaluation data for Phase 5).
+PLANNED, not yet present: `proto/` (gRPC definitions, currently at `services/api/proto/`),
+`infra/` (Docker, Redis and Postgres configuration beyond docker-compose),
+`blockchain/evidence/` (evidence anchoring).
 
 ## 6. Setup Prerequisites
 
@@ -649,7 +657,7 @@ Critical ────────→ Hold
 - Mobile: `apps/mobile/VoiceShieldApp/src`
 - Backend: `services/api/app` (`api/`, `core/`, `models/`, `risk/`, `websocket/`)
 - ML: `services/api/app/ml` and `services/api/app/simulation`
-- Database: `database/schema.sql`
+- Database: `services/api/schema.sql`
 - DevOps: `docker-compose.yml` (an `infra/` tree is PLANNED)
 - Security/evidence: `app/core/security.py` and the incident integrity hash
   (a `blockchain/evidence/` tree is PLANNED)

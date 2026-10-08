@@ -82,9 +82,9 @@ STREAM_WINDOWER_WINDOW = 64608
 STREAM_WINDOWER_HOP = 16000
 STREAM_WINDOWER_MAX_BUFFER = 80608
 
-ARI_URL = "http://localhost:8088/ari"
-ARI_USER = "voiceshield"
-ARI_PASS = "voiceshield_secret_pass"
+ARI_URL = os.getenv("ARI_URL", "http://localhost:8088/ari")
+ARI_USER = os.getenv("ARI_USER", "voiceshield")
+ARI_PASS = os.getenv("ARI_PASSWORD") or os.getenv("ARI_PASS") or ""
 ARI_AUTH = (ARI_USER, ARI_PASS)
 BACKEND_HTTP_URL = "http://localhost:8000"
 
@@ -1274,7 +1274,8 @@ class Phase54ScenarioRunner:
         log.info("=" * 70)
         t0 = time.time()
 
-        conn = sqlite3.connect("services/api/voiceshield.db")
+        db_path = "services/api/dhwaniai.db" if os.path.exists("services/api/dhwaniai.db") else "services/api/voiceshield.db"
+        conn = sqlite3.connect(db_path)
         cur = conn.cursor()
         cur.execute("SELECT id, session_id, final_state, peak_risk_score, action_taken, integrity_hash, evidence_summary FROM incidents ORDER BY created_at DESC LIMIT 1")
         row = cur.fetchone()

@@ -10,7 +10,7 @@ import android.telecom.CallScreeningService
 import android.util.Log
 
 /**
- * Android Telecom CallScreeningService for VoiceShield.
+ * Android Telecom CallScreeningService for Dhwani AI.
  *
  * Implements strict non-negotiable critical path:
  * 1. Extract supported metadata.
@@ -31,7 +31,7 @@ import android.util.Log
  * The measured local operations are bounded to approximately 1.5–4 ms in the available in-process
  * benchmark, leaving substantial margin relative to Android Telecom's 5-second screening requirement.
  */
-class VoiceShieldCallScreeningService : CallScreeningService() {
+class DhwaniAICallScreeningService : CallScreeningService() {
 
     companion object {
         private const val TAG = "VoiceShieldTelecom"
@@ -39,7 +39,7 @@ class VoiceShieldCallScreeningService : CallScreeningService() {
 
     override fun onScreenCall(callDetails: Call.Details) {
         val startTime = System.currentTimeMillis()
-        Log.i(TAG, "onScreenCall received by VoiceShieldCallScreeningService at $startTime")
+        Log.i(TAG, "onScreenCall received by DhwaniAICallScreeningService at $startTime")
 
         // 1. Extract supported metadata safely
         val rawHandle = callDetails.handle?.schemeSpecificPart ?: callDetails.handle?.toString()
@@ -179,9 +179,9 @@ class VoiceShieldCallScreeningService : CallScreeningService() {
         // 9. Post-screening non-critical: dispatch event to React Native if bridge is active
         if (record != null) {
             try {
-                VoiceShieldCallScreeningModule.notifyCallScreened(record)
+                DhwaniAICallScreeningModule.notifyCallScreened(record)
             } catch (e: Exception) {
-                Log.w(TAG, "VoiceShieldCallScreeningModule dispatch failed: ${e.message}")
+                Log.w(TAG, "DhwaniAICallScreeningModule dispatch failed: ${e.message}")
             }
         }
     }
